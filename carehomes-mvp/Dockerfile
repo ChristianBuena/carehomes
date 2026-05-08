@@ -1,6 +1,9 @@
 # Base image
 FROM node:20-alpine
 
+# Build args
+ARG DATABASE_URL
+
 # Set working directory
 WORKDIR /app
 
@@ -14,7 +17,7 @@ RUN npm install
 COPY . .
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN DATABASE_URL=$DATABASE_URL npx prisma generate
 
 # Build Next.js app
 RUN npm run build

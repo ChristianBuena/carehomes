@@ -19,13 +19,17 @@ enum RebuttalStatus {
 }
 
 model User {
-	id        String   @id @default(cuid())
-	email     String   @unique
-	name      String
-	password  String
-	role      UserRole @default(MEMBER)
-	createdAt DateTime @default(now())
-	updatedAt DateTime @updatedAt
+	id              String   @id @default(cuid())
+	email           String   @unique
+	name            String
+	password        String
+	role            UserRole @default(MEMBER)
+	// MFA fields
+	mfaEnabled      Boolean  @default(false)
+	mfaSecret       String?
+	backupCodes     String[]
+	createdAt       DateTime @default(now())
+	updatedAt       DateTime @updatedAt
 
 	rebuttalsCreated  Rebuttal[] @relation("RebuttalsCreated")
 	rebuttalsReviewed Rebuttal[] @relation("RebuttalsReviewed")

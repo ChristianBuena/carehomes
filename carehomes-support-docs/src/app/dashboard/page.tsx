@@ -1,8 +1,13 @@
-export default function DashboardPage() {
+export default function DirectoryPage() {
   return (
-    <main>
-      <h1>Dashboard</h1>
-      <p>Welcome to CareHomesSupport</p>
-    </main>
-  );
+    <div>
+      <h1 className="text-3xl font-bold">
+        Welcome to CareHomeSupport
+      </h1>
+
+      <p className="mt-2 text-gray-600">
+        Find trusted care homes and services.
+      </p>
+    </div>
+  )
 }

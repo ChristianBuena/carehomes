@@ -1,32 +1,44 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
+
 export default function LoginPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          Login
-        </h1>
+    <div className="flex items-center justify-center min-h-screen">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-center">Login</CardTitle>
+        </CardHeader>
 
-        <form className="flex flex-col gap-4">
-          <input
-            type="email"
-            placeholder="Email"
-            className="border p-3 rounded-lg"
-          />
+        <CardContent className="space-y-4">
+          
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input placeholder="you@example.com" />
+          </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="border p-3 rounded-lg"
-          />
+          <div className="space-y-2">
+            <Label>Password</Label>
+            <Input type="password" placeholder="••••••••" />
+          </div>
 
-          <button
-            type="submit"
-            className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
-          >
+          <Button className="w-full">
             Sign In
-          </button>
-        </form>
-      </div>
-    </main>
-  );
+          </Button>
+
+          <p className="text-sm text-center text-gray-500">
+            No account?{" "}
+            <Link href="/signup" className="underline">
+              Sign up
+            </Link>
+          </p>
+
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

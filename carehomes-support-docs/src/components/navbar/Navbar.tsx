@@ -1,11 +1,21 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Menu, X } from "lucide-react"
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const mainLinks = [
     { href: "/dashboard", label: "Dashboard" },
@@ -15,7 +25,15 @@ export default function Navbar() {
   ]
 
   return (
-    <header className="w-full border-b bg-background">
+    <header
+      className={`
+        w-full border-b sticky top-0 z-50 transition-all duration-300
+        ${scrolled
+          ? "bg-background/80 backdrop-blur-md shadow-sm"
+          : "bg-transparent"
+        }
+      `}
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center px-4 relative">
 
         {/* Logo */}
@@ -38,10 +56,7 @@ export default function Navbar() {
 
         {/* Right Side Auth */}
         <div className="hidden md:flex items-center gap-4 ml-auto">
-          <Link
-            href="/login"
-            className="text-sm hover:text-gray-600 transition"
-          >
+          <Link href="/login" className="text-sm hover:text-gray-600 transition">
             Login
           </Link>
 
@@ -65,7 +80,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden border-t px-4 py-4 flex flex-col space-y-4">
+        <div className="md:hidden border-t px-4 py-4 flex flex-col space-y-4 bg-background">
 
           {mainLinks.map((link) => (
             <Link
@@ -78,10 +93,7 @@ export default function Navbar() {
           ))}
 
           <div className="flex flex-col gap-3 pt-3 border-t">
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-            >
+            <Link href="/login" onClick={() => setOpen(false)}>
               Login
             </Link>
 

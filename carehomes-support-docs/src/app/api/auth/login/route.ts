@@ -41,10 +41,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. CREATE JWT TOKEN (UPDATED)
-    const token = signToken({
+    // 4. CREATE JWT TOKEN (UPDATED - ROLE ADDED HERE)
+    const token = await signToken({
       userId: user.id,
       email: user.email,
+      role: user.role, // ✅ ADDED THIS
     });
 
     // 5. Response with cookie
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: user.role, // ✅ OPTIONAL BUT USEFUL FOR FRONTEND
           membership: user.membership,
         },
       },

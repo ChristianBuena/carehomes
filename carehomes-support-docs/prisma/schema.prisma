@@ -92,3 +92,20 @@ model Facility {
 
   @@index([name])
 }
+
+//
+//  MFA MODEL (FINAL STABLE VERSION)
+//
+model MfaOtp {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}

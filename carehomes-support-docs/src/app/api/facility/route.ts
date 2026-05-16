@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createFacility, getFacilities } from "@/services/facility.service";
 import { verifyToken } from "@/lib/jwt";
+import { hasPermission } from "@/lib/permissions";
 
 export async function GET() {
   try {
@@ -29,10 +30,10 @@ export async function POST(req: NextRequest) {
 
     const user = await verifyToken(token);
 
-    // ROLE CHECK (ADMIN ONLY)
-    if (user.role !== "ADMIN") {
+    // ROLE PERMISSION CHECK (UPDATED)
+    if (!hasPermission(user.role, "manage_facilities")) {
       return NextResponse.json(
-        { error: "Forbidden: Admins only" },
+        { error: "Forbidden: insufficient permissions" },
         { status: 403 }
       );
     }

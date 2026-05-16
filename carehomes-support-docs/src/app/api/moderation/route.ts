@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/roleGuard";
+import { verifyToken } from "@/lib/jwt";
+import { hasPermission } from "@/lib/permissions";
 import {
   approveRebuttal,
   rejectRebuttal,
@@ -7,11 +8,24 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
-    // RBAC CHECK
-    const result = await requireRole(["ADMIN", "MODERATOR"]);
+    // AUTH CHECK
+    const token = req.cookies.get("auth-token")?.value;
 
-    if (result.error) {
-      return result.error;
+    if (!token) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const user = await verifyToken(token);
+
+    // PERMISSION CHECK (UPDATED)
+    if (!hasPermission(user.role, "moderate_rebuttals")) {
+      return NextResponse.json(
+        { error: "Forbidden: insufficient permissions" },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();

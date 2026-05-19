@@ -1,100 +1,100 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { Menu, X } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
-  const mainLinks = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/about", label: "About Us" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/contact", label: "Contact" },
-  ]
+  const links = [
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Pricing", href: "/pricing" },
+    { name: "About", href: "/about" },
+    { name: "Contact", href: "/contact" },
+  ];
 
   return (
-    <header className="w-full border-b bg-background">
-      <div className="mx-auto flex h-16 max-w-7xl items-center px-4 relative">
+    <header className="w-full sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
+      <nav className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
 
         {/* Logo */}
-        <Link href="/" className="font-bold text-lg">
-          CareHomeSupport
+        <Link href="/" className="text-xl font-semibold text-gray-800">
+          CareSupport
         </Link>
 
-        {/* Center Navigation */}
-        <nav className="hidden md:flex gap-8 text-sm absolute left-1/2 -translate-x-1/2">
-          {mainLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="hover:text-gray-600 transition"
-            >
-              {link.label}
-            </Link>
+        {/* Desktop Links */}
+        <ul className="hidden md:flex items-center gap-8 text-gray-600 font-medium">
+          {links.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className="hover:text-blue-600 transition"
+              >
+                {link.name}
+              </Link>
+            </li>
           ))}
-        </nav>
+        </ul>
 
-        {/* Right Side Auth */}
-        <div className="hidden md:flex items-center gap-4 ml-auto">
+        {/* Desktop Buttons */}
+        <div className="hidden md:flex items-center gap-3">
           <Link
-            href="/login"
-            className="text-sm hover:text-gray-600 transition"
+            href="/signin"
+            className="px-4 py-2 text-gray-700 hover:text-blue-600 transition"
           >
-            Login
+            Sign In
           </Link>
 
           <Link
-            href="/signup"
-            className="rounded-md bg-black px-4 py-2 text-sm text-white hover:opacity-90 transition"
+            href="/get-started"
+            className="px-5 py-2 rounded-lg bg-blue-600 text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition"
           >
-            Sign Up
+            Get Started
           </Link>
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Button */}
         <button
-          className="ml-auto md:hidden"
+          className="md:hidden text-gray-700 text-2xl"
           onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
         >
-          {open ? <X /> : <Menu />}
+          ☰
         </button>
-      </div>
+      </nav>
 
       {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden border-t px-4 py-4 flex flex-col space-y-4">
-
-          {mainLinks.map((link) => (
+        <div className="md:hidden px-6 pb-4 flex flex-col gap-4 text-gray-600">
+          {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
+              className="hover:text-blue-600 transition"
             >
-              {link.label}
+              {link.name}
             </Link>
           ))}
 
-          <div className="flex flex-col gap-3 pt-3 border-t">
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-            >
-              Login
-            </Link>
+          <hr className="my-2" />
 
-            <Link
-              href="/signup"
-              onClick={() => setOpen(false)}
-              className="rounded-md bg-black px-4 py-2 text-center text-white"
-            >
-              Sign Up
-            </Link>
-          </div>
+          <Link
+            href="/signin"
+            onClick={() => setOpen(false)}
+            className="hover:text-blue-600"
+          >
+            Sign In
+          </Link>
+
+          <Link
+            href="/get-started"
+            onClick={() => setOpen(false)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg shadow-blue-600/30 text-center"
+          >
+            Get Started
+          </Link>
         </div>
       )}
     </header>
-  )
+  );
 }

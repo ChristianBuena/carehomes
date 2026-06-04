@@ -26,7 +26,7 @@ export default function ErrorBoundary({
       <div className="flex gap-4">
         <Button
           onClick={() => reset()}
-          className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+          className="bg-[var(--color-secondary)] text-[var(--color-surface)] hover:bg-[var(--color-secondary-hover)]"
         >
           Try again
         </Button>

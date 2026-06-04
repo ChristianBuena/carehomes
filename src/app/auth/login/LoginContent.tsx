@@ -58,12 +58,12 @@ export default function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] py-12 px-4">
+      <div className="w-full max-w-md bg-[var(--color-surface)] rounded-lg shadow-md p-8">
         <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
 
-        {error && <div className="text-red-600 mb-4">{error}</div>}
-        {success && <div className="text-green-600 mb-4">{success}</div>}
+        {error && <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 text-[var(--color-danger)] px-4 py-3 rounded mb-4">{error}</div>}
+        {success && <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 text-[var(--color-success)] px-4 py-3 rounded mb-4">{success}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -71,7 +71,7 @@ export default function LoginContent() {
             type="email"
             placeholder="Email"
             onChange={handleChange}
-            className="w-full border p-2"
+            className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           />
 
           <input
@@ -79,16 +79,16 @@ export default function LoginContent() {
             type="password"
             placeholder="Password"
             onChange={handleChange}
-            className="w-full border p-2"
+            className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           />
 
-          <button className="w-full bg-blue-600 text-white py-2">
+          <button className="w-full bg-[var(--color-secondary)] text-[var(--color-surface)] py-2 rounded-lg hover:bg-[var(--color-secondary-hover)] font-medium transition">
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        <p className="mt-4 text-sm">
-          No account? <Link href="/auth/signup">Sign up</Link>
+        <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
+          No account? <Link href="/auth/signup" className="text-[var(--color-secondary)] hover:underline font-medium">Sign up</Link>
         </p>
       </div>
     </div>

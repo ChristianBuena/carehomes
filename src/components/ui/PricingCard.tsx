@@ -31,7 +31,7 @@ export function PricingCard({
     >
       {highlighted && (
         <div className="absolute top-0 right-6 transform -translate-y-1/2">
-          <span className="bg-[var(--color-accent)] text-[var(--color-text)] text-xs font-bold px-3 py-1 uppercase tracking-wide rounded-full shadow-sm">
+          <span className="bg-[var(--color-accent)] text-white text-xs font-bold px-3 py-1 uppercase tracking-wide rounded-full shadow-sm">
             Most Popular
           </span>
         </div>
@@ -72,7 +72,7 @@ export function PricingCard({
         asChild
         className={`w-full h-12 font-semibold ${
           highlighted
-            ? "bg-[var(--color-accent)] text-[var(--color-text)] hover:bg-[var(--color-accent)]/90"
+            ? "bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)]"
             : "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90"
         }`}
       >

@@ -21,12 +21,12 @@ export default function FacilitiesPage() {
   return (
     <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24">
+      <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24">
         <ResponsiveContainer>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
             Facility Directory
           </h1>
-          <p className="text-lg text-white/80 max-w-2xl">
+          <p className="text-lg text-[var(--color-surface)]/80 max-w-2xl">
             Browse licensed California care facilities. All listings include deep links to official CCLD records.
           </p>
         </ResponsiveContainer>

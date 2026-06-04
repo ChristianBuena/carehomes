@@ -29,7 +29,7 @@ export function FacilityFiltersDrawer() {
           <span>
             Filters
             {count > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-bold">
+              <span className="ml-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-[var(--color-primary)] text-[var(--color-surface)] text-[10px] font-bold">
                 {count}
               </span>
             )}
@@ -47,7 +47,7 @@ export function FacilityFiltersDrawer() {
           <SheetTitle>
             Filters
             {count > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-bold">
+              <span className="ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-[var(--color-primary)] text-[var(--color-surface)] text-[10px] font-bold">
                 {count}
               </span>
             )}

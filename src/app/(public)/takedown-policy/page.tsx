@@ -43,12 +43,12 @@ export default function TakedownPolicyPage() {
       <JsonLd data={jsonLd} />
       <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)]">
+      <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)]">
         <ResponsiveContainer>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
             Takedown Policy
           </h1>
-          <div className="flex flex-col sm:flex-row gap-4 sm:items-center text-white/80">
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center text-[var(--color-surface)]/80">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span className="text-sm font-medium">Last Updated: {lastUpdated}</span>
@@ -62,11 +62,11 @@ export default function TakedownPolicyPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] p-6 rounded-lg shadow-sm flex flex-col justify-center">
             <div className="flex items-start gap-4 mb-4">
-              <Clock className="h-6 w-6 text-[var(--color-accent)] shrink-0 mt-0.5" />
+              <Clock className="h-6 w-6 text-[var(--color-blue-600)] shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-bold text-[var(--color-primary)] text-lg mb-1">Response Target</h3>
                 <p className="text-[var(--color-text)] font-medium">
-                  We target a <strong className="text-[var(--color-accent)]">72-hour response</strong> for all takedown requests.
+                  We target a <strong className="text-[var(--color-blue-600)]">72-hour response</strong> for all takedown requests.
                 </p>
               </div>
             </div>
@@ -77,7 +77,7 @@ export default function TakedownPolicyPage() {
               <h3 className="font-bold text-[var(--color-primary)] text-lg mb-1">Need immediate action?</h3>
               <p className="text-[var(--color-muted)] text-sm">Submit your request directly to our moderation team.</p>
             </div>
-            <Button asChild className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90 text-white shadow-sm shrink-0">
+            <Button asChild className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] shadow-sm shrink-0">
               <a href="mailto:takedowns@carehomessupportdocs.org">
                 <Mail className="h-4 w-4 mr-2" />
                 Submit a Request

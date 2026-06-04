@@ -50,7 +50,7 @@ export default function GlobalError({
                 </p>
                 {/* For development debugging */}
                 {process.env.NODE_ENV === "development" && (
-                  <div className="mt-4 p-3 bg-red-50 text-red-900 text-xs text-left rounded-md overflow-auto max-h-32 font-mono">
+                  <div className="mt-4 p-3 bg-[var(--color-danger)]/10 text-[var(--color-danger)] text-xs text-left rounded-md overflow-auto max-h-32 font-mono">
                     {error.message || "Unknown error"}
                   </div>
                 )}

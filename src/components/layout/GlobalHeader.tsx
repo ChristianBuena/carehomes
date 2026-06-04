@@ -21,9 +21,9 @@ export function GlobalHeader() {
       <ResponsiveContainer className="flex h-16 items-center justify-between">
         <div className="flex items-center">
           <Link href="/" className="flex items-center gap-2" aria-label="CareHomesSupportDocs.org Home">
-            <Shield className="h-6 w-6 text-[var(--color-accent)]" aria-hidden="true" />
+            <Shield className="h-6 w-6 text-[var(--color-blue-100)]" aria-hidden="true" />
             <span className="text-lg font-bold tracking-tight text-white hidden sm:block">
-              CareHomesSupportDocs<span className="text-[var(--color-accent)]">.org</span>
+              CareHomesSupportDocs<span className="text-[var(--color-blue-100)]">.org</span>
             </span>
             <span className="text-lg font-bold tracking-tight text-white sm:hidden">
               CHSD
@@ -39,7 +39,7 @@ export function GlobalHeader() {
           <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
             Member Login
           </Button>
-          <Button className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90 font-semibold border-none">
+          <Button className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] font-semibold border-none">
             Join Now
           </Button>
         </div>

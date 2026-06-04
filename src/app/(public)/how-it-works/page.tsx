@@ -82,7 +82,7 @@ export default function HowItWorksPage() {
   return (
     <div className="bg-[var(--color-bg)] w-full">
       {/* Disclaimer Banner */}
-      <div className="bg-[var(--color-warning)] text-white w-full py-3 px-4">
+      <div className="bg-[var(--color-warning)] text-[var(--color-surface)] w-full py-3 px-4">
         <ResponsiveContainer className="flex items-start sm:items-center gap-3">
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 sm:mt-0" />
           <p className="text-sm font-medium leading-relaxed">
@@ -92,12 +92,12 @@ export default function HowItWorksPage() {
       </div>
 
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24">
+      <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24">
         <ResponsiveContainer className="text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
             How the Platform Works
           </h1>
-          <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto text-balance">
+          <p className="text-lg md:text-xl text-[var(--color-surface)]/80 max-w-3xl mx-auto text-balance">
             Our step-by-step process ensures that every rebuttal is published securely, transparently, and in full compliance with privacy standards.
           </p>
         </ResponsiveContainer>
@@ -112,10 +112,10 @@ export default function HowItWorksPage() {
               return (
                 <div key={step.id} className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden flex flex-col md:flex-row">
                   <div className="bg-[var(--color-primary)]/5 p-8 md:w-1/3 flex flex-col items-center md:items-start text-center md:text-left border-b md:border-b-0 md:border-r border-[var(--color-border)]">
-                    <div className="h-16 w-16 bg-[var(--color-primary)] text-white rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                    <div className="h-16 w-16 bg-[var(--color-primary)] text-[var(--color-surface)] rounded-2xl flex items-center justify-center mb-6 shadow-sm">
                       <Icon className="h-8 w-8" />
                     </div>
-                    <div className="text-[var(--color-accent)] font-bold text-sm tracking-wider uppercase mb-2">Step {step.id}</div>
+                    <div className="text-[var(--color-secondary)] font-bold text-sm tracking-wider uppercase mb-2">Step {step.id}</div>
                     <h2 className="text-2xl font-bold text-[var(--color-text)]">{step.title}</h2>
                   </div>
                   
@@ -176,7 +176,7 @@ export default function HowItWorksPage() {
           <p className="text-lg text-[var(--color-muted)] mb-10 max-w-2xl text-balance">
             Join our platform today to ensure your facility's voice is heard securely and professionally.
           </p>
-          <Button asChild size="lg" className="bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90 text-[var(--color-text)] font-semibold group h-14 px-8 text-lg rounded-full">
+          <Button asChild size="lg" className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] font-semibold group h-14 px-8 text-lg rounded-full">
             <Link href="/pricing">
               View Pricing <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>

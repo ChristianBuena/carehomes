@@ -4,11 +4,11 @@ export default function DirectoryLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-[var(--color-bg)]">
       
       {/* Navbar */}
-      <header className="h-16 bg-white border-b flex items-center justify-between px-6">
-        <h1 className="text-xl font-bold text-blue-700">
+      <header className="h-16 bg-[var(--color-surface)] border-b flex items-center justify-between px-6">
+        <h1 className="text-xl font-bold text-[var(--color-primary)]">
           CareHome Support
         </h1>
 
@@ -22,7 +22,7 @@ export default function DirectoryLayout({
       <div className="flex">
         
         {/* Sidebar */}
-        <aside className="w-64 min-h-[calc(100vh-64px)] bg-white border-r p-6">
+        <aside className="w-64 min-h-[calc(100vh-64px)] bg-[var(--color-surface)] border-r p-6">
           <nav className="space-y-4">
             <a href="/directory">Home</a>
 

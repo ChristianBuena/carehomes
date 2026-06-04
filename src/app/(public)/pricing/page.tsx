@@ -84,7 +84,7 @@ export default function PricingPage() {
   return (
     <div className="bg-[var(--color-bg)] w-full pb-24">
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24 relative overflow-hidden">
+      <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24 relative overflow-hidden">
         {/* Subtle background element */}
         <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" 
              style={{
@@ -96,7 +96,7 @@ export default function PricingPage() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
             Transparent Pricing
           </h1>
-          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto text-balance">
+          <p className="text-lg md:text-xl text-[var(--color-surface)]/80 max-w-2xl mx-auto text-balance">
             We are a nonprofit organization. 100% of membership fees directly fund platform operations, moderation, and security. All plans are billed annually.
           </p>
         </ResponsiveContainer>
@@ -144,7 +144,7 @@ export default function PricingPage() {
             </div>
           </div>
           
-          <div className="bg-[var(--color-warning)] p-6 rounded-lg flex gap-4 items-start text-white shadow-sm">
+          <div className="bg-[var(--color-warning)] p-6 rounded-lg flex gap-4 items-start text-[var(--color-surface)] shadow-sm">
             <AlertCircle className="h-6 w-6 shrink-0 mt-1" />
             <div className="text-sm">
               <p className="font-bold mb-1">Legal Disclaimer</p>

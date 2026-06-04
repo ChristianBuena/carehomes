@@ -44,7 +44,7 @@ export function ProviderDisclaimerSection() {
               We offer neutral, free directory listings to qualified professionals to help care facility operators easily find specialized assistance when they need it most.
             </p>
             <div className="pt-2">
-              <Button className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-white" asChild>
+              <Button className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-[var(--color-surface)]" asChild>
                 <a href="mailto:providers@carehomessupportdocs.org?subject=Provider%20Directory%20Listing%20Request">
                   <Mail className="w-4 h-4 mr-2" />
                   Request a Directory Listing

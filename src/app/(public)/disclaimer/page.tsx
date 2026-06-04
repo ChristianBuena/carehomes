@@ -80,24 +80,24 @@ export default function DisclaimerPage() {
       <JsonLd data={jsonLd} />
       <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-16 md:py-20 border-b border-[var(--color-border)]">
+      <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-16 md:py-20 border-b border-[var(--color-border)]">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
             Legal Disclaimer
           </h1>
-          <p className="text-white/80 font-medium">Last Updated: {lastUpdated}</p>
+          <p className="text-[var(--color-surface)]/80 font-medium">Last Updated: {lastUpdated}</p>
         </div>
       </header>
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 mt-12 mb-16">
         {/* Prominent Red/Amber Callout Box */}
-        <div className="bg-[var(--color-danger)] text-white p-6 md:p-8 rounded-xl shadow-md mb-12 flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
-          <AlertOctagon className="h-12 w-12 shrink-0 text-white/90" strokeWidth={2} />
+        <div className="bg-[var(--color-danger)] text-[var(--color-surface)] p-6 md:p-8 rounded-xl shadow-md mb-12 flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
+          <AlertOctagon className="h-12 w-12 shrink-0 text-[var(--color-surface)]/90" strokeWidth={2} />
           <div>
             <h2 className="text-2xl font-black tracking-wide uppercase mb-2">
               Read This Disclaimer Before Using This Site
             </h2>
-            <p className="text-white/90 text-sm md:text-base leading-relaxed font-medium">
+            <p className="text-[var(--color-surface)]/90 text-sm md:text-base leading-relaxed font-medium">
               By accessing, browsing, or utilizing CareHomesSupportDocs.org, you acknowledge that you have read, understood, and agree to be bound by the terms outlined in this disclaimer. If you do not agree, you must exit this site immediately.
             </p>
           </div>

@@ -25,10 +25,10 @@ export default function HeroSection() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <Button asChild size="lg" className="w-full sm:w-auto bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-white font-semibold">
+          <Button asChild size="lg" className="w-full sm:w-auto bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-white font-semibold shadow-md">
             <Link href="/facilities">Explore the Directory</Link>
           </Button>
-          <Button asChild size="lg" className="w-full sm:w-auto bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90 text-[var(--color-text)] font-semibold">
+          <Button asChild size="lg" className="w-full sm:w-auto bg-[var(--color-surface)] hover:bg-[var(--color-surface-raised)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)] shadow-sm">
             <Link href="/pricing">Join as a Member</Link>
           </Button>
         </div>

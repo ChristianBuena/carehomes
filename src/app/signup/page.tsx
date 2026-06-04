@@ -47,9 +47,9 @@ export default function SignupPage() {
           </Button>
 
           {/* Login link */}
-          <p className="text-sm text-center text-gray-500">
+          <p className="text-sm text-center text-[var(--color-muted)]">
             Already have an account?{" "}
-            <Link href="/login" className="underline">
+            <Link href="/login" className="underline text-[var(--color-secondary)]">
               Login
             </Link>
           </p>

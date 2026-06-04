@@ -44,7 +44,7 @@ export function NavLink({ href, children, className, onClick, isMobile = false }
       aria-current={isActive ? "page" : undefined}
       className={cn(
         "group relative flex min-h-[44px] items-center px-1 py-2 text-sm font-medium transition-colors",
-        isActive ? "text-white" : "text-white/80 hover:text-white",
+        isActive ? "text-[var(--color-surface)]" : "text-[var(--color-surface)]/80 hover:text-[var(--color-surface)]",
         className
       )}
     >

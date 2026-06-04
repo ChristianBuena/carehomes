@@ -8,8 +8,8 @@ export default function FacilitiesLoading() {
       {/* Header Skeleton */}
       <div className="bg-[var(--color-primary)] py-12 md:py-16 lg:py-24">
         <ResponsiveContainer className="space-y-4">
-          <Skeleton variant="text" className="h-12 w-72 bg-white/20" />
-          <Skeleton variant="text" className="h-6 w-96 bg-white/10" />
+          <Skeleton variant="text" className="h-12 w-72 bg-[var(--color-surface)]/20" />
+          <Skeleton variant="text" className="h-6 w-96 bg-[var(--color-surface)]/10" />
         </ResponsiveContainer>
       </div>
 

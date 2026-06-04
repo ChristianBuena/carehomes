@@ -172,7 +172,7 @@ export function ApprovedRebuttalsSection({
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
-            className="text-sm border border-[var(--color-border)] rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            className="text-sm border border-[var(--color-border)] rounded-md px-3 py-1.5 bg-[var(--color-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>

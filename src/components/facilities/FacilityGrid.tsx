@@ -115,7 +115,7 @@ export function FacilityGrid({ facilities }: FacilityGridProps) {
               aria-current={p === page ? "page" : undefined}
               className={`h-9 w-9 flex items-center justify-center rounded-lg text-sm font-medium transition ${
                 p === page
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
+                  ? "bg-[var(--color-primary)] text-[var(--color-surface)] shadow-sm"
                   : "border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-bg)]"
               }`}
             >

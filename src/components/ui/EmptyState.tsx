@@ -109,14 +109,14 @@ export function EmptyState({
         (action.href ? (
           <Link
             href={action.href}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-[var(--color-surface)] text-sm font-semibold hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
           >
             {action.label}
           </Link>
         ) : (
           <button
             onClick={action.onClick}
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-[var(--color-surface)] text-sm font-semibold hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
           >
             {action.label}
           </button>

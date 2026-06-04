@@ -58,7 +58,7 @@ export function TableOfContents({ items }: TableOfContentsProps) {
               className={cn(
                 "block pl-4 text-sm transition-colors duration-200",
                 activeId === item.id
-                  ? "text-[var(--color-accent)] font-semibold border-l-2 border-[var(--color-accent)] -ml-[2px]"
+                  ? "text-[var(--color-secondary)] font-semibold border-l-2 border-[var(--color-secondary)] -ml-[2px]"
                   : "text-[var(--color-muted)] hover:text-[var(--color-primary)]"
               )}
             >

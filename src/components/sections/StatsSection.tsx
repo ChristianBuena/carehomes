@@ -11,7 +11,7 @@ export function StatsSection() {
   return (
     <section
       aria-label="Platform statistics"
-      className="bg-gradient-to-r from-[var(--color-primary)] via-[#1e4a80] to-[var(--color-secondary)] py-12 md:py-16 lg:py-24"
+      className="bg-gradient-to-r from-[var(--color-navy)] via-[var(--color-blue-900)] to-[var(--color-secondary)] py-12 md:py-16 lg:py-24"
     >
       <ResponsiveContainer>
         <dl className="grid grid-cols-2 gap-8 md:grid-cols-4">

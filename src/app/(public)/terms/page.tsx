@@ -50,20 +50,20 @@ export default function TermsPage() {
       
       {/* Draft Watermark Background */}
       <div className="fixed inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] z-0 rotate-[-30deg]">
-        <span className="text-[15rem] font-black text-black">DRAFT</span>
+        <span className="text-[15rem] font-black text-[var(--color-text)]">DRAFT</span>
       </div>
 
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)] relative z-10">
+      <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)] relative z-10">
         <ResponsiveContainer>
-          <div className="inline-flex items-center gap-2 bg-[var(--color-warning)] text-white px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider mb-6">
+          <div className="inline-flex items-center gap-2 bg-[var(--color-warning)] text-[var(--color-surface)] px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider mb-6">
             <Construction className="h-4 w-4" />
             DRAFT STATUS
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
             Terms of Service
           </h1>
-          <p className="text-white/80 text-lg max-w-2xl">
+          <p className="text-[var(--color-surface)]/80 text-lg max-w-2xl">
             Please read these terms carefully before using the CareHomesSupportDocs.org platform.
           </p>
         </ResponsiveContainer>

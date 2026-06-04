@@ -89,7 +89,7 @@ export default async function FacilityDetailPage({
       </div>
 
       {/* ── Facility Header ────────────────────────────────────────────── */}
-      <header className="bg-[var(--color-primary)] text-white">
+      <header className="bg-[var(--color-primary)] text-[var(--color-surface)]">
         <ResponsiveContainer className="py-12 md:py-16 lg:py-24">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             {/* Left: name + metadata */}
@@ -97,12 +97,12 @@ export default async function FacilityDetailPage({
               {/* Status badge */}
               <div className="mb-4">
                 {isActive ? (
-                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-success)]/20 text-green-300 border border-green-400/20 px-3 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/20 px-3 py-1 rounded-full text-xs font-semibold">
                     <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                     Active Facility
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 bg-white/10 text-white/60 border border-white/10 px-3 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 border border-[var(--color-surface)]/10 px-3 py-1 rounded-full text-xs font-semibold">
                     <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
                     Inactive
                   </span>
@@ -121,25 +121,25 @@ export default async function FacilityDetailPage({
               >
                 <div
                   role="listitem"
-                  className="inline-flex items-center gap-2 bg-white/10 text-white/80 px-3 py-1.5 rounded-lg text-sm"
+                  className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm"
                 >
-                  <MapPin className="h-4 w-4 text-white/60" aria-hidden="true" />
+                  <MapPin className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
                   <span>
                     {facility.city}, {facility.county} County
                   </span>
                 </div>
                 <div
                   role="listitem"
-                  className="inline-flex items-center gap-2 bg-white/10 text-white/80 px-3 py-1.5 rounded-lg text-sm"
+                  className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm"
                 >
-                  <Users className="h-4 w-4 text-white/60" aria-hidden="true" />
+                  <Users className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
                   <span>Capacity: {facility.capacity}</span>
                 </div>
                 <div
                   role="listitem"
-                  className="inline-flex items-center gap-2 bg-white/10 text-white/80 px-3 py-1.5 rounded-lg text-sm font-mono"
+                  className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm font-mono"
                 >
-                  <Hash className="h-4 w-4 text-white/60" aria-hidden="true" />
+                  <Hash className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
                   <span>{facility.facilityNumber}</span>
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default async function FacilityDetailPage({
             <div className="shrink-0">
               <Button
                 asChild
-                className="h-12 px-6 bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90 text-[var(--color-text)] font-semibold shadow-md group"
+                className="h-12 px-6 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] font-semibold shadow-md group"
               >
                 <Link href="/login">
                   Member? Submit a Rebuttal

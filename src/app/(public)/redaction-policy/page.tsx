@@ -43,12 +43,12 @@ export default function RedactionPolicyPage() {
       <JsonLd data={jsonLd} />
 
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)]">
+      <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)]">
         <ResponsiveContainer>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
             Redaction Policy
           </h1>
-          <div className="flex items-center text-white/80 gap-2">
+          <div className="flex items-center text-[var(--color-surface)]/80 gap-2">
             <Calendar className="h-4 w-4" />
             <span className="text-sm font-medium">Last Updated: {lastUpdated}</span>
           </div>

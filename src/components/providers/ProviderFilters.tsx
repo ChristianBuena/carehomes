@@ -62,7 +62,7 @@ export function ProviderFilters({ providers }: ProviderFiltersProps) {
               className={cn(
                 "flex-1 lg:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-colors capitalize",
                 type === t
-                  ? "bg-white text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50"
+                  ? "bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50"
                   : "text-[var(--color-muted)] hover:text-[var(--color-text)]"
               )}
             >

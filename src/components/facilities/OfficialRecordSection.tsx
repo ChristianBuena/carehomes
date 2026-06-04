@@ -40,7 +40,7 @@ export function OfficialRecordSection({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`View ${facilityName} official CCLD record (opens in new tab)`}
-              className="inline-flex items-center gap-2.5 h-12 px-6 rounded-xl bg-[var(--color-secondary)] text-white font-semibold text-sm hover:bg-[var(--color-secondary)]/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)] focus-visible:ring-offset-2 transition-colors shadow-sm"
+              className="inline-flex items-center gap-2.5 h-12 px-6 rounded-xl bg-[var(--color-secondary)] text-[var(--color-surface)] font-semibold text-sm hover:bg-[var(--color-secondary)]/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary)] focus-visible:ring-offset-2 transition-colors shadow-sm"
             >
               View Official CCLD Record
               <ExternalLink className="h-4 w-4" aria-hidden="true" />

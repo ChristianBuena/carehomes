@@ -51,7 +51,7 @@ export function MobileMenu() {
         aria-label="Open mobile navigation"
         aria-expanded={isOpen}
         aria-controls="mobile-navigation-menu"
-        className="text-white hover:bg-white/10 min-h-[44px] min-w-[44px]"
+        className="text-[var(--color-surface)] hover:bg-[var(--color-surface)]/10 min-h-[44px] min-w-[44px]"
       >
         <Menu className="h-6 w-6" aria-hidden="true" />
       </Button>
@@ -60,7 +60,7 @@ export function MobileMenu() {
         <div className="fixed inset-0 z-50 flex">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-[var(--color-text)]/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
             aria-hidden="true"
             onClick={() => setIsOpen(false)}
           />
@@ -110,7 +110,7 @@ export function MobileMenu() {
                   Member Login
                 </Button>
                 <Button 
-                  className="w-full min-h-[44px] bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90" 
+                  className="w-full min-h-[44px] bg-[var(--color-accent)] text-[var(--color-surface)] hover:bg-[var(--color-accent-hover)]" 
                   onClick={() => setIsOpen(false)}
                 >
                   Join Now

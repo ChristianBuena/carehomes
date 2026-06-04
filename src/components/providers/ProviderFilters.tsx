@@ -6,7 +6,13 @@ import { useProviderFilters } from "@/hooks/useProviderFilters";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Provider } from "@/lib/mock-data/providers";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +21,8 @@ interface ProviderFiltersProps {
 }
 
 export function ProviderFilters({ providers }: ProviderFiltersProps) {
-  const { type, county, search, updateFilter, clearFilters, hasActiveFilters } = useProviderFilters();
+  const { type, county, search, updateFilter, clearFilters, hasActiveFilters } =
+    useProviderFilters();
 
   // Local state for search input to allow debouncing without laggy typing
   const [localSearch, setLocalSearch] = useState(search);
@@ -63,7 +70,7 @@ export function ProviderFilters({ providers }: ProviderFiltersProps) {
                 "flex-1 lg:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-colors capitalize",
                 type === t
                   ? "bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50"
-                  : "text-[var(--color-muted)] hover:text-[var(--color-text)]"
+                  : "text-[var(--color-muted)] hover:text-[var(--color-text)]",
               )}
             >
               {t === "all" ? "All Types" : t}
@@ -73,11 +80,14 @@ export function ProviderFilters({ providers }: ProviderFiltersProps) {
 
         {/* County Select */}
         <div className="w-full lg:w-48 shrink-0">
-          <Select value={county} onValueChange={(val) => updateFilter("county", val)}>
+          <Select
+            value={county}
+            onValueChange={(val) => updateFilter("county", val)}
+          >
             <SelectTrigger className="w-full h-10">
               <SelectValue placeholder="All Counties" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[var(--color-surface)] border border-[var(--color-border)]">
               <SelectItem value="all">All Counties</SelectItem>
               {uniqueCounties.map((c) => (
                 <SelectItem key={c} value={c}>

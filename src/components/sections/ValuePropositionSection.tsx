@@ -1,4 +1,5 @@
 import { Shield, FileText, Lock } from "lucide-react";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export default function ValuePropositionSection() {
   const cards = [
@@ -20,8 +21,8 @@ export default function ValuePropositionSection() {
   ];
 
   return (
-    <section className="py-24 bg-[var(--color-bg)] w-full">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="py-12 md:py-16 lg:py-24 bg-[var(--color-bg)] w-full">
+      <ResponsiveContainer>
         {/* Inject keyframes for fadeUp entrance animation */}
         <style dangerouslySetInnerHTML={{__html: `
           @keyframes fadeUp {
@@ -35,7 +36,7 @@ export default function ValuePropositionSection() {
         `}} />
         
         <div className="text-center max-w-3xl mx-auto mb-16 animate-fade-up">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--color-primary)]">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-primary)]">
             Our Core Principles
           </h2>
           <p className="mt-4 text-lg text-[var(--color-muted)]">
@@ -65,7 +66,7 @@ export default function ValuePropositionSection() {
             );
           })}
         </div>
-      </div>
+      </ResponsiveContainer>
     </section>
   );
 }

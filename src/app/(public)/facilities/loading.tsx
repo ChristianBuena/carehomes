@@ -1,18 +1,19 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacilityListSkeleton } from "@/components/facilities/FacilityListSkeleton";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export default function FacilitiesLoading() {
   return (
     <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* Header Skeleton */}
-      <div className="bg-[var(--color-primary)] py-14 md:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-4">
+      <div className="bg-[var(--color-primary)] py-12 md:py-16 lg:py-24">
+        <ResponsiveContainer className="space-y-4">
           <Skeleton variant="text" className="h-12 w-72 bg-white/20" />
           <Skeleton variant="text" className="h-6 w-96 bg-white/10" />
-        </div>
+        </ResponsiveContainer>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
+      <ResponsiveContainer className="mt-8">
         {/* Search bar skeleton */}
         <Skeleton variant="card" className="h-12 w-full mb-8" />
 
@@ -42,7 +43,7 @@ export default function FacilitiesLoading() {
             <FacilityListSkeleton />
           </div>
         </div>
-      </div>
+      </ResponsiveContainer>
     </div>
   );
 }

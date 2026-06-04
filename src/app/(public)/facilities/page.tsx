@@ -6,7 +6,7 @@ import { FacilityFilters } from "@/components/facilities/FacilityFilters";
 import { FacilityFiltersDrawer } from "@/components/facilities/FacilityFiltersDrawer";
 import { FacilityGrid } from "@/components/facilities/FacilityGrid";
 import { AlertCircle } from "lucide-react";
-
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 import { buildMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = buildMetadata({
@@ -21,19 +21,19 @@ export default function FacilitiesPage() {
   return (
     <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-14 md:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24">
+        <ResponsiveContainer>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
             Facility Directory
           </h1>
           <p className="text-lg text-white/80 max-w-2xl">
             Browse licensed California care facilities. All listings include deep links to official CCLD records.
           </p>
-        </div>
+        </ResponsiveContainer>
       </header>
 
       {/* Disclaimer */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6">
+      <ResponsiveContainer className="mt-6">
         <div className="flex items-start gap-3 bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 text-[var(--color-text)] px-4 py-3 rounded-lg text-sm">
           <AlertCircle className="h-4 w-4 text-[var(--color-warning)] shrink-0 mt-0.5" aria-hidden="true" />
           <span>
@@ -49,9 +49,9 @@ export default function FacilitiesPage() {
             .
           </span>
         </div>
-      </div>
+      </ResponsiveContainer>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
+      <ResponsiveContainer className="mt-8">
         {/* Search + mobile filter toggle row */}
         <div className="flex gap-3 mb-8">
           <div className="flex-1">
@@ -82,14 +82,14 @@ export default function FacilitiesPage() {
             </Suspense>
           </div>
         </div>
-      </div>
+      </ResponsiveContainer>
     </div>
   );
 }
 
 function GridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {Array.from({ length: 9 }).map((_, i) => (
         <div key={i} className="h-64 rounded-xl bg-[var(--color-border)]/40 animate-pulse" />
       ))}

@@ -1,9 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProviderListSkeleton } from "@/components/providers/ProviderListSkeleton";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export default function ProvidersLoading() {
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+    <ResponsiveContainer className="py-12 md:py-16 lg:py-24">
       <div className="mb-8 space-y-4">
         <Skeleton variant="text" className="h-10 w-64" />
         <Skeleton variant="text" className="h-6 w-full max-w-3xl" />
@@ -27,6 +28,6 @@ export default function ProvidersLoading() {
       </div>
 
       <ProviderListSkeleton />
-    </div>
+    </ResponsiveContainer>
   );
 }

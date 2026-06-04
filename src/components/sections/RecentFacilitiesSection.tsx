@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MapPin, ArrowRight, FileText, CheckCircle2 } from "lucide-react";
 import { MOCK_FACILITIES } from "@/lib/mock-data/facilities";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 // Server Component — sort by lastUpdated, take top 3
 function getRecentFacilities() {
@@ -23,9 +24,9 @@ export function RecentFacilitiesSection() {
   return (
     <section
       aria-labelledby="recent-facilities-heading"
-      className="bg-[var(--color-bg)] py-20"
+      className="bg-[var(--color-bg)] py-12 md:py-16 lg:py-24"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <ResponsiveContainer>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
           <div>
@@ -44,7 +45,7 @@ export function RecentFacilitiesSection() {
           </div>
           <Link
             href="/facilities"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors group shrink-0"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors group shrink-0 min-h-[44px]"
           >
             View full directory
             <ArrowRight
@@ -115,13 +116,13 @@ export function RecentFacilitiesSection() {
         <div className="mt-10 text-center">
           <Link
             href="/facilities"
-            className="inline-flex items-center gap-2 bg-[var(--color-primary)] text-white font-semibold px-6 py-3 rounded-full hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white font-semibold px-6 min-h-[44px] rounded-full hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
           >
             Browse all {MOCK_FACILITIES.length} facilities
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-      </div>
+      </ResponsiveContainer>
     </section>
   );
 }

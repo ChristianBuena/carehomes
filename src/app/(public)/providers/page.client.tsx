@@ -7,6 +7,7 @@ import { ProviderList } from "@/components/providers/ProviderList";
 import { ProviderFilters } from "@/components/providers/ProviderFilters";
 import { ProviderDisclaimerSection } from "@/components/providers/ProviderDisclaimerSection";
 import { useProviderFilters } from "@/hooks/useProviderFilters";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export default function ProvidersClientPage() {
   const { type, county, search, clearFilters } = useProviderFilters();
@@ -28,9 +29,9 @@ export default function ProvidersClientPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <ResponsiveContainer className="py-12 md:py-16 lg:py-24">
         <div className="mb-8 space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-primary)] sm:text-4xl">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[var(--color-primary)]">
             Provider Directory
           </h1>
           <p className="text-lg text-[var(--color-muted)] max-w-3xl">
@@ -49,7 +50,7 @@ export default function ProvidersClientPage() {
           query={search || undefined}
           onClearFilters={clearFilters}
         />
-      </div>
+      </ResponsiveContainer>
       <ProviderDisclaimerSection />
     </>
   );

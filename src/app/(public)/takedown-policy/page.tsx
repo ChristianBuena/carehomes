@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export const metadata: Metadata = buildMetadata({
   title: "Takedown Policy",
@@ -42,9 +43,9 @@ export default function TakedownPolicyPage() {
       <JsonLd data={jsonLd} />
       <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-16 md:py-20 border-b border-[var(--color-border)]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)]">
+        <ResponsiveContainer>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
             Takedown Policy
           </h1>
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center text-white/80">
@@ -53,11 +54,11 @@ export default function TakedownPolicyPage() {
               <span className="text-sm font-medium">Last Updated: {lastUpdated}</span>
             </div>
           </div>
-        </div>
+        </ResponsiveContainer>
       </header>
 
       {/* Prominent Callouts */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-12">
+      <ResponsiveContainer className="mt-8 mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] p-6 rounded-lg shadow-sm flex flex-col justify-center">
             <div className="flex items-start gap-4 mb-4">
@@ -84,9 +85,9 @@ export default function TakedownPolicyPage() {
             </Button>
           </div>
         </div>
-      </div>
+      </ResponsiveContainer>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <ResponsiveContainer>
         <div className="flex flex-col lg:flex-row gap-12 relative">
           
           {/* TOC Sidebar - Desktop Only */}
@@ -96,7 +97,7 @@ export default function TakedownPolicyPage() {
 
           {/* Main Content */}
           <main className="flex-1 max-w-prose">
-            <div className="prose prose-slate prose-headings:text-[var(--color-primary)] prose-a:text-[var(--color-secondary)] prose-a:font-semibold hover:prose-a:text-[var(--color-primary)] prose-p:leading-relaxed prose-li:leading-relaxed">
+            <div className="prose prose-slate prose-headings:text-[var(--color-primary)] prose-a:text-[var(--color-secondary)] prose-a:font-semibold hover:prose-a:text-[var(--color-primary)] prose-p:leading-relaxed prose-li:leading-relaxed break-words">
               
               <section id="overview" className="scroll-mt-28 mb-12">
                 <h2 className="text-3xl font-bold mb-4">1. Overview</h2>
@@ -188,7 +189,7 @@ export default function TakedownPolicyPage() {
             </div>
           </main>
         </div>
-      </div>
+      </ResponsiveContainer>
     </div>
     </>
   );

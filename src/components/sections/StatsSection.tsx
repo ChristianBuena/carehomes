@@ -1,3 +1,5 @@
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
+
 const STATS = [
   { value: "10+", label: "Facilities Listed", description: "Licensed CA care facilities" },
   { value: "100%", label: "Moderated Content", description: "Every rebuttal reviewed before publish" },
@@ -9,10 +11,10 @@ export function StatsSection() {
   return (
     <section
       aria-label="Platform statistics"
-      className="bg-gradient-to-r from-[var(--color-primary)] via-[#1e4a80] to-[var(--color-secondary)] py-14"
+      className="bg-gradient-to-r from-[var(--color-primary)] via-[#1e4a80] to-[var(--color-secondary)] py-12 md:py-16 lg:py-24"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+      <ResponsiveContainer>
+        <dl className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {STATS.map((stat) => (
             <div
               key={stat.label}
@@ -28,7 +30,7 @@ export function StatsSection() {
             </div>
           ))}
         </dl>
-      </div>
+      </ResponsiveContainer>
     </section>
   );
 }

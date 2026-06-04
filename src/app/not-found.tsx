@@ -4,6 +4,7 @@ import { Search, Home, Building2, CreditCard, Mail } from "lucide-react";
 import { GlobalHeader } from "@/components/layout/GlobalHeader";
 import { GlobalFooter } from "@/components/layout/GlobalFooter";
 import { FacilitySearch } from "@/components/facilities/FacilitySearch";
+import { Suspense } from "react";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -54,7 +55,9 @@ export default function NotFound() {
               >
                 Looking for a facility? Try searching:
               </label>
-              <FacilitySearch />
+              <Suspense fallback={<div className="h-12 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl w-full animate-pulse" />}>
+                <FacilitySearch />
+              </Suspense>
             </div>
 
             <div className="pt-6 border-t border-[var(--color-border)]">

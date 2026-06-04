@@ -17,6 +17,7 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { OfficialRecordSection } from "@/components/facilities/OfficialRecordSection";
 import { ApprovedRebuttalsSection } from "@/components/facilities/ApprovedRebuttalsSection";
 import { Button } from "@/components/ui/button";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 // ─── Static generation ────────────────────────────────────────────────────────
 
@@ -77,19 +78,19 @@ export default async function FacilityDetailPage({
       <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* ── Breadcrumb bar ─────────────────────────────────────────────── */}
       <div className="bg-[var(--color-surface)] border-b border-[var(--color-border)]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+        <ResponsiveContainer className="py-3">
           <Breadcrumb
             items={[
               { label: "Facilities", href: "/facilities" },
               { label: facility.name },
             ]}
           />
-        </div>
+        </ResponsiveContainer>
       </div>
 
       {/* ── Facility Header ────────────────────────────────────────────── */}
       <header className="bg-[var(--color-primary)] text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <ResponsiveContainer className="py-12 md:py-16 lg:py-24">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             {/* Left: name + metadata */}
             <div>
@@ -160,11 +161,11 @@ export default async function FacilityDetailPage({
               </Button>
             </div>
           </div>
-        </div>
+        </ResponsiveContainer>
       </header>
 
       {/* ── Main content ───────────────────────────────────────────────── */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-10 space-y-12">
+      <ResponsiveContainer className="mt-10 space-y-12">
         {/* 1. Official Record */}
         <OfficialRecordSection
           ccldLink={facility.ccldLink ?? null}
@@ -203,7 +204,7 @@ export default async function FacilityDetailPage({
             </p>
           </div>
         </aside>
-      </div>
+      </ResponsiveContainer>
     </div>
     </>
   );

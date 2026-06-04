@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PricingCard } from "@/components/ui/PricingCard";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 const PREVIEW_TIERS = [
   {
@@ -44,10 +45,10 @@ const PREVIEW_TIERS = [
 
 export default function PricingPreviewSection() {
   return (
-    <section className="py-24 bg-[var(--color-surface)] border-y border-[var(--color-border)]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="py-12 md:py-16 lg:py-24 bg-[var(--color-surface)] border-y border-[var(--color-border)]">
+      <ResponsiveContainer>
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--color-primary)]">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-primary)]">
             Simple, Transparent Pricing
           </h2>
           <p className="mt-4 text-lg text-[var(--color-muted)]">
@@ -64,13 +65,13 @@ export default function PricingPreviewSection() {
         <div className="text-center">
           <Link
             href="/pricing"
-            className="inline-flex items-center text-[var(--color-secondary)] hover:text-[var(--color-primary)] font-semibold transition-colors group"
+            className="inline-flex items-center justify-center min-h-[44px] text-[var(--color-secondary)] hover:text-[var(--color-primary)] font-semibold transition-colors group"
           >
             See Full Pricing
             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
-      </div>
+      </ResponsiveContainer>
     </section>
   );
 }

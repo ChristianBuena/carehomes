@@ -4,6 +4,7 @@ import { AlertTriangle, Calendar } from "lucide-react";
 
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export const metadata: Metadata = buildMetadata({
   title: "Redaction Policy",
@@ -42,29 +43,29 @@ export default function RedactionPolicyPage() {
       <JsonLd data={jsonLd} />
 
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-16 md:py-20 border-b border-[var(--color-border)]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)]">
+        <ResponsiveContainer>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
             Redaction Policy
           </h1>
           <div className="flex items-center text-white/80 gap-2">
             <Calendar className="h-4 w-4" />
             <span className="text-sm font-medium">Last Updated: {lastUpdated}</span>
           </div>
-        </div>
+        </ResponsiveContainer>
       </header>
 
       {/* Prominent Callout */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 mb-12">
+      <ResponsiveContainer className="mt-8 mb-12">
         <div className="bg-[var(--color-danger)]/10 border-l-4 border-[var(--color-danger)] p-6 rounded-r-lg flex gap-4 items-start shadow-sm">
           <AlertTriangle className="h-6 w-6 text-[var(--color-danger)] shrink-0 mt-0.5" />
           <p className="text-[var(--color-text)] font-semibold text-lg leading-relaxed">
             This policy exists to protect resident privacy. Violations will result in immediate takedown.
           </p>
         </div>
-      </div>
+      </ResponsiveContainer>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <ResponsiveContainer>
         <div className="flex flex-col lg:flex-row gap-12 relative">
           
           {/* TOC Sidebar - Desktop Only */}
@@ -74,7 +75,7 @@ export default function RedactionPolicyPage() {
 
           {/* Main Content */}
           <main className="flex-1 max-w-prose">
-            <div className="prose prose-slate prose-headings:text-[var(--color-primary)] prose-a:text-[var(--color-secondary)] prose-a:font-semibold hover:prose-a:text-[var(--color-primary)] prose-p:leading-relaxed prose-li:leading-relaxed">
+            <div className="prose prose-slate prose-headings:text-[var(--color-primary)] prose-a:text-[var(--color-secondary)] prose-a:font-semibold hover:prose-a:text-[var(--color-primary)] prose-p:leading-relaxed prose-li:leading-relaxed break-words">
               
               <section id="what-is-redaction" className="scroll-mt-28 mb-12">
                 <h2 className="text-3xl font-bold mb-4">1. What Is Redaction?</h2>
@@ -159,7 +160,7 @@ export default function RedactionPolicyPage() {
             </div>
           </main>
         </div>
-      </div>
+      </ResponsiveContainer>
     </div>
   );
 }

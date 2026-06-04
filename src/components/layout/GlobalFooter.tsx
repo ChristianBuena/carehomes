@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Shield } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export function GlobalFooter() {
   const currentYear = new Date().getFullYear();
@@ -10,11 +11,11 @@ export function GlobalFooter() {
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
-      <div className="mx-auto max-w-7xl px-4 pb-8 pt-12 sm:px-6 lg:px-8 lg:pt-16">
-        <div className="xl:grid xl:grid-cols-4 xl:gap-8">
+      <ResponsiveContainer className="pb-8 pt-12 lg:pt-16">
+        <div className="lg:grid lg:grid-cols-4 lg:gap-8">
           
           {/* Col 1: Logo + nonprofit tagline + disclaimer blurb */}
-          <div className="space-y-6 xl:col-span-1">
+          <div className="space-y-6 lg:col-span-1">
             <Link href="/" className="flex items-center gap-2" aria-label="CareHomesSupportDocs.org Home">
               <Shield className="h-7 w-7 text-[var(--color-accent)]" aria-hidden="true" />
               <span className="text-xl font-bold tracking-tight text-white">
@@ -30,7 +31,7 @@ export function GlobalFooter() {
           </div>
           
           {/* Columns 2-4 */}
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 xl:col-span-3 xl:mt-0">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 lg:col-span-3 lg:mt-0">
             {/* Col 2: Platform links */}
             <div>
               <h3 className="text-sm font-semibold leading-6 text-white">Platform</h3>
@@ -93,7 +94,7 @@ export function GlobalFooter() {
             ))}
           </div>
         </div>
-      </div>
+      </ResponsiveContainer>
     </footer>
   );
 }

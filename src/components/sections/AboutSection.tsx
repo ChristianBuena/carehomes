@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Shield, ExternalLink, Scale, FileText, BookOpen } from "lucide-react";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 const POLICY_LINKS = [
   { label: "Legal Disclaimer", href: "/disclaimer", icon: Scale },
@@ -12,9 +13,9 @@ export function AboutSection() {
   return (
     <section
       aria-labelledby="about-heading"
-      className="bg-[var(--color-surface)] py-20 border-y border-[var(--color-border)]"
+      className="bg-[var(--color-surface)] py-12 md:py-16 lg:py-24 border-y border-[var(--color-border)]"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <ResponsiveContainer>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* Left — Text */}
           <div>
@@ -23,7 +24,7 @@ export function AboutSection() {
             </p>
             <h2
               id="about-heading"
-              className="text-3xl sm:text-4xl font-extrabold text-[var(--color-primary)] tracking-tight mb-6"
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--color-primary)] tracking-tight mb-6"
             >
               CareHomesSupportDocs.org
             </h2>
@@ -102,7 +103,7 @@ export function AboutSection() {
             </div>
           </div>
         </div>
-      </div>
+      </ResponsiveContainer>
     </section>
   );
 }

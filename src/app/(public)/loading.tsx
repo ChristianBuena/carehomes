@@ -1,8 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export default function Loading() {
   return (
-    <div className="w-full space-y-12 py-12 px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
+    <ResponsiveContainer className="space-y-12 py-12">
       {/* Hero Skeleton */}
       <div className="flex flex-col items-center justify-center space-y-6 pt-10">
         <Skeleton className="h-12 w-3/4 max-w-3xl rounded-lg" />
@@ -26,6 +27,6 @@ export default function Loading() {
         <Skeleton className="h-8 w-1/3 rounded-md mx-auto" />
         <Skeleton className="h-4 w-2/3 rounded-md mx-auto" />
       </div>
-    </div>
+    </ResponsiveContainer>
   );
 }

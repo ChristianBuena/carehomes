@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,7 @@ export function MobileMenu() {
         <Menu className="h-6 w-6" aria-hidden="true" />
       </Button>
 
-      {isOpen && (
+      {isOpen && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 flex">
           {/* Backdrop */}
           <div 
@@ -69,6 +70,7 @@ export function MobileMenu() {
             ref={menuRef}
             id="mobile-navigation-menu"
             role="navigation"
+            aria-hidden={!isOpen}
             aria-label="Mobile navigation"
             className="relative flex w-[85%] max-w-sm flex-col bg-[var(--color-surface)] shadow-xl animate-in slide-in-from-left duration-300"
           >
@@ -116,7 +118,8 @@ export function MobileMenu() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

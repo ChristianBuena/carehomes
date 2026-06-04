@@ -1,11 +1,12 @@
 import { Mail, Search, Info } from "lucide-react";
 import { DisclaimerCallout } from "@/components/ui/DisclaimerCallout";
 import { Button } from "@/components/ui/button";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export function ProviderDisclaimerSection() {
   return (
-    <section className="mt-16 bg-[var(--color-bg)] border-t border-[var(--color-border)] py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+    <section className="mt-16 bg-[var(--color-bg)] border-t border-[var(--color-border)] py-12 md:py-16 lg:py-24">
+      <ResponsiveContainer className="space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           {/* Members Column */}
           <div className="space-y-4">
@@ -61,7 +62,7 @@ export function ProviderDisclaimerSection() {
           We receive no referral fees or compensation from these providers. 
           Your use of this directory does not create an attorney-client relationship. You are solely responsible for conducting your own due diligence before hiring any professional.
         </DisclaimerCallout>
-      </div>
+      </ResponsiveContainer>
     </section>
   );
 }

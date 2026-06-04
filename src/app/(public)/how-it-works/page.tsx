@@ -5,6 +5,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { AlertCircle, ArrowRight, UserPlus, FileUp, CheckCircle, Globe } from "lucide-react";
 
 import { buildMetadata } from "@/lib/metadata";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export const metadata: Metadata = buildMetadata({
   title: "How It Works",
@@ -82,29 +83,29 @@ export default function HowItWorksPage() {
     <div className="bg-[var(--color-bg)] w-full">
       {/* Disclaimer Banner */}
       <div className="bg-[var(--color-warning)] text-white w-full py-3 px-4">
-        <div className="mx-auto max-w-7xl flex items-start sm:items-center gap-3">
+        <ResponsiveContainer className="flex items-start sm:items-center gap-3">
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 sm:mt-0" />
           <p className="text-sm font-medium leading-relaxed">
             <strong>Important Notice:</strong> CareHomesSupportDocs.org does not provide legal advice. Always consult a licensed attorney for legal matters.
           </p>
-        </div>
+        </ResponsiveContainer>
       </div>
 
       {/* Page Header */}
-      <header className="bg-[var(--color-primary)] text-white py-16 md:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
+      <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24">
+        <ResponsiveContainer className="text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
             How the Platform Works
           </h1>
           <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto text-balance">
             Our step-by-step process ensures that every rebuttal is published securely, transparently, and in full compliance with privacy standards.
           </p>
-        </div>
+        </ResponsiveContainer>
       </header>
 
       {/* Detailed Steps Section */}
-      <section className="py-20">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-16 lg:py-24">
+        <ResponsiveContainer className="max-w-5xl">
           <div className="space-y-16">
             {STEPS.map((step) => {
               const Icon = step.icon;
@@ -144,14 +145,14 @@ export default function HowItWorksPage() {
               );
             })}
           </div>
-        </div>
+        </ResponsiveContainer>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 bg-[var(--color-surface)] border-y border-[var(--color-border)]">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-16 lg:py-24 bg-[var(--color-surface)] border-y border-[var(--color-border)]">
+        <ResponsiveContainer className="max-w-3xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[var(--color-primary)] mb-4">Frequently Asked Questions</h2>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--color-primary)] mb-4">Frequently Asked Questions</h2>
             <p className="text-[var(--color-muted)]">Everything you need to know about the rebuttal process.</p>
           </div>
           
@@ -165,13 +166,13 @@ export default function HowItWorksPage() {
               </AccordionItem>
             ))}
           </Accordion>
-        </div>
+        </ResponsiveContainer>
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 text-center">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-[var(--color-primary)] mb-6">Ready to get started?</h2>
+      <section className="py-12 md:py-16 lg:py-24 text-center">
+        <ResponsiveContainer className="max-w-4xl flex flex-col items-center">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--color-primary)] mb-6">Ready to get started?</h2>
           <p className="text-lg text-[var(--color-muted)] mb-10 max-w-2xl text-balance">
             Join our platform today to ensure your facility's voice is heard securely and professionally.
           </p>
@@ -180,7 +181,7 @@ export default function HowItWorksPage() {
               View Pricing <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
-        </div>
+        </ResponsiveContainer>
       </section>
     </div>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Shield } from "lucide-react";
 import { NavBar } from "./NavBar";
 import { MobileMenu } from "./MobileMenu";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 import { Button } from "@/components/ui/button";
 
 export function GlobalHeader() {
@@ -15,12 +16,9 @@ export function GlobalHeader() {
         Skip to main content
       </a>
 
-      {/* Prominent disclaimer banner */}
-      <div className="bg-[var(--color-danger)] text-white text-xs sm:text-sm font-medium px-4 py-2 text-center">
-        This is not a government website. Always verify information at official CCLD sources.
-      </div>
 
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+
+      <ResponsiveContainer className="flex h-16 items-center justify-between">
         <div className="flex items-center">
           <Link href="/" className="flex items-center gap-2" aria-label="CareHomesSupportDocs.org Home">
             <Shield className="h-6 w-6 text-[var(--color-accent)]" aria-hidden="true" />
@@ -50,7 +48,7 @@ export function GlobalHeader() {
         <div className="lg:hidden flex items-center">
           <MobileMenu />
         </div>
-      </div>
+      </ResponsiveContainer>
     </header>
   );
 }

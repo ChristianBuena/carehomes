@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, ExternalLink } from "lucide-react";
+import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export function DisclaimerBanner() {
   return (
@@ -7,7 +8,7 @@ export function DisclaimerBanner() {
       aria-label="Important disclaimers"
       className="bg-[var(--color-warning)]/8 border-y-2 border-[var(--color-warning)]/30 py-12"
     >
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <ResponsiveContainer className="max-w-4xl">
         <div className="flex flex-col sm:flex-row items-start gap-5">
           {/* Icon */}
           <div className="shrink-0 h-11 w-11 rounded-full bg-[var(--color-warning)]/15 border border-[var(--color-warning)]/30 flex items-center justify-center">
@@ -23,7 +24,7 @@ export function DisclaimerBanner() {
               Important — Please Read Before Using This Site
             </h2>
 
-            <ul className="space-y-2 text-sm text-[var(--color-text)] leading-relaxed list-none">
+            <ul className="space-y-2 text-sm text-[var(--color-text)] leading-relaxed list-none break-words">
               <li className="flex items-baseline gap-2">
                 <span className="text-[var(--color-warning)] font-bold shrink-0">›</span>
                 <span>
@@ -69,7 +70,7 @@ export function DisclaimerBanner() {
             </p>
           </div>
         </div>
-      </div>
+      </ResponsiveContainer>
     </section>
   );
 }

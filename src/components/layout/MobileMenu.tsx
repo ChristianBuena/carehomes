@@ -1,39 +1,28 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site-config";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { NavLink } from "./NavLink";
+import { cn } from "@/lib/utils";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Focus trap and escape key to close
+  // Close menu on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Handle escape key and body scroll lock
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
-      
-      if (e.key === "Tab" && isOpen && menuRef.current) {
-        const focusableElements = menuRef.current.querySelectorAll(
-          'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])'
-        );
-        const firstElement = focusableElements[0] as HTMLElement;
-        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-        if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            lastElement.focus();
-            e.preventDefault();
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus();
-            e.preventDefault();
-          }
-        }
-      }
     };
 
     if (isOpen) {
@@ -49,24 +38,28 @@ export function MobileMenu() {
     };
   }, [isOpen]);
 
+  // Activate focus trap
+  useFocusTrap(menuRef, isOpen);
+
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(true)}
-        aria-label="Open main navigation"
+        aria-label="Open mobile navigation"
         aria-expanded={isOpen}
-        className="text-white hover:bg-white/10"
+        aria-controls="mobile-navigation-menu"
+        className="text-white hover:bg-white/10 min-h-[44px] min-w-[44px]"
       >
-        <Menu className="h-6 w-6" />
+        <Menu className="h-6 w-6" aria-hidden="true" />
       </Button>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm" 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
             aria-hidden="true"
             onClick={() => setIsOpen(false)}
           />
@@ -74,45 +67,54 @@ export function MobileMenu() {
           {/* Drawer */}
           <div 
             ref={menuRef}
-            className="relative flex w-[85%] max-w-sm flex-col bg-[var(--color-bg)] shadow-xl"
-            role="dialog"
-            aria-modal="true"
+            id="mobile-navigation-menu"
+            role="navigation"
             aria-label="Mobile navigation"
+            className="relative flex w-[85%] max-w-sm flex-col bg-[var(--color-surface)] shadow-xl animate-in slide-in-from-left duration-300"
           >
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] p-4">
-              <span className="font-bold text-[var(--color-primary)]">Menu</span>
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] p-4 min-h-[64px]">
+              <span className="font-bold text-lg text-[var(--color-primary)]">Menu</span>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsOpen(false)}
                 aria-label="Close navigation"
-                className="text-[var(--color-text)] hover:bg-[var(--color-border)]"
+                className="text-[var(--color-text)] hover:bg-[var(--color-bg)] min-h-[44px] min-w-[44px]"
               >
-                <X className="h-6 w-6" />
+                <X className="h-6 w-6" aria-hidden="true" />
               </Button>
             </div>
             
-            <nav className="flex-1 overflow-y-auto p-4 flex flex-col space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
               {siteConfig.mainNav.map((link) => (
-                <Link
+                <NavLink
                   key={link.label}
                   href={link.href}
-                  className="block py-2 text-lg font-medium text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors"
+                  isMobile
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
-                </Link>
+                </NavLink>
               ))}
-              <hr className="my-4 border-[var(--color-border)]" />
-              <div className="flex flex-col space-y-3">
-                <Button variant="outline" className="w-full border-[var(--color-primary)] text-[var(--color-primary)]" onClick={() => setIsOpen(false)}>
+              
+              <hr className="my-4 border-[var(--color-border)]" aria-hidden="true" />
+              
+              <div className="flex flex-col gap-3 mt-auto mb-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full min-h-[44px] border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5" 
+                  onClick={() => setIsOpen(false)}
+                >
                   Member Login
                 </Button>
-                <Button className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90" onClick={() => setIsOpen(false)}>
+                <Button 
+                  className="w-full min-h-[44px] bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90" 
+                  onClick={() => setIsOpen(false)}
+                >
                   Join Now
                 </Button>
               </div>
-            </nav>
+            </div>
           </div>
         </div>
       )}

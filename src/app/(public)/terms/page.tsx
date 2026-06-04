@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { TableOfContents } from "@/components/ui/table-of-contents";
 import { AlertTriangle, Construction } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Terms of Service (DRAFT) | CareHomesSupportDocs.org",
+import { buildMetadata } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Terms of Service (DRAFT)",
   description: "Terms of Service and usage agreement for the CareHomesSupportDocs platform.",
-};
+});
 
 const TOC_ITEMS = [
   { id: "acceptance", label: "1. Acceptance of Terms" },
@@ -26,8 +29,23 @@ const TOC_ITEMS = [
 ];
 
 export default function TermsPage() {
+  const lastUpdated = "August 15, 2026";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Terms of Service",
+    description: "Terms of Service and usage agreement for the CareHomesSupportDocs platform.",
+    publisher: {
+      "@type": "Organization",
+      name: "CareHomesSupportDocs.org",
+    },
+    dateModified: new Date(lastUpdated).toISOString(),
+  };
+
   return (
-    <div className="bg-[var(--color-bg)] min-h-screen pb-24 relative overflow-hidden">
+    <>
+      <JsonLd data={jsonLd} />
+      <div className="bg-[var(--color-bg)] min-h-screen pb-24 relative overflow-hidden">
       
       {/* Draft Watermark Background */}
       <div className="fixed inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] z-0 rotate-[-30deg]">
@@ -191,5 +209,6 @@ export default function TermsPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

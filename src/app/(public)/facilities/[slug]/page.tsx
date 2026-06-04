@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { buildMetadata } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
 import {
   MapPin,
   Users,
@@ -34,15 +36,15 @@ export async function generateMetadata({
   if (!facility) {
     return { title: "Facility Not Found | CareHomesSupportDocs.org" };
   }
-  return {
-    title: `${facility.name} — ${facility.city}, CA | CareHomesSupportDocs.org`,
+  return buildMetadata({
+    title: `${facility.name} — ${facility.city}, CA`,
     description: `View the official CCLD record and ${facility.rebuttalsCount} published rebuttal${facility.rebuttalsCount !== 1 ? "s" : ""} for ${facility.name} in ${facility.city}, ${facility.county} County, California.`,
     openGraph: {
       title: `${facility.name} | CareHomesSupportDocs.org`,
       description: `Licensed California care facility in ${facility.city}, ${facility.county} County. View rebuttals and official CCLD records.`,
       type: "website",
     },
-  };
+  });
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -58,8 +60,21 @@ export default async function FacilityDetailPage({
 
   const isActive = facility.status === "active";
 
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: facility.name,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: facility.city,
+      addressRegion: "CA",
+    },
+  };
+
   return (
-    <div className="bg-[var(--color-bg)] min-h-screen pb-24">
+    <>
+      <JsonLd data={localBusinessSchema} />
+      <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* ── Breadcrumb bar ─────────────────────────────────────────────── */}
       <div className="bg-[var(--color-surface)] border-b border-[var(--color-border)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
@@ -157,7 +172,7 @@ export default async function FacilityDetailPage({
         />
 
         {/* 2. Approved Rebuttals */}
-        <ApprovedRebuttalsSection facility={facility} />
+        <ApprovedRebuttalsSection rebuttals={[]} />
 
         {/* 3. Disclaimer callout */}
         <aside
@@ -190,5 +205,6 @@ export default async function FacilityDetailPage({
         </aside>
       </div>
     </div>
+    </>
   );
 }

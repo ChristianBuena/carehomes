@@ -145,9 +145,8 @@ export function ApprovedRebuttalsSection({
           Published Rebuttals (0)
         </h2>
         <EmptyState
-          icon={<FileText className="w-8 h-8" />}
-          heading="No rebuttals published yet"
-          description="There are currently no approved rebuttals for citations at this facility."
+          variant="no-rebuttals"
+          action={{ label: "Become a Member", href: "/pricing" }}
         />
         <MemberCTA />
       </section>

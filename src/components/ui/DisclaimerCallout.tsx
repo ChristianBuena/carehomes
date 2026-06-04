@@ -28,9 +28,9 @@ export function DisclaimerCallout({
       text: "text-[var(--color-text)]",
     },
     legal: {
-      container: "bg-[var(--color-primary)]/5 border-[var(--color-primary)]/10",
-      icon: <Scale className="h-5 w-5 text-[var(--color-primary)] mt-0.5" />,
-      title: "text-[var(--color-primary)]",
+      container: "bg-[var(--color-bg)] border-[var(--color-border)]",
+      icon: <Scale className="h-5 w-5 text-[var(--color-muted)] mt-0.5" />,
+      title: "text-[var(--color-text)]",
       text: "text-[var(--color-text)]",
     },
   };

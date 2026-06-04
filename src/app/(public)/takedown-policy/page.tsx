@@ -3,10 +3,13 @@ import { TableOfContents } from "@/components/ui/table-of-contents";
 import { Clock, Calendar, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = {
-  title: "Takedown Policy | CareHomesSupportDocs.org",
+import { buildMetadata } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Takedown Policy",
   description: "Learn how to submit a takedown request for content published on CareHomesSupportDocs.org that violates our privacy or redaction policies.",
-};
+});
 
 const TOC_ITEMS = [
   { id: "overview", label: "1. Overview" },
@@ -22,8 +25,22 @@ const TOC_ITEMS = [
 export default function TakedownPolicyPage() {
   const lastUpdated = "August 15, 2026"; // Hardcoded for now
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Takedown Policy",
+    description: "Learn how to submit a takedown request for content published on CareHomesSupportDocs.org.",
+    publisher: {
+      "@type": "Organization",
+      name: "CareHomesSupportDocs.org",
+    },
+    dateModified: new Date(lastUpdated).toISOString(),
+  };
+
   return (
-    <div className="bg-[var(--color-bg)] min-h-screen pb-24">
+    <>
+      <JsonLd data={jsonLd} />
+      <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* Page Header */}
       <header className="bg-[var(--color-primary)] text-white py-16 md:py-20 border-b border-[var(--color-border)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -173,5 +190,6 @@ export default function TakedownPolicyPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

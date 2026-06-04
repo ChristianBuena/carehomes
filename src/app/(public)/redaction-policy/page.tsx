@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { TableOfContents } from "@/components/ui/table-of-contents";
 import { AlertTriangle, Calendar } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Redaction Policy | CareHomesSupportDocs.org",
+import { buildMetadata } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Redaction Policy",
   description: "Strict privacy and redaction guidelines for all rebuttals published on CareHomesSupportDocs.org to protect resident identity and sensitive health data.",
-};
+});
 
 const TOC_ITEMS = [
   { id: "what-is-redaction", label: "1. What Is Redaction?" },
@@ -35,10 +38,8 @@ export default function RedactionPolicyPage() {
   return (
     <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* JSON-LD structured data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {/* JSON-LD structured data */}
+      <JsonLd data={jsonLd} />
 
       {/* Page Header */}
       <header className="bg-[var(--color-primary)] text-white py-16 md:py-20 border-b border-[var(--color-border)]">

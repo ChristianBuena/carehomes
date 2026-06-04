@@ -7,10 +7,12 @@ import { FacilityFiltersDrawer } from "@/components/facilities/FacilityFiltersDr
 import { FacilityGrid } from "@/components/facilities/FacilityGrid";
 import { AlertCircle } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Facility Directory | CareHomesSupportDocs.org",
+import { buildMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Facility Directory",
   description: "Browse licensed California care facilities. All listings include deep links to official CCLD records and any published member rebuttals.",
-};
+});
 
 export default function FacilitiesPage() {
   // In production this would be an async fetch; for now, use mock data

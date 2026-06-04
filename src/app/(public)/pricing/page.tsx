@@ -3,10 +3,12 @@ import { PricingCard } from "@/components/ui/PricingCard";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { AlertCircle, ShieldAlert } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Pricing | CareHomesSupportDocs.org",
+import { buildMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Pricing",
   description: "Transparent, annual membership pricing for CareHomesSupportDocs.org. Choose the tier that fits your facility operations.",
-};
+});
 
 const FULL_TIERS = [
   {

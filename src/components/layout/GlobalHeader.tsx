@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Shield } from "lucide-react";
-import { siteConfig } from "@/lib/site-config";
+import { NavBar } from "./NavBar";
 import { MobileMenu } from "./MobileMenu";
 import { Button } from "@/components/ui/button";
 
@@ -34,21 +34,11 @@ export function GlobalHeader() {
         </div>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
-          {siteConfig.mainNav.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="text-sm font-medium text-white/90 hover:text-white transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <NavBar />
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-4">
-          <Button variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white">
+        <div className="hidden lg:flex items-center gap-4">
+          <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
             Member Login
           </Button>
           <Button className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90 font-semibold border-none">
@@ -57,7 +47,7 @@ export function GlobalHeader() {
         </div>
 
         {/* Mobile Menu */}
-        <div className="md:hidden flex items-center">
+        <div className="lg:hidden flex items-center">
           <MobileMenu />
         </div>
       </div>

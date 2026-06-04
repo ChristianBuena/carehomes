@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { AlertCircle, ArrowRight, UserPlus, FileUp, CheckCircle, Globe } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "How It Works | CareHomesSupportDocs.org",
+import { buildMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = buildMetadata({
+  title: "How It Works",
   description: "Learn how the CareHomesSupportDocs platform works, from joining as a member to publishing your regulatory rebuttals securely and compliantly.",
-};
+});
 
 const STEPS = [
   {

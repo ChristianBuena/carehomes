@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { TableOfContents } from "@/components/ui/table-of-contents";
 import { AlertTriangle, Construction } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy (DRAFT) | CareHomesSupportDocs.org",
+import { buildMetadata } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Privacy Policy (DRAFT)",
   description: "Learn how CareHomesSupportDocs.org collects, uses, and protects your information.",
-};
+});
 
 const TOC_ITEMS = [
   { id: "introduction", label: "1. Introduction & Scope" },
@@ -23,8 +26,23 @@ const TOC_ITEMS = [
 ];
 
 export default function PrivacyPolicyPage() {
+  const lastUpdated = "August 15, 2026";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Privacy Policy",
+    description: "Learn how CareHomesSupportDocs.org collects, uses, and protects your information.",
+    publisher: {
+      "@type": "Organization",
+      name: "CareHomesSupportDocs.org",
+    },
+    dateModified: new Date(lastUpdated).toISOString(),
+  };
+
   return (
-    <div className="bg-[var(--color-bg)] min-h-screen pb-24 relative overflow-hidden">
+    <>
+      <JsonLd data={jsonLd} />
+      <div className="bg-[var(--color-bg)] min-h-screen pb-24 relative overflow-hidden">
       
       {/* Draft Watermark Background */}
       <div className="fixed inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] z-0 rotate-[-30deg]">
@@ -173,5 +191,6 @@ export default function PrivacyPolicyPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

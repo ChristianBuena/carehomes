@@ -37,3 +37,32 @@
     color: var(--foreground);
   }
 }
+
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(
+      90deg,
+      var(--color-border) 25%,
+      rgba(255, 255, 255, 0.4) 50%,
+      var(--color-border) 75%
+    );
+    background-size: 400% 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer {
+      animation: none;
+      background: var(--color-border);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { AlertOctagon, Scale, Shield, ExternalLink, Users, BookOpen, AlertTriangle, Building } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Legal Disclaimer | CareHomesSupportDocs.org",
+import { buildMetadata } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Legal Disclaimer",
   description: "Important legal disclaimers regarding the use of CareHomesSupportDocs.org, including our status as an independent nonprofit and our policies on legal advice and content accuracy.",
-};
+});
 
 const DISCLAIMERS = [
   {
@@ -60,8 +63,22 @@ const DISCLAIMERS = [
 export default function DisclaimerPage() {
   const lastUpdated = "August 15, 2026"; // Hardcoded for now
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Legal Disclaimer",
+    description: "Important legal disclaimers regarding the use of CareHomesSupportDocs.org.",
+    publisher: {
+      "@type": "Organization",
+      name: "CareHomesSupportDocs.org",
+    },
+    dateModified: new Date(lastUpdated).toISOString(),
+  };
+
   return (
-    <div className="bg-[var(--color-bg)] min-h-screen pb-24">
+    <>
+      <JsonLd data={jsonLd} />
+      <div className="bg-[var(--color-bg)] min-h-screen pb-24">
       {/* Page Header */}
       <header className="bg-[var(--color-primary)] text-white py-16 md:py-20 border-b border-[var(--color-border)]">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
@@ -115,5 +132,6 @@ export default function DisclaimerPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

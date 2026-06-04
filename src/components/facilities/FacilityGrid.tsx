@@ -5,7 +5,9 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { Facility } from "@/lib/mock-data/facilities";
 import { FacilityCard } from "@/components/facilities/FacilityCard";
 import { readFiltersFromParams } from "@/components/facilities/FacilityFilters";
-import { ChevronLeft, ChevronRight, SearchX } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { NoResultsEmptyState } from "@/components/ui/NoResultsEmptyState";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const PAGE_SIZE = 9;
 
@@ -71,14 +73,24 @@ export function FacilityGrid({ facilities }: FacilityGridProps) {
             <FacilityCard key={facility.id} facility={facility} />
           ))}
         </div>
+      ) : q ? (
+        <NoResultsEmptyState
+          query={q}
+          onClear={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete("q");
+            params.delete("page");
+            router.replace(`${pathname}?${params.toString()}`);
+          }}
+        />
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-          <SearchX className="h-12 w-12 text-[var(--color-border)]" aria-hidden="true" />
-          <h3 className="text-xl font-semibold text-[var(--color-text)]">No facilities found</h3>
-          <p className="text-[var(--color-muted)] max-w-xs">
-            Try adjusting your search or filters to find what you&apos;re looking for.
-          </p>
-        </div>
+        <EmptyState
+          variant="no-results"
+          action={{
+            label: "Clear all filters",
+            onClick: () => router.replace(pathname),
+          }}
+        />
       )}
 
       {/* Pagination */}

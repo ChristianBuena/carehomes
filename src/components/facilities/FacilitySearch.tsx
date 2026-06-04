@@ -13,6 +13,13 @@ export function FacilitySearch() {
   const debouncedValue = useDebounce(value, 300);
 
   useEffect(() => {
+    if (!pathname.startsWith("/facilities")) {
+      if (debouncedValue) {
+        router.push(`/facilities?q=${encodeURIComponent(debouncedValue)}`);
+      }
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     if (debouncedValue) {
       params.set("q", debouncedValue);

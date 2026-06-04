@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AlertOctagon, Scale, Shield, ExternalLink, Users, BookOpen, AlertTriangle, Building } from "lucide-react";
+import { AlertOctagon, Scale, Shield, ExternalLink, Users, BookOpen, AlertTriangle, Building, Info } from "lucide-react";
 
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -90,14 +90,14 @@ export default function DisclaimerPage() {
       </header>
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 mt-12 mb-16">
-        {/* Prominent Red/Amber Callout Box */}
-        <div className="bg-[var(--color-danger)] text-[var(--color-surface)] p-6 md:p-8 rounded-xl shadow-md mb-12 flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
-          <AlertOctagon className="h-12 w-12 shrink-0 text-[var(--color-surface)]/90" strokeWidth={2} />
+        {/* Prominent Callout Box */}
+        <div className="bg-[var(--color-primary)]/5 border border-[var(--color-border)] text-[var(--color-primary)] p-6 md:p-8 rounded-xl shadow-sm mb-12 flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
+          <Info className="h-12 w-12 shrink-0 text-[var(--color-primary)]" strokeWidth={2} />
           <div>
             <h2 className="text-2xl font-black tracking-wide uppercase mb-2">
               Read This Disclaimer Before Using This Site
             </h2>
-            <p className="text-[var(--color-surface)]/90 text-sm md:text-base leading-relaxed font-medium">
+            <p className="text-[var(--color-text)] text-sm md:text-base leading-relaxed font-medium">
               By accessing, browsing, or utilizing CareHomesSupportDocs.org, you acknowledge that you have read, understood, and agree to be bound by the terms outlined in this disclaimer. If you do not agree, you must exit this site immediately.
             </p>
           </div>

@@ -31,7 +31,7 @@ export function PricingCard({
     >
       {highlighted && (
         <div className="absolute top-0 right-6 transform -translate-y-1/2">
-          <span className="bg-[var(--color-accent)] text-white text-xs font-bold px-3 py-1 uppercase tracking-wide rounded-full shadow-sm">
+          <span className="bg-[var(--color-accent)] text-white text-sm font-bold px-3 py-1 uppercase tracking-wide rounded-full shadow-sm">
             Most Popular
           </span>
         </div>
@@ -41,23 +41,23 @@ export function PricingCard({
         <h3 className={`text-xl font-bold mb-2 ${highlighted ? "text-white" : "text-[var(--color-primary)]"}`}>
           {tier}
         </h3>
-        <p className={`text-sm mb-6 ${highlighted ? "text-white/80" : "text-[var(--color-muted)]"}`}>
+        <p className={`text-base mb-6 ${highlighted ? "text-white/80" : "text-[var(--color-muted)]"}`}>
           {facilities}
         </p>
         <div className="flex items-baseline gap-2">
           <span className="text-4xl font-extrabold tracking-tight">${price}</span>
-          <span className={`text-sm font-medium ${highlighted ? "text-white/80" : "text-[var(--color-muted)]"}`}>
+          <span className={`text-base font-medium ${highlighted ? "text-white/80" : "text-[var(--color-muted)]"}`}>
             /year
           </span>
         </div>
-        <p className={`text-xs mt-2 ${highlighted ? "text-white/60" : "text-[var(--color-muted)]"}`}>
+        <p className={`text-sm mt-2 ${highlighted ? "text-white/60" : "text-[var(--color-muted)]"}`}>
           Billed annually
         </p>
       </div>
 
       <ul className="flex-1 space-y-4 mb-8">
         {features.map((feature, idx) => (
-          <li key={idx} className="flex items-start gap-3 text-sm">
+          <li key={idx} className="flex items-start gap-3 text-base">
             <Check
               className={`h-5 w-5 shrink-0 ${highlighted ? "text-[var(--color-accent)]" : "text-[var(--color-secondary)]"}`}
             />

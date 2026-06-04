@@ -102,7 +102,7 @@ export function FacilityGrid({ facilities }: FacilityGridProps) {
           <button
             onClick={() => goToPage(page - 1)}
             disabled={page <= 1}
-            className="h-9 w-9 flex items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-bg)] disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-bg)] disabled:opacity-40 disabled:cursor-not-allowed transition"
             aria-label="Previous page"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -113,7 +113,7 @@ export function FacilityGrid({ facilities }: FacilityGridProps) {
               key={p}
               onClick={() => goToPage(p)}
               aria-current={p === page ? "page" : undefined}
-              className={`h-9 w-9 flex items-center justify-center rounded-lg text-sm font-medium transition ${
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-sm font-medium transition ${
                 p === page
                   ? "bg-[var(--color-primary)] text-[var(--color-surface)] shadow-sm"
                   : "border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-bg)]"
@@ -126,7 +126,7 @@ export function FacilityGrid({ facilities }: FacilityGridProps) {
           <button
             onClick={() => goToPage(page + 1)}
             disabled={page >= totalPages}
-            className="h-9 w-9 flex items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-bg)] disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-bg)] disabled:opacity-40 disabled:cursor-not-allowed transition"
             aria-label="Next page"
           >
             <ChevronRight className="h-4 w-4" aria-hidden="true" />

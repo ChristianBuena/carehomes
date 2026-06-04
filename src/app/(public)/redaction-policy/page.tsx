@@ -75,7 +75,7 @@ export default function RedactionPolicyPage() {
 
           {/* Main Content */}
           <main className="flex-1 max-w-prose">
-            <div className="prose prose-slate prose-headings:text-[var(--color-primary)] prose-a:text-[var(--color-secondary)] prose-a:font-semibold hover:prose-a:text-[var(--color-primary)] prose-p:leading-relaxed prose-li:leading-relaxed break-words">
+            <div className="prose text-lg prose-slate prose-headings:text-[var(--color-primary)] prose-a:text-[var(--color-secondary)] prose-a:font-semibold hover:prose-a:text-[var(--color-primary)] prose-p:leading-relaxed prose-li:leading-relaxed break-words">
               
               <section id="what-is-redaction" className="scroll-mt-28 mb-12">
                 <h2 className="text-3xl font-bold mb-4">1. What Is Redaction?</h2>

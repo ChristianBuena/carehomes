@@ -10,8 +10,10 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Info,
   ArrowRight,
 } from "lucide-react";
+import { BackButton } from "@/components/ui/BackButton";
 import { MOCK_FACILITIES } from "@/lib/mock-data/facilities";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { OfficialRecordSection } from "@/components/facilities/OfficialRecordSection";
@@ -85,6 +87,9 @@ export default async function FacilityDetailPage({
               { label: facility.name },
             ]}
           />
+          <div className="mt-2">
+            <BackButton />
+          </div>
         </ResponsiveContainer>
       </div>
 
@@ -97,12 +102,12 @@ export default async function FacilityDetailPage({
               {/* Status badge */}
               <div className="mb-4">
                 {isActive ? (
-                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/20 px-3 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/20 px-3 py-1 rounded-full text-sm font-semibold">
                     <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                     Active Facility
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 border border-[var(--color-surface)]/10 px-3 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 border border-[var(--color-surface)]/10 px-3 py-1 rounded-full text-sm font-semibold">
                     <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
                     Inactive
                   </span>
@@ -119,6 +124,7 @@ export default async function FacilityDetailPage({
                 role="list"
                 aria-label="Facility details"
               >
+                {/* // TODO: [nice-to-have] Increase padding and text size for metadata pills */}
                 <div
                   role="listitem"
                   className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm"
@@ -146,18 +152,25 @@ export default async function FacilityDetailPage({
             </div>
 
             {/* Right: CTA */}
-            <div className="shrink-0">
+            <div className="shrink-0 flex flex-col sm:flex-row gap-3">
               <Button
                 asChild
                 className="h-12 px-6 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] font-semibold shadow-md group"
               >
                 <Link href="/login">
-                  Member? Submit a Rebuttal
+                  Submit Rebuttal (Members)
                   <ArrowRight
                     className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform"
                     aria-hidden="true"
                   />
                 </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="h-12 px-6 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white font-semibold"
+              >
+                <Link href="/pricing">Join to Claim Facility</Link>
               </Button>
             </div>
           </div>
@@ -166,22 +179,13 @@ export default async function FacilityDetailPage({
 
       {/* ── Main content ───────────────────────────────────────────────── */}
       <ResponsiveContainer className="mt-10 space-y-12">
-        {/* 1. Official Record */}
-        <OfficialRecordSection
-          ccldLink={facility.ccldLink ?? null}
-          facilityName={facility.name}
-        />
-
-        {/* 2. Approved Rebuttals */}
-        <ApprovedRebuttalsSection rebuttals={[]} />
-
         {/* 3. Disclaimer callout */}
         <aside
-          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 flex gap-4 items-start shadow-sm"
+          className="bg-[var(--color-primary)]/5 border border-[var(--color-border)] rounded-2xl p-6 flex gap-4 items-start shadow-sm mb-12"
           aria-label="Legal disclaimer"
         >
-          <AlertCircle
-            className="h-5 w-5 text-[var(--color-warning)] shrink-0 mt-0.5"
+          <Info
+            className="h-5 w-5 text-[var(--color-primary)] shrink-0 mt-0.5"
             aria-hidden="true"
           />
           <div className="space-y-1.5 text-sm text-[var(--color-text)]">
@@ -204,6 +208,15 @@ export default async function FacilityDetailPage({
             </p>
           </div>
         </aside>
+
+        {/* 1. Official Record */}
+        <OfficialRecordSection
+          ccldLink={facility.ccldLink ?? null}
+          facilityName={facility.name}
+        />
+
+        {/* 2. Approved Rebuttals */}
+        <ApprovedRebuttalsSection rebuttals={[]} />
       </ResponsiveContainer>
     </div>
     </>

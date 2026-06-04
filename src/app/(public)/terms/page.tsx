@@ -92,7 +92,7 @@ export default function TermsPage() {
 
           {/* Main Content */}
           <main className="flex-1 max-w-prose bg-[var(--color-surface)] p-8 md:p-10 rounded-2xl border border-[var(--color-border)] shadow-sm">
-            <div className="prose prose-slate prose-headings:text-[var(--color-primary)] prose-a:text-[var(--color-secondary)] prose-a:font-semibold hover:prose-a:text-[var(--color-primary)] prose-p:leading-relaxed prose-li:leading-relaxed break-words">
+            <div className="prose text-lg prose-slate prose-headings:text-[var(--color-primary)] prose-a:text-[var(--color-secondary)] prose-a:font-semibold hover:prose-a:text-[var(--color-primary)] prose-p:leading-relaxed prose-li:leading-relaxed break-words">
               
               <section id="acceptance" className="scroll-mt-28 mb-12">
                 <h2 className="text-2xl font-bold mb-4">1. Acceptance of Terms</h2>

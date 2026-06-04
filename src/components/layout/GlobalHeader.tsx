@@ -29,6 +29,9 @@ export function GlobalHeader() {
               CHSD
             </span>
           </Link>
+          <span className="ml-4 text-xs font-semibold bg-[var(--color-blue-100)]/20 text-[var(--color-blue-50)] px-2.5 py-1 rounded-full hidden md:inline-flex items-center shadow-sm border border-[var(--color-blue-100)]/10">
+            Nonprofit Platform
+          </span>
         </div>
 
         {/* Desktop nav */}
@@ -39,7 +42,7 @@ export function GlobalHeader() {
           <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
             Member Login
           </Button>
-          <Button className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] font-semibold border-none">
+          <Button className="bg-[var(--color-secondary)] text-white hover:bg-[var(--color-secondary-hover)] font-semibold border-none">
             Join Now
           </Button>
         </div>

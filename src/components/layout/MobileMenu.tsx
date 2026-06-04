@@ -110,7 +110,7 @@ export function MobileMenu() {
                   Member Login
                 </Button>
                 <Button 
-                  className="w-full min-h-[44px] bg-[var(--color-accent)] text-[var(--color-surface)] hover:bg-[var(--color-accent-hover)]" 
+                  className="w-full min-h-[44px] bg-[var(--color-secondary)] text-[var(--color-surface)] hover:bg-[var(--color-secondary-hover)]" 
                   onClick={() => setIsOpen(false)}
                 >
                   Join Now

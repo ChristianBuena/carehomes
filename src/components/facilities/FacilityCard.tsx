@@ -15,7 +15,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
           {facility.name}
         </h3>
         <span
-          className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${
+          className={`shrink-0 text-sm font-semibold px-2.5 py-1 rounded-full ${
             facility.status === "active"
               ? "bg-[var(--color-success)]/10 text-[var(--color-success)]"
               : "bg-[var(--color-muted)]/10 text-[var(--color-muted)]"
@@ -26,7 +26,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
       </div>
 
       {/* Meta info */}
-      <div className="flex flex-col gap-2 text-sm text-[var(--color-muted)]">
+      <div className="flex flex-col gap-2 text-base text-[var(--color-muted)]">
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 shrink-0 text-[var(--color-primary)]/50" aria-hidden="true" />
           <span>
@@ -52,7 +52,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
       </div>
 
       {/* Facility Number */}
-      <p className="text-xs text-[var(--color-muted)]/70 font-mono">
+      <p className="text-sm text-[var(--color-muted)]/70 font-mono">
         License #{facility.facilityNumber}
       </p>
 
@@ -60,7 +60,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
       <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)] mt-auto">
         <Link
           href={`/facilities/${facility.slug}`}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition-colors group/link"
+          className="inline-flex items-center gap-1.5 text-base font-semibold text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition-colors group/link"
         >
           View Facility
           <ArrowRight className="h-4 w-4 group-hover/link:translate-x-0.5 transition-transform" aria-hidden="true" />
@@ -70,7 +70,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
           href={facility.ccldLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-secondary)] transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-[var(--color-muted)] hover:text-[var(--color-secondary)] transition-colors"
           aria-label={`View ${facility.name} on CCLD (opens in new tab)`}
         >
           <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />

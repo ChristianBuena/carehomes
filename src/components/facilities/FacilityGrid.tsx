@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { Facility } from "@/lib/mock-data/facilities";
 import { FacilityCard } from "@/components/facilities/FacilityCard";
+import { readFiltersFromParams } from "@/components/facilities/FacilityFilters";
 import { ChevronLeft, ChevronRight, SearchX } from "lucide-react";
 
 const PAGE_SIZE = 9;
@@ -18,24 +19,27 @@ export function FacilityGrid({ facilities }: FacilityGridProps) {
   const pathname = usePathname();
 
   const q = searchParams.get("q")?.toLowerCase() ?? "";
-  const county = searchParams.get("county") ?? "";
-  const status = searchParams.get("status") ?? "";
-  const capacity = searchParams.get("capacity") ?? "";
-  const rebuttals = searchParams.get("rebuttals") === "1";
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
+  const filters = readFiltersFromParams(searchParams);
 
   const filtered = useMemo(() => {
     return facilities.filter((f) => {
+      // Text search: name, city, county
       if (q && !f.name.toLowerCase().includes(q) && !f.city.toLowerCase().includes(q) && !f.county.toLowerCase().includes(q)) return false;
-      if (county && f.county !== county) return false;
-      if (status && f.status !== status) return false;
-      if (capacity === "small" && f.capacity > 6) return false;
-      if (capacity === "medium" && (f.capacity < 7 || f.capacity > 30)) return false;
-      if (capacity === "large" && f.capacity < 31) return false;
-      if (rebuttals && f.rebuttalsCount === 0) return false;
+      // County — multi-select (any match)
+      if (filters.counties.length > 0 && !filters.counties.includes(f.county)) return false;
+      // Status
+      if (filters.status !== "all" && f.status !== filters.status) return false;
+      // Capacity
+      if (filters.capacity === "lt10" && f.capacity >= 10) return false;
+      if (filters.capacity === "10-25" && (f.capacity < 10 || f.capacity > 25)) return false;
+      if (filters.capacity === "26-50" && (f.capacity < 26 || f.capacity > 50)) return false;
+      if (filters.capacity === "50plus" && f.capacity <= 50) return false;
+      // Has rebuttals
+      if (filters.hasRebuttals && f.rebuttalsCount === 0) return false;
       return true;
     });
-  }, [facilities, q, county, status, capacity, rebuttals]);
+  }, [facilities, q, filters]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

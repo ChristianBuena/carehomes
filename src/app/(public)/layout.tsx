@@ -2,8 +2,8 @@ import { ReactNode } from "react";
 import { Inter, Outfit } from "next/font/google";
 
 // These components are assumed to be defined in the components directory
-import { GlobalHeader } from "@/components/navbar/GlobalHeader";
-import { GlobalFooter } from "@/components/navbar/GlobalFooter";
+import { GlobalHeader } from "@/components/layout/GlobalHeader";
+import { GlobalFooter } from "@/components/layout/GlobalFooter";
 
 const outfit = Outfit({
   subsets: ["latin"],

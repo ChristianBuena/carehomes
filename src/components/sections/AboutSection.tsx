@@ -24,34 +24,40 @@ export function AboutSection() {
             </p>
             <h2
               id="about-heading"
-              className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--color-primary)] tracking-tight mb-6"
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--color-primary)] tracking-tight mb-6 t"
             >
-              CareHomesSupportDocs.org
+              CareHomes
             </h2>
 
             <div className="space-y-5 text-[var(--color-text)] leading-relaxed text-base">
               <p>
-                CareHomesSupportDocs.org is an independent nonprofit platform built to give
-                licensed California care facility operators a transparent, compliant way to
-                publish rebuttals to regulatory citations issued by the Community Care Licensing
-                Division (CCLD). We believe facility operators deserve a structured, moderated
-                channel to provide context alongside the public citation record.
+                CareHomesSupportDocs.org is an independent nonprofit platform
+                built to give licensed California care facility operators a
+                transparent, compliant way to publish rebuttals to regulatory
+                citations issued by the Community Care Licensing Division
+                (CCLD). We believe facility operators deserve a structured,
+                moderated channel to provide context alongside the public
+                citation record.
               </p>
               <p>
-                Every rebuttal published on our platform passes through a rigorous moderation
-                process to ensure no resident-identifying information is ever disclosed, language
-                remains professional, and content stays factually grounded. We are not affiliated
-                with any government agency — we are an independent voice for California care
-                facility operators.
+                Every rebuttal published on our platform passes through a
+                rigorous moderation process to ensure no resident-identifying
+                information is ever disclosed, language remains professional,
+                and content stays factually grounded. We are not affiliated with
+                any government agency — we are an independent voice for
+                California care facility operators.
               </p>
             </div>
 
             {/* Mission callout */}
             <blockquote className="mt-8 border-l-4 border-[var(--color-secondary)] pl-5 py-1">
               <p className="text-lg font-semibold text-[var(--color-primary)] italic leading-snug">
-                "Giving care facilities a fair, transparent voice in the public regulatory record."
+                "Giving care facilities a fair, transparent voice in the public
+                regulatory record."
               </p>
-              <footer className="mt-2 text-sm text-[var(--color-muted)]">— Our Mission</footer>
+              <footer className="mt-2 text-sm text-[var(--color-muted)]">
+                — Our Mission
+              </footer>
             </blockquote>
           </div>
 
@@ -60,7 +66,10 @@ export function AboutSection() {
             {/* Nonprofit badge */}
             <div className="flex items-start gap-4 bg-[var(--color-secondary)]/8 border border-[var(--color-secondary)]/20 rounded-2xl p-6">
               <div className="shrink-0 h-12 w-12 rounded-xl bg-[var(--color-secondary)] flex items-center justify-center shadow-sm">
-                <Shield className="h-6 w-6 text-[var(--color-surface)]" aria-hidden="true" />
+                <Shield
+                  className="h-6 w-6 text-[var(--color-surface)]"
+                  aria-hidden="true"
+                />
               </div>
               <div>
                 <p className="font-bold text-[var(--color-primary)] text-base mb-1">
@@ -68,8 +77,8 @@ export function AboutSection() {
                 </p>
                 <p className="text-sm text-[var(--color-text)] leading-relaxed">
                   We are not a government agency. We receive no referral fees or
-                  endorsements from any listed facility or provider. Membership fees
-                  fund platform operations only.
+                  endorsements from any listed facility or provider. Membership
+                  fees fund platform operations only.
                 </p>
               </div>
             </div>

@@ -5,25 +5,29 @@ export default function HowItWorksSection() {
     {
       id: 1,
       title: "Join as a Member",
-      description: "Sign up and verify your credentials as a licensed care facility operator.",
+      description:
+        "Sign up and verify your credentials as a licensed care facility operator.",
       icon: UserPlus,
     },
     {
       id: 2,
       title: "Submit Your Rebuttal",
-      description: "Use our secure form to draft your response to specific CCLD citations.",
+      description:
+        "Use our secure form to draft your response to specific CCLD citations.",
       icon: FileUp,
     },
     {
       id: 3,
       title: "Moderation Review",
-      description: "Our team reviews your submission for compliance and privacy standards.",
+      description:
+        "Our team reviews your submission for compliance and privacy standards.",
       icon: CheckCircle,
     },
     {
       id: 4,
       title: "Published to Facility Page",
-      description: "Your approved rebuttal is published directly on your facility's public profile.",
+      description:
+        "Your approved rebuttal is published directly on your facility's public profile.",
       icon: Globe,
     },
   ];
@@ -42,30 +46,39 @@ export default function HowItWorksSection() {
 
         <div className="relative">
           {/* Horizontal line for desktop connecting steps */}
-          <div className="hidden md:block absolute top-8 left-[10%] right-[10%] h-[2px] bg-[var(--color-border)] z-0" aria-hidden="true" />
-          
+          <div
+            className="hidden md:block absolute top-8 left-[10%] right-[10%] h-[2px] bg-[var(--color-border)] z-0"
+            aria-hidden="true"
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {steps.map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.id} className="relative z-10 flex flex-col items-center text-center group">
+                <div
+                  key={step.id}
+                  className="relative z-10 flex flex-col items-center text-center group"
+                >
                   {/* Vertical line for mobile connecting steps (except last) */}
                   {step.id !== 4 && (
-                    <div className="md:hidden absolute top-[4rem] left-1/2 w-[2px] h-full bg-[var(--color-border)] -translate-x-1/2 -z-10" aria-hidden="true" />
+                    <div
+                      className="md:hidden absolute top-[4rem] left-1/2 w-[2px] h-full bg-[var(--color-border)] -translate-x-1/2 -z-10"
+                      aria-hidden="true"
+                    />
                   )}
-                  
+
                   <div className="w-16 h-16 rounded-full bg-[var(--color-bg)] border-2 border-[var(--color-primary)] flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 group-hover:bg-[var(--color-primary)] transition-all duration-300">
                     <Icon className="h-6 w-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
                   </div>
-                  
-                  <div className="bg-[var(--color-accent)] text-[var(--color-text)] text-xs font-bold px-2.5 py-0.5 rounded-full mb-3 shadow-sm">
+
+                  <div className="bg-[var(--color-accent)] text-[var(--color-blue-50)] text-xs font-bold px-2.5 py-0.5 rounded-full mb-3 shadow-sm">
                     Step {step.id}
                   </div>
-                  
+
                   <h3 className="text-lg font-bold text-[var(--color-text)] mb-2">
                     {step.title}
                   </h3>
-                  
+
                   <p className="text-sm text-[var(--color-muted)] max-w-[250px]">
                     {step.description}
                   </p>

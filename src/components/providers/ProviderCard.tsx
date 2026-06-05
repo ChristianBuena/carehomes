@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { Mail, Globe, MapPin, Scale, Briefcase, ExternalLink } from "lucide-react";
+import {
+  Mail,
+  Globe,
+  MapPin,
+  Scale,
+  Briefcase,
+  ExternalLink,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Provider } from "@/lib/mock-data/providers";
@@ -35,8 +42,8 @@ export function ProviderCard({ provider }: { provider: Provider }) {
             className={cn(
               "shrink-0",
               isAttorney
-                ? "bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90"
-                : "bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-[var(--color-surface)]"
+                ? "bg-[var(--color-primary)] text-[var(--color-blue-50)] hover:bg-[var(--color-primary)]/90"
+                : "bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-[var(--color-surface)]",
             )}
           >
             {isAttorney ? (
@@ -59,7 +66,10 @@ export function ProviderCard({ provider }: { provider: Provider }) {
 
       <div className="md:w-56 flex flex-col justify-center shrink-0 border-t md:border-t-0 md:border-l border-[var(--color-border)] pt-4 md:pt-0 md:pl-6">
         {contactHref && (
-          <Button asChild className="w-full">
+          <Button
+            asChild
+            className="w-full  hover:text-[var(--color-blue-600)]"
+          >
             <a
               href={contactHref}
               target={isExternal ? "_blank" : undefined}

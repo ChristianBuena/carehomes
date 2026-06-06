@@ -5,7 +5,7 @@ export default function DirectoryPage() {
         Welcome to CareHomeSupport
       </h1>
 
-      <p className="mt-2 text-gray-600">
+      <p className="mt-2 text-[var(--color-muted)]">
         Find trusted care homes and services.
       </p>
     </div>

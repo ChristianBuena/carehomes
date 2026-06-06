@@ -30,9 +30,9 @@ export default function LoginPage() {
             Sign In
           </Button>
 
-          <p className="text-sm text-center text-gray-500">
+          <p className="text-sm text-center text-[var(--color-muted)]">
             No account?{" "}
-            <Link href="/signup" className="underline">
+            <Link href="/signup" className="underline text-[var(--color-secondary)]">
               Sign up
             </Link>
           </p>

@@ -9,7 +9,7 @@ export async function getUserFromRequest(): Promise<AuthTokenPayload | null> {
 
     if (!token) return null;
 
-    const decoded = verifyToken(token);
+    const decoded = await verifyToken(token);
 
     return decoded as AuthTokenPayload;
   } catch (err) {

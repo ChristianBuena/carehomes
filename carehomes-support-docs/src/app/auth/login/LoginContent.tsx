@@ -12,7 +12,7 @@ export default function LoginContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // 🔐 MFA STATES
+  // MFA STATES
   const [mfaRequired, setMfaRequired] = useState(false);
   const [otp, setOtp] = useState('');
   const [emailForOtp, setEmailForOtp] = useState('');
@@ -34,7 +34,7 @@ export default function LoginContent() {
     });
   };
 
-  // ✅ LOGIN (STEP 1)
+  // 🔐 LOGIN STEP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -55,14 +55,13 @@ export default function LoginContent() {
         return;
       }
 
-      // 🔐 MFA FLOW
+      // 🔐 MFA REQUIRED
       if (data.mfaRequired) {
         setMfaRequired(true);
         setEmailForOtp(data.email);
         return;
       }
 
-      // fallback (if MFA disabled)
       router.push('/dashboard');
 
     } catch {
@@ -72,7 +71,7 @@ export default function LoginContent() {
     }
   };
 
-  // ✅ OTP VERIFY (STEP 2)
+  // 🔐 OTP VERIFY STEP
   const handleVerifyOtp = async () => {
     setError('');
     setLoading(true);
@@ -83,7 +82,7 @@ export default function LoginContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: emailForOtp,
-          code: otp,
+          otp: otp, // ✅ FIXED (important)
         }),
       });
 
@@ -94,7 +93,16 @@ export default function LoginContent() {
         return;
       }
 
-      // 🎉 SUCCESS → LOGIN COMPLETE
+      // 🔐 STORE JWT TOKEN
+      localStorage.setItem('token', data.token);
+
+      // OPTIONAL: preload user session check
+      await fetch('/api/auth/me', {
+        headers: {
+          Authorization: `Bearer ${data.token}`,
+        },
+      });
+
       router.push('/dashboard');
 
     } catch {
@@ -102,10 +110,6 @@ export default function LoginContent() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOtp(e.target.value);
   };
 
   return (
@@ -119,7 +123,7 @@ export default function LoginContent() {
         {error && <div className="text-red-600 mb-4">{error}</div>}
         {success && <div className="text-green-600 mb-4">{success}</div>}
 
-        {/* 🔐 STEP 1: LOGIN FORM */}
+        {/* LOGIN FORM */}
         {!mfaRequired ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
@@ -128,6 +132,7 @@ export default function LoginContent() {
               placeholder="Email"
               onChange={handleChange}
               className="w-full border p-2"
+              required
             />
 
             <input
@@ -136,6 +141,7 @@ export default function LoginContent() {
               placeholder="Password"
               onChange={handleChange}
               className="w-full border p-2"
+              required
             />
 
             <button className="w-full bg-blue-600 text-white py-2">
@@ -143,7 +149,7 @@ export default function LoginContent() {
             </button>
           </form>
         ) : (
-          /* 🔐 STEP 2: OTP FORM */
+          // OTP FORM
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-center">
               Verify OTP
@@ -153,8 +159,9 @@ export default function LoginContent() {
               type="text"
               placeholder="Enter OTP"
               value={otp}
-              onChange={handleOtpChange}
+              onChange={(e) => setOtp(e.target.value)}
               className="w-full border p-2"
+              required
             />
 
             <button

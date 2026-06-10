@@ -6,6 +6,10 @@ datasource db {
   provider = "postgresql"
 }
 
+//
+// ENUMS
+//
+
 enum Role {
   MEMBER
   MODERATOR
@@ -19,6 +23,24 @@ enum RebuttalStatus {
   REQUEST_FIX
 }
 
+enum MembershipPlan {
+  NONE
+  TIER_A
+  TIER_B
+  TIER_C
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+//
+// USER
+//
+
 model User {
   id       String @id @default(cuid())
   name     String
@@ -29,9 +51,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // RELATIONS
   membership Membership?
 
-  // Relations
   rebuttals          Rebuttal[]
   moderatedRebuttals Rebuttal[] @relation("ModeratedRebuttals")
 
@@ -40,13 +62,22 @@ model User {
   @@index([email])
 }
 
+//
+// MEMBERSHIP (STRIPE + TIERS)
+//
+
 model Membership {
-  id                   String    @id @default(cuid())
+  id                   String   @id @default(cuid())
   userId               String    @unique
-  plan                 String    @default("none")
-  status               String    @default("inactive")
+
+  plan                 MembershipPlan @default(NONE)
+  status               MembershipStatus @default(INACTIVE)
+
+  maxFacilities        Int       @default(0)
+
   stripeCustomerId     String?
   stripeSubscriptionId String?
+
   startDate            DateTime?
   endDate              DateTime?
   nextBillingDate      DateTime?
@@ -55,7 +86,14 @@ model Membership {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([plan])
+  @@index([status])
 }
+
+//
+// REBUTTAL SYSTEM
+//
 
 model Rebuttal {
   id      String         @id @default(cuid())
@@ -66,16 +104,21 @@ model Rebuttal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // OWNER
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // MODERATION TRACKING
+  // MODERATION
   moderatedById String?
   moderatedBy   User?   @relation("ModeratedRebuttals", fields: [moderatedById], references: [id])
 
   @@index([userId])
   @@index([status])
 }
+
+//
+// FACILITY SYSTEM
+//
 
 model Facility {
   id          String  @id @default(cuid())
@@ -86,16 +129,18 @@ model Facility {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // TRACK WHO CREATED FACILITY
+  // OWNER
   createdById String?
-  createdBy   User?   @relation(fields: [createdById], references: [id])
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([name])
+  @@index([createdById])
 }
 
 //
-//  MFA MODEL (FINAL STABLE VERSION)
+// MFA SYSTEM
 //
+
 model MfaOtp {
   id        String   @id @default(cuid())
   email     String

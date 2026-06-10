@@ -1,98 +1,109 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import { useRouter } from "next/navigation";
 
 const plans = [
   {
-    name: 'Basic',
+    label: "Basic",
+    plan: "TIER_A",
     price: 300,
-    description: 'Perfect for small facilities',
-    features: [
-      'Submit up to 5 rebuttals per month',
-      'Basic support',
-      'Email notifications',
-      'Document upload up to 5MB',
-    ],
+    description: "Perfect for small facilities",
   },
   {
-    name: 'Pro',
+    label: "Pro",
+    plan: "TIER_B",
     price: 400,
-    description: 'Best for growing facilities',
-    features: [
-      'Submit up to 25 rebuttals per month',
-      'Priority support',
-      'Real-time notifications',
-      'Document upload up to 20MB',
-      'Custom branding',
-    ],
+    description: "Best for growing facilities",
     popular: true,
   },
   {
-    name: 'Enterprise',
+    label: "Enterprise",
+    plan: "TIER_C",
     price: 500,
-    description: 'For large organizations',
-    features: [
-      'Unlimited rebuttals',
-      '24/7 dedicated support',
-      'Real-time notifications',
-      'Document upload up to 100MB',
-      'Custom branding',
-      'API access',
-      'Advanced analytics',
-    ],
+    description: "For large organizations",
   },
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
+
+  const selectPlan = async (plan: string) => {
+    try {
+      const res = await fetch("/api/membership/update", {
+        method: "POST",
+        credentials: "include", 
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to update subscription");
+        return;
+      }
+
+      alert("Subscription activated successfully!");
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error selecting plan:", error);
+      alert("Something went wrong");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-4">Simple, Transparent Pricing</h1>
-        <p className="text-center text-gray-600 mb-12">Choose the plan that fits your needs</p>
+        <h1 className="text-4xl font-bold text-center mb-4">
+          Simple, Transparent Pricing
+        </h1>
+
+        <p className="text-center text-gray-600 mb-12">
+          Choose the plan that fits your needs
+        </p>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {plans.map((plan) => (
+          {plans.map((planItem) => (
             <div
-              key={plan.name}
+              key={planItem.plan}
               className={`bg-white rounded-lg shadow-md p-8 ${
-                plan.popular ? 'ring-2 ring-blue-600 relative' : ''
+                planItem.popular ? "ring-2 ring-blue-600" : ""
               }`}
             >
-              {plan.popular && (
-                <div className="absolute top-0 right-8 transform -translate-y-1/2">
-                  <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
-                    Most Popular
-                  </span>
+              {planItem.popular && (
+                <div className="text-sm font-bold text-blue-600 mb-2">
+                  Most Popular
                 </div>
               )}
 
-              <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-              <p className="text-gray-600 mb-6">{plan.description}</p>
+              <h3 className="text-2xl font-bold mb-2">
+                {planItem.label}
+              </h3>
+
+              <p className="text-gray-600 mb-4">
+                {planItem.description}
+              </p>
 
               <div className="mb-6">
-                <span className="text-4xl font-bold">${plan.price}</span>
-                <span className="text-gray-600 ml-2">/month</span>
+                <span className="text-4xl font-bold">
+                  ₱{planItem.price}
+                </span>
+                <span className="text-gray-500"> / month</span>
               </div>
 
-              <Link
-                href="/auth/signup"
-                className={`w-full py-2 rounded-lg font-medium text-center block mb-8 transition ${
-                  plan.popular
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              <button
+                onClick={() => selectPlan(planItem.plan)}
+                className={`w-full py-3 rounded-lg font-medium transition ${
+                  planItem.popular
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                 }`}
               >
                 Get Started
-              </Link>
-
-              <ul className="space-y-4">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start">
-                    <span className="text-green-500 mr-3">✓</span>
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+              </button>
             </div>
           ))}
         </div>

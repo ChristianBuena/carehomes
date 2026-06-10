@@ -1,25 +1,29 @@
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/mailer";
 
 /**
- * Generate a 6-digit OTP
+ * Generate 6-digit OTP
  */
 export function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 /**
- * Create OTP for MFA login
+ * Create OTP + send via email
  */
 export async function createMfaOtp(email: string) {
-  // delete old OTPs first (important)
+  // 1. Delete old OTPs
   await prisma.mfaOtp.deleteMany({
     where: { email },
   });
 
+  // 2. Generate OTP
   const otp = generateOTP();
 
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+  // 3. Expiry
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
+  // 4. Save OTP first
   await prisma.mfaOtp.create({
     data: {
       email,
@@ -30,62 +34,26 @@ export async function createMfaOtp(email: string) {
     },
   });
 
-  return otp;
-}
-
-/**
- * Verify OTP
- */
-export async function verifyMfaOtp(email: string, code: string) {
-  const record = await prisma.mfaOtp.findFirst({
-    where: {
-      email,
-      code,
-      used: false,
-    },
-  });
-
-  // no record found
-  if (!record) {
-    // increase attempt count for security tracking
-    await prisma.mfaOtp.updateMany({
-      where: { email },
-      data: {
-        attempts: { increment: 1 },
-      },
+  // 5. SEND EMAIL (NOW WITH PROPER ERROR HANDLING)
+  try {
+    await sendEmail({
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your OTP is: ${otp}`,
     });
 
-    return false;
-  }
+    console.log("📧 OTP email sent successfully to:", email);
+  } catch (error) {
+    console.error("❌ Failed to send OTP email:", error);
 
-  // expired OTP
-  if (record.expiresAt < new Date()) {
-    return false;
-  }
+    // OPTIONAL BUT RECOMMENDED:
+    // rollback OTP if email fails
+    await prisma.mfaOtp.deleteMany({
+      where: { email },
+    });
 
-  // too many attempts
-  if (record.attempts >= 3) {
-    return false;
+    throw new Error("Failed to send OTP email");
   }
-
-  // mark OTP as used
-  await prisma.mfaOtp.update({
-    where: { id: record.id },
-    data: { used: true },
-  });
 
   return true;
-}
-
-/**
- * Optional: cleanup expired OTPs (you can call this later in cron)
- */
-export async function cleanupExpiredOtps() {
-  await prisma.mfaOtp.deleteMany({
-    where: {
-      expiresAt: {
-        lt: new Date(),
-      },
-    },
-  });
 }

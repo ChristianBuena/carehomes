@@ -3,14 +3,14 @@ import { createFacility, getFacilities } from "@/services/facility.service";
 import { verifyToken } from "@/lib/jwt";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { canCreateFacility } from "@/config/tiers";
 
 export async function GET() {
   try {
     const facilities = await getFacilities();
-
     return NextResponse.json(facilities);
   } catch (error) {
+    console.error("GET facilities error:", error);
+
     return NextResponse.json(
       { error: "Failed to fetch facilities" },
       { status: 500 }
@@ -20,7 +20,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // =========================
     // AUTH CHECK
+    // =========================
     const token = req.cookies.get("auth-token")?.value;
 
     if (!token) {
@@ -31,9 +33,19 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await verifyToken(token);
+
+    if (!user?.userId) {
+      return NextResponse.json(
+        { error: "Invalid token" },
+        { status: 401 }
+      );
+    }
+
     const userId = user.userId;
 
-    // ROLE PERMISSION CHECK
+    // =========================
+    // ROLE CHECK (RBAC)
+    // =========================
     if (!hasPermission(user.role, "manage_facilities")) {
       return NextResponse.json(
         { error: "Forbidden: insufficient permissions" },
@@ -41,7 +53,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TIER CHECK 
+    // =========================
+    // MEMBERSHIP CHECK (STRIPE)
+    // =========================
     const membership = await prisma.membership.findUnique({
       where: { userId },
     });
@@ -53,18 +67,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // =========================
+    // FACILITY LIMIT CHECK
+    // (Stripe-driven source of truth)
+    // =========================
     const currentCount = await prisma.facility.count({
       where: { createdById: userId },
     });
 
-    if (!canCreateFacility(membership.plan, currentCount)) {
+    if (currentCount >= membership.maxFacilities) {
       return NextResponse.json(
-        { error: "Tier limit reached" },
+        {
+          error: `Tier limit reached (${membership.maxFacilities} facilities allowed)`,
+        },
         { status: 403 }
       );
     }
 
+    // =========================
     // VALIDATION
+    // =========================
     const body = await req.json();
 
     if (!body.name || !body.address) {
@@ -74,7 +96,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // =========================
     // CREATE FACILITY
+    // =========================
     const facility = await createFacility({
       name: body.name,
       address: body.address,

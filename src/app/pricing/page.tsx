@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const plans = [
   {
@@ -8,6 +9,7 @@ const plans = [
     plan: "TIER_A",
     price: 300,
     description: "Perfect for small facilities",
+    priceId: "price_1TgsvuIgV8gft3QpEVbiVCjX",
   },
   {
     label: "Pro",
@@ -15,42 +17,50 @@ const plans = [
     price: 400,
     description: "Best for growing facilities",
     popular: true,
+    priceId: "price_1TgslqIgV8gft3QpabXM1WX1",
   },
   {
     label: "Enterprise",
     plan: "TIER_C",
     price: 500,
     description: "For large organizations",
+    priceId: "price_1TgsmqIgV8gft3QpOisOIT7n",
   },
 ];
 
 export default function PricingPage() {
   const router = useRouter();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const selectPlan = async (plan: string) => {
+  const selectPlan = async (priceId: string, plan: string) => {
     try {
-      const res = await fetch("/api/membership/update", {
+      setLoadingPlan(plan);
+
+      const res = await fetch("/api/stripe/checkout", {
         method: "POST",
-        credentials: "include", 
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({
+          priceId,
+          plan,
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to update subscription");
+        alert(data.error || "Failed to start checkout");
         return;
       }
 
-      alert("Subscription activated successfully!");
-
-      router.push("/dashboard");
+      // redirect to Stripe Checkout
+      window.location.href = data.url;
     } catch (error) {
       console.error("Error selecting plan:", error);
       alert("Something went wrong");
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -95,14 +105,19 @@ export default function PricingPage() {
               </div>
 
               <button
-                onClick={() => selectPlan(planItem.plan)}
+                onClick={() =>
+                  selectPlan(planItem.priceId, planItem.plan)
+                }
+                disabled={loadingPlan === planItem.plan}
                 className={`w-full py-3 rounded-lg font-medium transition ${
                   planItem.popular
                     ? "bg-blue-600 text-white hover:bg-blue-700"
                     : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                 }`}
               >
-                Get Started
+                {loadingPlan === planItem.plan
+                  ? "Redirecting..."
+                  : "Get Started"}
               </button>
             </div>
           ))}

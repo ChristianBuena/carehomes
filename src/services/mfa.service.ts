@@ -9,21 +9,16 @@ export function generateOTP(): string {
 }
 
 /**
- * Create OTP + send via email
+ * CREATE OTP + SEND EMAIL
  */
 export async function createMfaOtp(email: string) {
-  // 1. Delete old OTPs
   await prisma.mfaOtp.deleteMany({
     where: { email },
   });
 
-  // 2. Generate OTP
   const otp = generateOTP();
-
-  // 3. Expiry
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-  // 4. Save OTP first
   await prisma.mfaOtp.create({
     data: {
       email,
@@ -34,7 +29,6 @@ export async function createMfaOtp(email: string) {
     },
   });
 
-  // 5. SEND EMAIL (NOW WITH PROPER ERROR HANDLING)
   try {
     await sendEmail({
       to: email,
@@ -46,8 +40,6 @@ export async function createMfaOtp(email: string) {
   } catch (error) {
     console.error("❌ Failed to send OTP email:", error);
 
-    // OPTIONAL BUT RECOMMENDED:
-    // rollback OTP if email fails
     await prisma.mfaOtp.deleteMany({
       where: { email },
     });
@@ -56,4 +48,31 @@ export async function createMfaOtp(email: string) {
   }
 
   return true;
+}
+
+/**
+ * VERIFY OTP (THIS FIXES YOUR BUILD ERROR)
+ */
+export async function verifyMfaOtp(email: string, code: string) {
+  const otp = await prisma.mfaOtp.findFirst({
+    where: {
+      email,
+      code,
+      used: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+  });
+
+  if (!otp) return null;
+
+  await prisma.mfaOtp.update({
+    where: { id: otp.id },
+    data: {
+      used: true,
+    },
+  });
+
+  return otp;
 }

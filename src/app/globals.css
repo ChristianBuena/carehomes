@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/* ─── Blue Theme Color System ──────────────────────────────────────────── */
+
+:root {
+  /* Core palette */
+  --color-primary: #1B3A6B;
+  --color-primary-hover: #152E56;
+  --color-secondary: #2563EB;
+  --color-secondary-hover: #1D4ED8;
+  --color-accent: #3B82F6;
+  --color-accent-hover: #2563EB;
+
+  /* Backgrounds */
+  --color-bg: #F0F4FF;
+  --color-bg-subtle: #E8EFFE;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #F5F8FF;
+
+  /* Text */
+  --color-text: #0F1F3D;
+  --color-text-secondary: #3B5080;
+  --color-muted: #6B7FA3;
+
+  /* Borders */
+  --color-border: #C7D4F0;
+  --color-border-subtle: #DDE6FA;
+
+  /* Status */
+  --color-success: #15803D;
+  --color-danger: #DC2626;
+  --color-warning: #D97706;
+
+  /* Blue scale */
+  --color-blue-50: #EFF6FF;
+  --color-blue-100: #DBEAFE;
+  --color-blue-600: #2563EB;
+  --color-blue-700: #1D4ED8;
+  --color-blue-900: #1E3A8A;
+  --color-navy: #1B3A6B;
+
+  /* Tailwind / shadcn compat aliases */
+  --background: var(--color-bg);
+  --foreground: var(--color-text);
+  --primary: var(--color-primary);
+  --secondary: var(--color-bg-subtle);
+  --muted: var(--color-muted);
+  --border: var(--color-border);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+}
+
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(
+      90deg,
+      var(--color-border) 25%,
+      rgba(255, 255, 255, 0.4) 50%,
+      var(--color-border) 75%
+    );
+    background-size: 400% 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer {
+      animation: none;
+      background: var(--color-border);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}

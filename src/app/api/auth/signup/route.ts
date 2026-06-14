@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         membership: {
           create: {
-            plan: 'NONE',
-            status: 'INACTIVE',
+            plan: 'none',
+            status: 'inactive',
           },
         },
       },

@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const publishedRebuttals = await prisma.rebuttal.findMany({
       where: {
-        status: "APPROVED", // this is your "published" state
+        status: "APPROVED", // ✅ this is your "published" state
       },
       include: {
         user: {

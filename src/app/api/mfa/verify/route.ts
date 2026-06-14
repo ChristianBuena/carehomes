@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     const { email, code } = await req.json();
 
+    // VALIDATE INPUT
     if (!email || !code) {
       return NextResponse.json(
         { error: "Email and code required" },
@@ -14,15 +15,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const validOtp = await verifyMfaOtp(email, code);
+    // VERIFY OTP
+    const valid = await verifyMfaOtp(email, code);
 
-    if (!validOtp) {
+    if (!valid) {
       return NextResponse.json(
         { error: "Invalid or expired OTP" },
         { status: 400 }
       );
     }
 
+    // GET REAL USER
     const user = await prisma.user.findUnique({
       where: { email },
       include: { membership: true },
@@ -35,12 +38,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // CREATE JWT
     const token = await signToken({
       userId: user.id,
       email: user.email,
       role: user.role,
     });
 
+    // RESPONSE
     const response = NextResponse.json({
       success: true,
       message: "Login successful",
@@ -53,6 +58,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // SET COOKIE
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -62,6 +68,7 @@ export async function POST(req: NextRequest) {
     });
 
     return response;
+
   } catch (error) {
     console.error("MFA verify error:", error);
 

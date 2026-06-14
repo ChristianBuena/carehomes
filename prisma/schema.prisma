@@ -12,29 +12,115 @@ enum Role {
   ADMIN
 }
 
+enum RebuttalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUEST_FIX
+}
+
+enum MembershipPlan {
+  NONE
+  TIER_A
+  TIER_B
+  TIER_C
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+  PAST_DUE
+  CANCELED
+}
+
 model User {
-  id         String      @id @default(cuid())
-  name       String
-  email      String      @unique
-  password   String
-  role       Role        @default(MEMBER)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  membership Membership?
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String
+  role     Role   @default(MEMBER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  membership         Membership?
+  rebuttals          Rebuttal[]
+  moderatedRebuttals Rebuttal[] @relation("ModeratedRebuttals")
+  createdFacilities  Facility[]
+
+  @@index([email])
 }
 
 model Membership {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  plan                 String   @default("none")
-  status               String   @default("inactive")
+  id     String @id @default(cuid())
+  userId String @unique
+
+  plan   MembershipPlan   @default(NONE)
+  status MembershipStatus @default(INACTIVE)
+
+  maxFacilities Int @default(0)
+
   stripeCustomerId     String?
   stripeSubscriptionId String?
-  startDate            DateTime?
-  endDate              DateTime?
-  nextBillingDate      DateTime?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+
+  startDate       DateTime?
+  endDate         DateTime?
+  nextBillingDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([plan])
+  @@index([status])
+}
+
+model Rebuttal {
+  id      String         @id @default(cuid())
+  title   String
+  content String
+  status  RebuttalStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  moderatedById String?
+  moderatedBy   User?   @relation("ModeratedRebuttals", fields: [moderatedById], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Facility {
+  id          String  @id @default(cuid())
+  name        String
+  address     String
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([name])
+  @@index([createdById])
+}
+
+model MfaOtp {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+
+  attempts Int     @default(0)
+  used     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }

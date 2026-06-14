@@ -1,33 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/jwt';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { verifyToken } from "@/lib/jwt";
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    // 🔐 READ FROM COOKIE (NOT HEADER)
+    const token = request.cookies.get("auth-token")?.value;
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
+        { error: "Not authenticated" },
         { status: 401 }
       );
     }
 
-    // ✅ PROPER JWT DECODE (NOT BASE64)
-    const decoded = await verifyToken(token) as {
-      userId: string;
-      email: string;
-      role: string;
-    };
+    // 🔐 VERIFY JWT
+    let decoded;
 
-    if (!decoded?.userId) {
+    try {
+      decoded = await verifyToken(token);
+    } catch (err) {
       return NextResponse.json(
-        { error: 'Invalid token' },
+        { error: "Invalid token" },
         { status: 401 }
       );
     }
 
-    // Fetch user safely
+    // 👤 FETCH USER
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: "User not found" },
         { status: 404 }
       );
     }
@@ -49,10 +48,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(user, { status: 200 });
 
   } catch (error) {
-    console.error('Auth check error:', error);
+    console.error("Auth check error:", error);
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

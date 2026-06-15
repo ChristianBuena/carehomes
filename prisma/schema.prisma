@@ -6,35 +6,151 @@ datasource db {
   provider = "postgresql"
 }
 
+//
+// ENUMS
+//
+
 enum Role {
   MEMBER
   MODERATOR
   ADMIN
 }
 
-model User {
-  id         String      @id @default(cuid())
-  name       String
-  email      String      @unique
-  password   String
-  role       Role        @default(MEMBER)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  membership Membership?
+enum RebuttalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUEST_FIX
 }
+
+enum MembershipPlan {
+  NONE
+  TIER_A
+  TIER_B
+  TIER_C
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+//
+// USER
+//
+
+model User {
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String
+  role     Role   @default(MEMBER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // RELATIONS
+  membership Membership?
+
+  rebuttals          Rebuttal[]
+  moderatedRebuttals Rebuttal[] @relation("ModeratedRebuttals")
+
+  createdFacilities Facility[]
+
+  @@index([email])
+}
+
+//
+// MEMBERSHIP (STRIPE + TIERS)
+//
 
 model Membership {
   id                   String   @id @default(cuid())
-  userId               String   @unique
-  plan                 String   @default("none")
-  status               String   @default("inactive")
+  userId               String    @unique
+
+  plan                 MembershipPlan @default(NONE)
+  status               MembershipStatus @default(INACTIVE)
+
+  maxFacilities        Int       @default(0)
+
   stripeCustomerId     String?
   stripeSubscriptionId String?
+
   startDate            DateTime?
   endDate              DateTime?
   nextBillingDate      DateTime?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([plan])
+  @@index([status])
+}
+
+//
+// REBUTTAL SYSTEM
+//
+
+model Rebuttal {
+  id      String         @id @default(cuid())
+  title   String
+  content String
+  status  RebuttalStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // OWNER
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // MODERATION
+  moderatedById String?
+  moderatedBy   User?   @relation("ModeratedRebuttals", fields: [moderatedById], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+//
+// FACILITY SYSTEM
+//
+
+model Facility {
+  id          String  @id @default(cuid())
+  name        String
+  address     String
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // OWNER
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([name])
+  @@index([createdById])
+}
+
+//
+// MFA SYSTEM
+//
+
+model MfaOtp {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }

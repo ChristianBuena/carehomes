@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { MOCK_FACILITIES } from "@/lib/mock-data/facilities";
+import { getFacilities } from "@/services/facility.service";
 import { FacilitySearch } from "@/components/facilities/FacilitySearch";
 import { FacilityFilters } from "@/components/facilities/FacilityFilters";
 import { FacilityFiltersDrawer } from "@/components/facilities/FacilityFiltersDrawer";
@@ -14,9 +14,27 @@ export const metadata: Metadata = buildMetadata({
   description: "Browse licensed California care facilities. All listings include deep links to official CCLD records and any published member rebuttals.",
 });
 
-export default function FacilitiesPage() {
-  // In production this would be an async fetch; for now, use mock data
-  const facilities = MOCK_FACILITIES;
+export default async function FacilitiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const dbFacilities = await getFacilities({ query: q });
+
+  const facilities = dbFacilities.map((f) => ({
+    id: f.id,
+    slug: f.slug,
+    facilityNumber: f.facilityNumber ?? "N/A",
+    name: f.name,
+    city: f.city ?? f.address.split(",")[1]?.trim() ?? f.address,
+    county: f.county ?? "Unknown",
+    capacity: f.capacity ?? 0,
+    ccldLink: f.ccldLink ?? "",
+    status: "active" as const,
+    rebuttalsCount: 0,
+    lastUpdated: f.updatedAt.toISOString(),
+  }));
 
   return (
     <div className="bg-[var(--color-bg)] min-h-screen pb-24">

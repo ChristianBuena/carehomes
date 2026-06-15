@@ -9,5 +9,6 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default function ProvidersPage() {
+  // TODO: connect to real provider API when available
   return <ProvidersClientPage />;
 }

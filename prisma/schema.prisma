@@ -108,12 +108,17 @@ model Rebuttal {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // FACILITY LINK
+  facilityId String?
+  facility   Facility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
+
   // MODERATION
   moderatedById String?
   moderatedBy   User?   @relation("ModeratedRebuttals", fields: [moderatedById], references: [id])
 
   @@index([userId])
   @@index([status])
+  @@index([facilityId])
 }
 
 //
@@ -121,10 +126,16 @@ model Rebuttal {
 //
 
 model Facility {
-  id          String  @id @default(cuid())
-  name        String
-  address     String
-  description String?
+  id             String  @id @default(cuid())
+  slug           String  @unique
+  name           String
+  address        String
+  description    String?
+  facilityNumber String?
+  city           String?
+  county         String?
+  capacity       Int?
+  ccldLink       String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -133,6 +144,10 @@ model Facility {
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
+  // REBUTTALS
+  rebuttals Rebuttal[]
+
+  @@index([slug])
   @@index([name])
   @@index([createdById])
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { getFacilityBySlug } from "@/services/facility.service";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
@@ -14,18 +16,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { BackButton } from "@/components/ui/BackButton";
-import { MOCK_FACILITIES } from "@/lib/mock-data/facilities";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { OfficialRecordSection } from "@/components/facilities/OfficialRecordSection";
 import { ApprovedRebuttalsSection } from "@/components/facilities/ApprovedRebuttalsSection";
+import type { Rebuttal as RebuttalCardType } from "@/components/facilities/ApprovedRebuttalsSection";
 import { Button } from "@/components/ui/button";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
-
-// ─── Static generation ────────────────────────────────────────────────────────
-
-export function generateStaticParams() {
-  return MOCK_FACILITIES.map((f) => ({ slug: f.slug }));
-}
 
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
@@ -35,16 +31,19 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const facility = MOCK_FACILITIES.find((f) => f.slug === slug);
+  const facility = await getFacilityBySlug(slug);
   if (!facility) {
     return { title: "Facility Not Found | CareHomesSupportDocs.org" };
   }
+  const name = facility.name;
+  const city = facility.city ?? facility.address.split(",")[1]?.trim() ?? facility.address;
+
   return buildMetadata({
-    title: `${facility.name} — ${facility.city}, CA`,
-    description: `View the official CCLD record and ${facility.rebuttalsCount} published rebuttal${facility.rebuttalsCount !== 1 ? "s" : ""} for ${facility.name} in ${facility.city}, ${facility.county} County, California.`,
+    title: `${name} — ${city}, CA`,
+    description: `View the official CCLD record and published rebuttals for ${name} in ${city}, California.`,
     openGraph: {
-      title: `${facility.name} | CareHomesSupportDocs.org`,
-      description: `Licensed California care facility in ${facility.city}, ${facility.county} County. View rebuttals and official CCLD records.`,
+      title: `${name} | CareHomesSupportDocs.org`,
+      description: `Licensed California care facility in ${city}. View rebuttals and official CCLD records.`,
       type: "website",
     },
   });
@@ -58,10 +57,30 @@ export default async function FacilityDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const facility = MOCK_FACILITIES.find((f) => f.slug === slug);
+  const facility = await getFacilityBySlug(slug);
+
   if (!facility) notFound();
 
-  const isActive = facility.status === "active";
+  const city = facility.city ?? facility.address.split(",")[1]?.trim() ?? facility.address;
+
+  // Fetch approved rebuttals for THIS facility only
+  const dbRebuttals = await prisma.rebuttal.findMany({
+    where: { facilityId: facility.id, status: "APPROVED" },
+    include: { user: { select: { name: true } } },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  // Map DB shape → ApprovedRebuttalsSection's Rebuttal type (no `as any`)
+  const publishedRebuttals: RebuttalCardType[] = dbRebuttals.map((r) => ({
+    id: r.id,
+    title: r.title,
+    citationId: `REB-${r.id.slice(-6).toUpperCase()}`,
+    citationDate: r.createdAt.toISOString(),
+    summary: r.content,
+    moderationStatus: "approved" as const,
+    publishedAt: r.updatedAt.toISOString(),
+    filesUrl: undefined,
+  }));
 
   const localBusinessSchema = {
     "@context": "https://schema.org",
@@ -69,7 +88,7 @@ export default async function FacilityDetailPage({
     name: facility.name,
     address: {
       "@type": "PostalAddress",
-      addressLocality: facility.city,
+      addressLocality: city,
       addressRegion: "CA",
     },
   };
@@ -101,17 +120,10 @@ export default async function FacilityDetailPage({
             <div>
               {/* Status badge */}
               <div className="mb-4">
-                {isActive ? (
-                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/20 px-3 py-1 rounded-full text-sm font-semibold">
-                    <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                    Active Facility
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 border border-[var(--color-surface)]/10 px-3 py-1 rounded-full text-sm font-semibold">
-                    <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                    Inactive
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1.5 bg-[var(--color-success)]/20 text-[var(--color-success)] border border-[var(--color-success)]/20 px-3 py-1 rounded-full text-sm font-semibold">
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  Active Facility
+                </span>
               </div>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-5 text-balance">
@@ -131,23 +143,27 @@ export default async function FacilityDetailPage({
                 >
                   <MapPin className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
                   <span>
-                    {facility.city}, {facility.county} County
+                    {city}, CA
                   </span>
                 </div>
-                <div
-                  role="listitem"
-                  className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm"
-                >
-                  <Users className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
-                  <span>Capacity: {facility.capacity}</span>
-                </div>
-                <div
-                  role="listitem"
-                  className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm font-mono"
-                >
-                  <Hash className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
-                  <span>{facility.facilityNumber}</span>
-                </div>
+                {facility.capacity != null && (
+                  <div
+                    role="listitem"
+                    className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm"
+                  >
+                    <Users className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
+                    <span>Capacity: {facility.capacity}</span>
+                  </div>
+                )}
+                {facility.facilityNumber && (
+                  <div
+                    role="listitem"
+                    className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm font-mono"
+                  >
+                    <Hash className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
+                    <span>{facility.facilityNumber}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -216,7 +232,7 @@ export default async function FacilityDetailPage({
         />
 
         {/* 2. Approved Rebuttals */}
-        <ApprovedRebuttalsSection rebuttals={[]} />
+        <ApprovedRebuttalsSection rebuttals={publishedRebuttals} />
       </ResponsiveContainer>
     </div>
     </>

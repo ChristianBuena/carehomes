@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 export default function LoginContent() {
   const router = useRouter();
@@ -15,6 +16,9 @@ export default function LoginContent() {
   const [mfaRequired, setMfaRequired] = useState(false);
   const [otp, setOtp] = useState("");
   const [emailForOtp, setEmailForOtp] = useState("");
+  const [timer, setTimer] = useState(60);
+
+  const isVerifying = useRef(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -25,6 +29,21 @@ export default function LoginContent() {
     const successMessage = searchParams.get("success");
     if (successMessage) setSuccess(successMessage);
   }, [searchParams]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (mfaRequired && timer > 0) {
+      interval = setInterval(() => setTimer((t) => t - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [mfaRequired, timer]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (otp.length === 6 && !isVerifying.current && mfaRequired) {
+      handleVerifyOtp();
+    }
+  }, [otp, mfaRequired]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -56,14 +75,17 @@ export default function LoginContent() {
       }
 
       router.push("/dashboard");
-    } catch {
-      setError("An error occurred");
+    } catch (err) {
+      console.error("Login submission error:", err);
+      setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOtp = async () => {
+  const handleVerifyOtp = useCallback(async () => {
+    if (loading || isVerifying.current) return;
+    isVerifying.current = true;
     setError("");
     setLoading(true);
 
@@ -78,6 +100,8 @@ export default function LoginContent() {
 
       if (!res.ok) {
         setError(data.error || "Invalid OTP");
+        isVerifying.current = false;
+        setLoading(false);
         return;
       }
 
@@ -87,18 +111,54 @@ export default function LoginContent() {
         headers: { Authorization: `Bearer ${data.token}` },
       });
 
+      setOtp("");
+      isVerifying.current = false;
       router.push("/dashboard");
     } catch {
       setError("Verification failed");
+      isVerifying.current = false;
+      setLoading(false);
+    }
+  }, [otp, emailForOtp, loading, router]);
+
+  const handleResendOtp = async () => {
+    if (timer > 0) return;
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/mfa/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailForOtp }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to resend OTP");
+        return;
+      }
+
+      setTimer(60);
+      setSuccess("A new OTP has been sent to your email.");
+    } catch {
+      setError("Failed to resend OTP");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] py-12 px-4">
-      <div className="w-full max-w-md bg-[var(--color-surface)] rounded-lg shadow-md p-8">
-        <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-bg)] py-12 px-4 sm:px-6 lg:px-8">
+      {/* Text Logo */}
+      <Link href="/" className="mb-8 flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md">
+        <span className="text-2xl font-extrabold tracking-tight text-[var(--color-primary)]">
+          CareHomesSupportDocs
+        </span>
+      </Link>
+
+      <div className="w-full max-w-md bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] p-8">
+        <h2 className="text-2xl font-bold text-center text-[var(--color-text)] mb-8">Welcome Back</h2>
 
         {error && (
           <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 text-[var(--color-danger)] px-4 py-3 rounded mb-4">
@@ -112,52 +172,104 @@ export default function LoginContent() {
         )}
 
         {!mfaRequired ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              name="email"
-              type="email"
-              placeholder="Email"
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-            />
-            <input
-              name="password"
-              type="password"
-              placeholder="Password"
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-            />
-            <button className="w-full bg-[var(--color-secondary)] text-[var(--color-surface)] py-2 rounded-lg hover:bg-[var(--color-secondary-hover)] font-medium transition">
-              {loading ? "Logging in..." : "Login"}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1.5">
+                Email
+              </label>
+              <input
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="w-full min-h-[44px] px-4 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-shadow"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1.5">
+                Password
+              </label>
+              <input
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full min-h-[44px] px-4 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-shadow"
+              />
+            </div>
+
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full min-h-[44px] mt-2 flex items-center justify-center bg-[var(--color-secondary)] text-white py-2 px-4 rounded-lg hover:bg-[var(--color-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-secondary)] font-medium transition disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
             </button>
           </form>
         ) : (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-center">Verify OTP</h3>
-            <input
-              type="text"
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-            />
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold text-center text-[var(--color-text)]">Verify OTP</h3>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1.5 text-center">
+                Enter the 6-digit code sent to your email
+              </label>
+              <input
+                type="text"
+                placeholder="123456"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+                disabled={loading}
+                className="w-full min-h-[44px] px-4 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-shadow text-center tracking-widest text-lg"
+                maxLength={6}
+              />
+            </div>
             <button
+              type="button"
               onClick={handleVerifyOtp}
-              className="w-full bg-[var(--color-success)] text-[var(--color-surface)] py-2 rounded-lg hover:opacity-90 font-medium transition"
+              disabled={loading || otp.length < 6}
+              className="w-full min-h-[44px] flex items-center justify-center bg-[var(--color-secondary)] text-white py-2 px-4 rounded-lg hover:bg-[var(--color-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-secondary)] font-medium transition disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loading ? "Verifying..." : "Verify OTP"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                "Verify OTP"
+              )}
             </button>
+            
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={timer > 0 || loading}
+                className="text-sm font-medium text-[var(--color-secondary)] hover:underline disabled:text-[var(--color-muted)] disabled:no-underline"
+              >
+                {timer > 0 ? `Resend OTP in ${timer}s` : "Resend OTP"}
+              </button>
+            </div>
           </div>
         )}
 
-        <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
-          No account?{" "}
+        <p className="mt-8 text-center text-sm text-[var(--color-text)]">
+          Don't have an account?{" "}
           <Link
             href="/auth/signup"
-            className="text-[var(--color-secondary)] hover:underline font-medium"
+            className="text-[var(--color-secondary)] hover:underline font-semibold"
           >
             Sign up
           </Link>

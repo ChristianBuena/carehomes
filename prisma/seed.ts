@@ -118,7 +118,8 @@ async function main() {
       county: "San Diego",
       facilityNumber: "374603921",
       capacity: 6,
-      ccldLink: "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/374603921",
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/374603921",
       description:
         "Sunny Days Care Home is a small residential care facility providing personalized, family-style care for up to six seniors in a peaceful San Diego neighborhood. Our staff is trained in dementia care and medication management. We maintain a 24-hour awake night staff and a robust activity program centered on resident preferences.",
     },
@@ -130,7 +131,8 @@ async function main() {
       county: "Los Angeles",
       facilityNumber: "193608274",
       capacity: 45,
-      ccldLink: "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/193608274",
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/193608274",
       description:
         "Oak Tree Senior Living offers assisted living services across three licensed residential units in a tree-lined Pasadena neighborhood. Our interdisciplinary care team coordinates with residents' physicians to ensure continuity of care. Amenities include a dedicated dining room, rehabilitation gym, and secured memory care wing.",
     },
@@ -142,7 +144,8 @@ async function main() {
       county: "Alameda",
       facilityNumber: "015600293",
       capacity: 15,
-      ccldLink: "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/015600293",
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/015600293",
       description:
         "Bayside Residential Care is a mid-sized RCFE offering specialized memory care in the heart of Oakland. The facility features secured outdoor courtyards, structured daily programming, and a bilingual care team fluent in Spanish and Cantonese. Family engagement is a core pillar of our care model.",
     },
@@ -154,7 +157,8 @@ async function main() {
       county: "Placer",
       facilityNumber: "317002845",
       capacity: 6,
-      ccldLink: "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/317002845",
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/317002845",
       description:
         "Nestled in the Sierra Nevada foothills, Whispering Pines Retreat provides an intimate residential care environment for adults requiring daily living assistance. Our six-bed home offers a tranquil, nature-rich setting with individualized care plans updated quarterly. We specialize in end-of-life comfort care and hospice coordination.",
     },
@@ -166,9 +170,75 @@ async function main() {
       county: "Orange",
       facilityNumber: "306001837",
       capacity: 120,
-      ccldLink: "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/306001837",
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/306001837",
       description:
         "Golden Years Assisted Living is one of Orange County's premier large-scale RCFEs, licensed for 120 residents across four wings. Our facility provides tiered care levels from independent living to skilled nursing coordination. On-site amenities include a beauty salon, outdoor pool, chapel, and multiple dining venues.",
+    },
+    {
+      slug: "valley-view-care-center",
+      name: "Valley View Care Center",
+      address: "558 Cesar Chavez Blvd, Fresno, CA 93706",
+      city: "Fresno",
+      county: "Fresno",
+      facilityNumber: "101004729",
+      capacity: 30,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/101004729",
+      description:
+        "Valley View Care Center serves the Central Valley community with comprehensive assisted living services for adults 60 and older. Our bilingual Spanish-speaking staff provides culturally sensitive care in a warm, homelike environment. The facility offers structured daily activities, transportation coordination, and close partnerships with Fresno-area healthcare providers.",
+    },
+    {
+      slug: "coastal-breeze-senior-home",
+      name: "Coastal Breeze Senior Home",
+      address: "2210 Pacific Coast Hwy, Santa Barbara, CA 93101",
+      city: "Santa Barbara",
+      county: "Santa Barbara",
+      facilityNumber: "421700366",
+      capacity: 6,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/421700366",
+      description:
+        "Coastal Breeze Senior Home is a boutique six-bed RCFE located minutes from the Santa Barbara waterfront. We provide individualized care plans, gourmet meal preparation, and daily cognitive engagement activities for residents with early to mid-stage dementia. Our facility maintains an exceptional staff-to-resident ratio to ensure attentive, dignified care.",
+    },
+    {
+      slug: "redwood-care-community",
+      name: "Redwood Care Community",
+      address: "780 Redwood Rd, Santa Rosa, CA 95404",
+      city: "Santa Rosa",
+      county: "Sonoma",
+      facilityNumber: "498200183",
+      capacity: 55,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/498200183",
+      description:
+        "Redwood Care Community is a mid-sized assisted living facility serving the North Bay region of California. The community features private and semi-private suites, a fully licensed kitchen, and a dedicated recreation room. Our care team includes certified medication aides and a full-time social worker to support residents and their families through every stage of aging.",
+    },
+    {
+      slug: "desert-rose-elder-care",
+      name: "Desert Rose Elder Care",
+      address: "3391 Palm Canyon Dr, Palm Springs, CA 92264",
+      city: "Palm Springs",
+      county: "Riverside",
+      facilityNumber: "336005012",
+      capacity: 6,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/336005012",
+      description:
+        "Desert Rose Elder Care provides intimate residential care in a serene Palm Springs setting. Our small six-bed home specializes in post-hospitalization recovery support and long-term chronic disease management for older adults. The warm desert climate and tranquil courtyard garden support resident wellbeing, and our team includes a licensed vocational nurse available on-call.",
+    },
+    {
+      slug: "harbor-lights-senior-living",
+      name: "Harbor Lights Senior Living",
+      address: "1045 Harbor Dr, Long Beach, CA 90802",
+      city: "Long Beach",
+      county: "Los Angeles",
+      facilityNumber: "194300558",
+      capacity: 80,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/194300558",
+      description:
+        "Harbor Lights Senior Living is a large assisted living community located near the Long Beach waterfront. Licensed for 80 residents, the facility offers three distinct levels of care — independent, assisted, and memory care — within a single campus. Amenities include a rooftop terrace, on-site physical therapy, weekly group outings, and a 24-hour concierge service.",
     },
   ];
 
@@ -197,7 +267,18 @@ async function main() {
 
   console.log(`✅ Facilities: ${facilities.map((f) => f.slug).join(", ")}`);
 
-  const [facility1, facility2, facility3] = facilities;
+  const [
+    facility1,
+    facility2,
+    facility3,
+    facility4,
+    facility5,
+    facility6,
+    facility7,
+    facility8,
+    facility9,
+    facility10,
+  ] = facilities;
 
   // ── 3. Rebuttals ──────────────────────────────────────────────────────────
 
@@ -219,7 +300,8 @@ async function main() {
     },
     {
       id: "seed-rebuttal-002",
-      title: "Rebuttal Regarding Medication Administration Finding — September 2025",
+      title:
+        "Rebuttal Regarding Medication Administration Finding — September 2025",
       content:
         "The facility disagrees with this citation. Our medication administration logs, reviewed internally and audited by a third-party pharmacist, show full compliance with Title 22 §87465 requirements. The citing inspector observed a single instance of a delayed documentation entry; however, the administration itself was performed on schedule. Staff received refresher training within 72 hours of the survey date, and a new electronic medication log system was implemented to prevent future documentation delays.",
       status: "APPROVED" as const,

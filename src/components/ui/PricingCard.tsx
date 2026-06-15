@@ -1,26 +1,66 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface PricingCardProps {
   tier: string;
+  planId: string;
   price: number;
   facilities: string;
   features: string[];
   highlighted?: boolean;
   ctaLabel: string;
-  ctaHref: string;
+  currentPlan?: string;
 }
 
 export function PricingCard({
   tier,
+  planId,
   price,
   facilities,
   features,
   highlighted = false,
   ctaLabel,
-  ctaHref,
+  currentPlan,
 }: PricingCardProps) {
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const isCurrentPlan = currentPlan === planId;
+
+  const handleSubscribe = async () => {
+    if (!isAuthenticated) {
+      router.push("/login?redirect=/pricing");
+      return;
+    }
+
+    if (isCurrentPlan) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planId }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("Checkout error:", data.error);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      setLoading(false);
+    }
+  };
   return (
     <div
       className={`relative flex flex-col p-8 rounded-2xl ${
@@ -29,10 +69,18 @@ export function PricingCard({
           : "bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border)] shadow-sm"
       }`}
     >
-      {highlighted && (
+      {highlighted && !isCurrentPlan && (
         <div className="absolute top-0 right-6 transform -translate-y-1/2">
           <span className="bg-[var(--color-accent)] text-white text-sm font-bold px-3 py-1 uppercase tracking-wide rounded-full shadow-sm">
             Most Popular
+          </span>
+        </div>
+      )}
+
+      {isCurrentPlan && (
+        <div className="absolute top-0 right-6 transform -translate-y-1/2">
+          <span className="bg-[var(--color-success)] text-white text-sm font-bold px-3 py-1 uppercase tracking-wide rounded-full shadow-sm">
+            Current Plan
           </span>
         </div>
       )}
@@ -69,14 +117,17 @@ export function PricingCard({
       </ul>
 
       <Button
-        asChild
+        onClick={handleSubscribe}
+        disabled={loading || isCurrentPlan}
         className={`w-full h-12 font-semibold ${
-          highlighted
+          highlighted && !isCurrentPlan
             ? "bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)]"
+            : isCurrentPlan
+            ? "bg-[var(--color-success)] text-white hover:bg-[var(--color-success)] cursor-default"
             : "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90"
         }`}
       >
-        <Link href={ctaHref}>{ctaLabel}</Link>
+        {loading ? "Redirecting..." : isCurrentPlan ? "Active Plan" : ctaLabel}
       </Button>
     </div>
   );

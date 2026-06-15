@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { getFacilityById } from "@/services/facility.service";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
@@ -14,18 +16,13 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { BackButton } from "@/components/ui/BackButton";
-import { MOCK_FACILITIES } from "@/lib/mock-data/facilities";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { OfficialRecordSection } from "@/components/facilities/OfficialRecordSection";
 import { ApprovedRebuttalsSection } from "@/components/facilities/ApprovedRebuttalsSection";
 import { Button } from "@/components/ui/button";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
-// ─── Static generation ────────────────────────────────────────────────────────
-
-export function generateStaticParams() {
-  return MOCK_FACILITIES.map((f) => ({ slug: f.slug }));
-}
+// Removed generateStaticParams since we are fetching dynamically from DB
 
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
@@ -35,16 +32,19 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const facility = MOCK_FACILITIES.find((f) => f.slug === slug);
+  const facility = await getFacilityById(slug);
   if (!facility) {
     return { title: "Facility Not Found | CareHomesSupportDocs.org" };
   }
+  const name = facility.name;
+  const city = facility.address.split(",")[1]?.trim() || facility.address;
+  
   return buildMetadata({
-    title: `${facility.name} — ${facility.city}, CA`,
-    description: `View the official CCLD record and ${facility.rebuttalsCount} published rebuttal${facility.rebuttalsCount !== 1 ? "s" : ""} for ${facility.name} in ${facility.city}, ${facility.county} County, California.`,
+    title: `${name} — ${city}, CA`,
+    description: `View the official CCLD record and published rebuttals for ${name} in ${city}, California.`,
     openGraph: {
-      title: `${facility.name} | CareHomesSupportDocs.org`,
-      description: `Licensed California care facility in ${facility.city}, ${facility.county} County. View rebuttals and official CCLD records.`,
+      title: `${name} | CareHomesSupportDocs.org`,
+      description: `Licensed California care facility in ${city}. View rebuttals and official CCLD records.`,
       type: "website",
     },
   });
@@ -58,10 +58,18 @@ export default async function FacilityDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const facility = MOCK_FACILITIES.find((f) => f.slug === slug);
+  const facility = await getFacilityById(slug);
+  
   if (!facility) notFound();
 
-  const isActive = facility.status === "active";
+  const publishedRebuttals = await prisma.rebuttal.findMany({
+    where: { status: "APPROVED" },
+    include: { user: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const isActive = true; // DB does not have status yet
+  const city = facility.address.split(",")[1]?.trim() || facility.address;
 
   const localBusinessSchema = {
     "@context": "https://schema.org",
@@ -69,7 +77,7 @@ export default async function FacilityDetailPage({
     name: facility.name,
     address: {
       "@type": "PostalAddress",
-      addressLocality: facility.city,
+      addressLocality: city,
       addressRegion: "CA",
     },
   };
@@ -131,7 +139,7 @@ export default async function FacilityDetailPage({
                 >
                   <MapPin className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
                   <span>
-                    {facility.city}, {facility.county} County
+                    {city}, CA
                   </span>
                 </div>
                 <div
@@ -139,14 +147,14 @@ export default async function FacilityDetailPage({
                   className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm"
                 >
                   <Users className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
-                  <span>Capacity: {facility.capacity}</span>
+                  <span>Capacity: N/A</span>
                 </div>
                 <div
                   role="listitem"
                   className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm font-mono"
                 >
                   <Hash className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
-                  <span>{facility.facilityNumber}</span>
+                  <span>N/A</span>
                 </div>
               </div>
             </div>
@@ -211,12 +219,12 @@ export default async function FacilityDetailPage({
 
         {/* 1. Official Record */}
         <OfficialRecordSection
-          ccldLink={facility.ccldLink ?? null}
+          ccldLink={null}
           facilityName={facility.name}
         />
 
         {/* 2. Approved Rebuttals */}
-        <ApprovedRebuttalsSection rebuttals={[]} />
+        <ApprovedRebuttalsSection rebuttals={publishedRebuttals as any} />
       </ResponsiveContainer>
     </div>
     </>

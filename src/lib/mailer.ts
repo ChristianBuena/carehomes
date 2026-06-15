@@ -8,21 +8,26 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export type SendEmailParams = {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+};
+
 export const sendEmail = async ({
   to,
   subject,
   text,
-}: {
-  to: string;
-  subject: string;
-  text: string;
-}) => {
+  html,
+}: SendEmailParams) => {
   try {
     await transporter.sendMail({
       from: `CareHomes OTP <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,
+      html,
     });
 
     console.log("📧 Email sent successfully to:", to);

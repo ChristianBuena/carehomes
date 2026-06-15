@@ -3,6 +3,8 @@ import { PricingCard } from "@/components/ui/PricingCard";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { AlertCircle, ShieldAlert } from "lucide-react";
 
+import { getUserFromRequest } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { buildMetadata } from "@/lib/metadata";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
@@ -14,6 +16,7 @@ export const metadata: Metadata = buildMetadata({
 const FULL_TIERS = [
   {
     tier: "Tier A",
+    planId: "TIER_A",
     price: 300,
     facilities: "1 Facility",
     features: [
@@ -28,6 +31,7 @@ const FULL_TIERS = [
   },
   {
     tier: "Tier B",
+    planId: "TIER_B",
     price: 400,
     facilities: "Up to 3 Facilities",
     features: [
@@ -43,6 +47,7 @@ const FULL_TIERS = [
   },
   {
     tier: "Tier C",
+    planId: "TIER_C",
     price: 500,
     facilities: "Up to 10 Facilities",
     features: [
@@ -80,7 +85,20 @@ const FAQS = [
   }
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const user = await getUserFromRequest();
+  let currentPlan: string | undefined;
+
+  if (user) {
+    const membership = await prisma.membership.findUnique({
+      where: { userId: user.userId },
+      select: { plan: true, status: true },
+    });
+    if (membership?.status === "ACTIVE") {
+      currentPlan = membership.plan;
+    }
+  }
+
   return (
     <div className="bg-[var(--color-bg)] w-full pb-24">
       {/* Page Header */}
@@ -107,7 +125,7 @@ export default function PricingPage() {
         <ResponsiveContainer>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start max-w-6xl mx-auto">
             {FULL_TIERS.map((tier) => (
-              <PricingCard key={tier.tier} {...tier} />
+              <PricingCard key={tier.tier} {...tier} currentPlan={currentPlan} />
             ))}
           </div>
         </ResponsiveContainer>

@@ -16,10 +16,25 @@ export async function createFacility(data: {
   });
 }
 
-export async function getFacilities() {
+export async function getFacilities(filters?: { query?: string }) {
   return prisma.facility.findMany({
+    where: filters?.query ? {
+      OR: [
+        { name: { contains: filters.query, mode: "insensitive" } },
+        { address: { contains: filters.query, mode: "insensitive" } },
+      ],
+    } : undefined,
     include: {
       createdBy: true, // optional but useful for admin panels
+    },
+  });
+}
+
+export async function getFacilityById(id: string) {
+  return prisma.facility.findUnique({
+    where: { id },
+    include: {
+      createdBy: true,
     },
   });
 }

@@ -4,6 +4,7 @@ import { NavBar } from "./NavBar";
 import { MobileMenu } from "./MobileMenu";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 import { Button } from "@/components/ui/button";
+import { HeaderAuthActions } from "./HeaderAuthActions";
 
 export function GlobalHeader() {
   return (
@@ -44,17 +45,7 @@ export function GlobalHeader() {
         <NavBar />
 
         {/* Desktop Actions */}
-        <div className="hidden lg:flex items-center gap-4">
-          <Button
-            variant="ghost"
-            className="text-white hover:bg-white/10 cursor-pointer hover:text-white"
-          >
-            Member Login
-          </Button>
-          <Button className="bg-[var(--color-secondary)] text-white hover:bg-[var(--color-secondary-hover)] font-semibold border-none cursor-pointer">
-            Join Now
-          </Button>
-        </div>
+        <HeaderAuthActions />
 
         {/* Mobile Menu */}
         <div className="lg:hidden flex items-center">

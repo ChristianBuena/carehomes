@@ -4,7 +4,7 @@ import { getUserFromRequest } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
-    const { priceId } = await req.json();
+    const { plan } = await req.json();
 
     const user = await getUserFromRequest();
 
@@ -15,17 +15,29 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate allowed Stripe prices
-    const validPrices = [
-      process.env.STRIPE_PRICE_A,
-      process.env.STRIPE_PRICE_B,
-      process.env.STRIPE_PRICE_C,
-    ];
+    let priceId: string | undefined;
 
-    if (!priceId || !validPrices.includes(priceId)) {
+    switch (plan) {
+      case "TIER_A":
+        priceId = process.env.STRIPE_PRICE_A;
+        break;
+      case "TIER_B":
+        priceId = process.env.STRIPE_PRICE_B;
+        break;
+      case "TIER_C":
+        priceId = process.env.STRIPE_PRICE_C;
+        break;
+      default:
+        return NextResponse.json(
+          { error: "Invalid plan selected" },
+          { status: 400 }
+        );
+    }
+
+    if (!priceId) {
       return NextResponse.json(
-        { error: "Invalid price selected" },
-        { status: 400 }
+        { error: "Plan configuration error" },
+        { status: 500 }
       );
     }
 

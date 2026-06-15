@@ -6,8 +6,16 @@ export async function createFacility(data: {
   description?: string;
   createdById?: string;
 }) {
+  // Auto-generate a slug from name + timestamp suffix for uniqueness
+  const baseSlug = data.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  const slug = `${baseSlug}-${Date.now()}`;
+
   return prisma.facility.create({
     data: {
+      slug,
       name: data.name,
       address: data.address,
       description: data.description,
@@ -22,14 +30,25 @@ export async function getFacilities(filters?: { query?: string }) {
       OR: [
         { name: { contains: filters.query, mode: "insensitive" } },
         { address: { contains: filters.query, mode: "insensitive" } },
+        { city: { contains: filters.query, mode: "insensitive" } },
       ],
     } : undefined,
     include: {
-      createdBy: true, // optional but useful for admin panels
+      createdBy: true,
     },
   });
 }
 
+export async function getFacilityBySlug(slug: string) {
+  return prisma.facility.findUnique({
+    where: { slug },
+    include: {
+      createdBy: true,
+    },
+  });
+}
+
+/** @deprecated Use getFacilityBySlug for public-facing pages */
 export async function getFacilityById(id: string) {
   return prisma.facility.findUnique({
     where: { id },

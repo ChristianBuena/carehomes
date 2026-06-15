@@ -22,15 +22,15 @@ export default async function FacilitiesPage({
   const { q } = await searchParams;
   const dbFacilities = await getFacilities({ query: q });
 
-  const facilities = dbFacilities.map((f: { id: string; name: string; address: string; updatedAt: Date }) => ({
+  const facilities = dbFacilities.map((f) => ({
     id: f.id,
-    slug: f.id, // Using ID as slug since the schema does not have a slug yet
-    facilityNumber: "N/A",
+    slug: f.slug,
+    facilityNumber: f.facilityNumber ?? "N/A",
     name: f.name,
-    city: f.address.split(",")[1]?.trim() || f.address,
-    county: "Unknown",
-    capacity: 0,
-    ccldLink: "",
+    city: f.city ?? f.address.split(",")[1]?.trim() ?? f.address,
+    county: f.county ?? "Unknown",
+    capacity: f.capacity ?? 0,
+    ccldLink: f.ccldLink ?? "",
     status: "active" as const,
     rebuttalsCount: 0,
     lastUpdated: f.updatedAt.toISOString(),

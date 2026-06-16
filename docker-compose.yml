@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
@@ -15,7 +13,20 @@ services:
       - db_data:/var/lib/postgresql/data
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JWT_SECRET: ${JWT_SECRET}
+        DATABASE_URL: ${DATABASE_URL}
+        EMAIL_USER: ${EMAIL_USER}
+        EMAIL_PASS: ${EMAIL_PASS}
+        STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+        STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        STRIPE_PRICE_A: ${STRIPE_PRICE_A}
+        STRIPE_PRICE_B: ${STRIPE_PRICE_B}
+        STRIPE_PRICE_C: ${STRIPE_PRICE_C}
     container_name: carehomes-app
     restart: always
     ports:
@@ -23,7 +34,18 @@ services:
     depends_on:
       - db
     environment:
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: postgresql://postgres:ADMIN321@db:5432/carehomes
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      STRIPE_PRICE_A: ${STRIPE_PRICE_A}
+      STRIPE_PRICE_B: ${STRIPE_PRICE_B}
+      STRIPE_PRICE_C: ${STRIPE_PRICE_C}
+    env_file: .env
 
 volumes:
   db_data:

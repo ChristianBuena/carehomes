@@ -6,6 +6,7 @@ import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 const PREVIEW_TIERS = [
   {
     tier: "Tier A",
+    planId: "TIER_A",
     price: 300,
     facilities: "1 Facility",
     features: [
@@ -18,6 +19,7 @@ const PREVIEW_TIERS = [
   },
   {
     tier: "Tier B",
+    planId: "TIER_B",
     price: 400,
     facilities: "Up to 3 Facilities",
     features: [
@@ -31,6 +33,7 @@ const PREVIEW_TIERS = [
   },
   {
     tier: "Tier C",
+    planId: "TIER_C",
     price: 500,
     facilities: "Up to 10 Facilities",
     features: [

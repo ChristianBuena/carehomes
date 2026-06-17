@@ -72,8 +72,13 @@ export function hasPermission(role: string, permission: Permission): boolean {
 }
 
 /**
- * Membership tier facility limits
- * MEMBER must also have an ACTIVE membership to use these
+ * Membership tier facility limits — must stay in sync with config/tiers.ts TIER_LIMITS.
+ * (Duplicated here because config/tiers.ts imports from @prisma/client which is
+ *  incompatible with the Next.js Edge runtime used by middleware.)
+ *
+ * Tier A  → 1 facility
+ * Tier B  → 3 facilities
+ * Tier C  → 10 facilities
  */
 export const TIER_FACILITY_LIMITS: Record<string, number> = {
   NONE: 0,

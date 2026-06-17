@@ -43,6 +43,16 @@ export function PricingCard({
 
     setLoading(true);
     try {
+      // If they already have a plan, direct them to the portal to upgrade/downgrade safely
+      if (currentPlan) {
+        const res = await fetch("/api/stripe/portal", { method: "POST" });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      }
+
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -69,10 +79,8 @@ export function PricingCard({
     ? "Redirecting..."
     : isCurrentPlan
     ? "Active Plan"
-    : currentPlan && thisWeight > currentWeight
-    ? "Upgrade Plan"
-    : currentPlan && thisWeight < currentWeight
-    ? "Downgrade Plan"
+    : currentPlan
+    ? "Manage Subscription"
     : ctaLabel;
 
   return (

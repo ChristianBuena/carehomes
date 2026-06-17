@@ -30,13 +30,18 @@ export function HeaderAuthActions() {
 
   if (isAuthenticated && user) {
     return (
-      <div className="hidden lg:flex items-center gap-4">
-        <div className="flex flex-col items-end mr-2">
-          <span className="text-sm font-medium text-white">{user.name || user.email}</span>
-          <span className="text-xs bg-[var(--color-secondary)] text-white px-2 rounded-full mt-0.5">
+      <div className="hidden lg:flex items-center gap-3">
+        <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/15 bg-white/5">
+          <span className="text-sm font-medium text-white leading-none whitespace-nowrap">
+            {user.name || user.email}
+          </span>
+          <span className="text-[10px] bg-[var(--color-secondary)] text-white px-2.5 py-1 rounded-full uppercase font-bold tracking-wider leading-none shadow-sm">
             {user.role}
           </span>
         </div>
+
+        <div className="h-6 w-px bg-white/15" />
+
         <Button
           asChild
           variant="ghost"

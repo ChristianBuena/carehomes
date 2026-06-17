@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasPermission } from "@/lib/permissions";
 import NewRebuttalForm from "./NewRebuttalForm";
 
 export const metadata = {
@@ -15,8 +16,13 @@ export default async function NewRebuttalPage() {
     redirect("/login");
   }
 
-  // Fetch ALL facilities so the member can submit a rebuttal for any of them
+  if (!hasPermission(user.role, "submit_rebuttal") || user.role === "ADMIN") {
+    redirect("/dashboard");
+  }
+
+  // Fetch only facilities owned by the member
   const facilities = await prisma.facility.findMany({
+    where: { createdById: user.userId },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

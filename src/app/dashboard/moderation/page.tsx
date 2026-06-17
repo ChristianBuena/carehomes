@@ -74,7 +74,7 @@ export default async function ModerationPage() {
               </span>
             </div>
             <Link
-              href="/moderation/access-review"
+              href="/dashboard/moderation/access-review"
               className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shrink-0 shadow-sm hover:border-[var(--color-secondary)] transition-colors"
             >
               <ShieldCheck className="h-4 w-4 text-[var(--color-secondary)]" />

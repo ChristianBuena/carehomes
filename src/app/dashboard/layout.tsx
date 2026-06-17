@@ -12,15 +12,23 @@ import {
   LogOut,
   Menu,
   X,
+  ClipboardCheck,
+  Users,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { hasPermission } from "@/lib/permissions";
 
 const NAV_LINKS = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "My Rebuttals", href: "/dashboard/rebuttals", icon: FileText },
-  { name: "My Facilities", href: "/dashboard/facilities", icon: Building2 },
-  { name: "Member Library", href: "/dashboard/library", icon: BookOpen },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Dashboard", href: "/dashboard", icon: Home, permission: null },
+  { name: "My Facilities", href: "/dashboard/facilities", icon: Building2, permission: "view_own_facilities" },
+  { name: "My Rebuttals", href: "/dashboard/rebuttals", icon: FileText, permission: "view_own_rebuttals" },
+  { name: "Member Library", href: "/dashboard/library", icon: BookOpen, permission: "view_own_facilities" }, // keeping library for members
+  { name: "Moderation Queue", href: "/dashboard/moderation", icon: ClipboardCheck, permission: "moderate_rebuttals" },
+  { name: "Manage Users", href: "/dashboard/users", icon: Users, permission: "manage_users" },
+  { name: "Manage Facilities", href: "/dashboard/facilities/manage", icon: Settings, permission: "manage_facilities" },
+  { name: "Memberships", href: "/dashboard/memberships", icon: CreditCard, permission: "manage_memberships" },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings, permission: null },
 ];
 
 export default function DashboardLayout({
@@ -35,6 +43,18 @@ export default function DashboardLayout({
 
   const currentLink = NAV_LINKS.find((link) => link.href === pathname);
   const pageTitle = currentLink ? currentLink.name : "Dashboard";
+
+  // Filter based on permission and override ADMIN hiding
+  const visibleNavItems = NAV_LINKS.filter((item) => {
+    if (!user || !user.role) return item.permission === null;
+    
+    // Hide these explicitly for ADMIN even though they technically have the permission
+    if (user.role === "ADMIN" && (item.name === "My Facilities" || item.name === "My Rebuttals" || item.name === "Member Library")) {
+      return false;
+    }
+
+    return item.permission === null || hasPermission(user.role, item.permission as any);
+  });
 
   const handleLogout = async () => {
     try {
@@ -100,7 +120,7 @@ export default function DashboardLayout({
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {NAV_LINKS.map((link) => {
+          {visibleNavItems.map((link) => {
             const isActive = pathname === link.href;
             const Icon = link.icon;
             return (

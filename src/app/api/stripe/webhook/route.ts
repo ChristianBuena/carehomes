@@ -62,12 +62,16 @@ export async function POST(req: Request) {
             plan: tier,
             status: "ACTIVE",
             maxFacilities: tierConfig[tier].maxFacilities,
+            stripeCustomerId: session.customer as string,
+            stripeSubscriptionId: session.subscription as string,
           },
           create: {
             userId,
             plan: tier,
             status: "ACTIVE",
             maxFacilities: tierConfig[tier].maxFacilities,
+            stripeCustomerId: session.customer as string,
+            stripeSubscriptionId: session.subscription as string,
           },
         });
 

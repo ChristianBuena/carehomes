@@ -5,8 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CheckCircle } from "lucide-react";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string }>;
+}) {
+  const { success } = await searchParams;
   const user = await getUserFromRequest();
 
   if (!user) {
@@ -52,6 +58,15 @@ export default async function DashboardPage() {
             </Button>
           )}
         </header>
+
+        {success === "true" && (
+          <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/30 text-[var(--color-success)] px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+            <CheckCircle className="h-5 w-5 shrink-0 mt-0.5" />
+            <span>
+              <strong>Payment successful!</strong> Your subscription has been processed. Your membership status will update momentarily.
+            </span>
+          </div>
+        )}
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 gap-4">

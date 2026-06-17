@@ -44,17 +44,22 @@ function clearCache() {
 }
 
 export function useAuth() {
-  // Seed state from sessionStorage immediately — eliminates loading flash on
-  // back-navigation since the layout remounts but the cache is still warm.
-  const [user, setUser] = useState<AuthUser | null>(() => readCache());
-  const [loading, setLoading] = useState(() => readCache() === null);
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => readCache() !== null
-  );
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
+    // 1. Instantly use cache on mount to prevent long loading flash
+    const cached = readCache();
+    if (cached) {
+      setUser(cached);
+      setIsAuthenticated(true);
+      setLoading(false);
+    }
+
+    // 2. Re-validate with the server in the background
     async function checkAuth() {
       try {
         const res = await fetch("/api/auth/me");

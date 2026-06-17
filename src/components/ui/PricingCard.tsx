@@ -61,6 +61,20 @@ export function PricingCard({
       setLoading(false);
     }
   };
+  const planWeights: Record<string, number> = { TIER_A: 1, TIER_B: 2, TIER_C: 3 };
+  const currentWeight = currentPlan ? planWeights[currentPlan] || 0 : 0;
+  const thisWeight = planWeights[planId] || 0;
+
+  const buttonText = loading
+    ? "Redirecting..."
+    : isCurrentPlan
+    ? "Active Plan"
+    : currentPlan && thisWeight > currentWeight
+    ? "Upgrade Plan"
+    : currentPlan && thisWeight < currentWeight
+    ? "Downgrade Plan"
+    : ctaLabel;
+
   return (
     <div
       className={`relative flex flex-col p-8 rounded-2xl ${
@@ -127,7 +141,7 @@ export function PricingCard({
             : "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90"
         }`}
       >
-        {loading ? "Redirecting..." : isCurrentPlan ? "Active Plan" : ctaLabel}
+        {buttonText}
       </Button>
     </div>
   );

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
-import { FileText, ExternalLink, Clock, CheckCircle, XCircle, AlertCircle, AlertTriangle } from "lucide-react";
+import { FileText, ExternalLink, Clock, CheckCircle, XCircle, AlertCircle, AlertTriangle, Pencil } from "lucide-react";
 
 export const metadata = {
   title: "My Rebuttals — Dashboard",
@@ -36,9 +36,9 @@ const STATUS_CONFIG = {
 export default async function MyRebuttalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string }>;
+  searchParams: Promise<{ success?: string; resubmitted?: string }>;
 }) {
-  const { success } = await searchParams;
+  const { success, resubmitted } = await searchParams;
   const user = await getUserFromRequest();
   if (!user) redirect("/login");
 
@@ -81,6 +81,15 @@ export default async function MyRebuttalsPage({
           <CheckCircle className="h-5 w-5 shrink-0 mt-0.5" />
           <span>
             <strong>Rebuttal submitted!</strong> It is now pending moderation. You will see its status update here once reviewed.
+          </span>
+        </div>
+      )}
+
+      {resubmitted === "true" && (
+        <div className="bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+          <CheckCircle className="h-5 w-5 shrink-0 mt-0.5" />
+          <span>
+            <strong>Rebuttal resubmitted!</strong> Your updated rebuttal is now pending moderation review.
           </span>
         </div>
       )}
@@ -143,6 +152,18 @@ export default async function MyRebuttalsPage({
                       <FileText className="h-4 w-4" />
                       View Uploaded Document
                     </a>
+                  </div>
+                )}
+
+                {rebuttal.status === "REQUEST_FIX" && (
+                  <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
+                    <Link
+                      href={`/dashboard/rebuttals/${rebuttal.id}/edit`}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent)]/80 transition-colors"
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                      Edit &amp; Resubmit
+                    </Link>
                   </div>
                 )}
 

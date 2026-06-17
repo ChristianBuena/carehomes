@@ -23,7 +23,8 @@ import type { Rebuttal as RebuttalCardType } from "@/components/facilities/Appro
 import { Button } from "@/components/ui/button";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
-// ─── Metadata ─────────────────────────────────────────────────────────────────
+// Add getUserFromRequest import at the top
+import { getUserFromRequest } from "@/lib/auth";
 
 export async function generateMetadata({
   params,
@@ -60,6 +61,17 @@ export default async function FacilityDetailPage({
   const facility = await getFacilityBySlug(slug);
 
   if (!facility) notFound();
+
+  // Get User and Membership state for dynamic CTA buttons
+  const user = await getUserFromRequest();
+  let hasActiveMembership = false;
+  if (user) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: { membership: true },
+    });
+    hasActiveMembership = dbUser?.membership?.status === "ACTIVE";
+  }
 
   const city = facility.city ?? facility.address.split(",")[1]?.trim() ?? facility.address;
 
@@ -173,21 +185,23 @@ export default async function FacilityDetailPage({
                 asChild
                 className="h-12 px-6 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] font-semibold shadow-md group"
               >
-                <Link href="/login">
-                  Submit Rebuttal (Members)
+                <Link href={hasActiveMembership ? "/dashboard/rebuttals/new" : "/login"}>
+                  {hasActiveMembership ? "Submit Rebuttal" : "Submit Rebuttal (Members)"}
                   <ArrowRight
                     className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform"
                     aria-hidden="true"
                   />
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="h-12 px-6 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white font-semibold"
-              >
-                <Link href="/pricing">Join to Claim Facility</Link>
-              </Button>
+              {!hasActiveMembership && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-12 px-6 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white font-semibold"
+                >
+                  <Link href="/pricing">Join to Claim Facility</Link>
+                </Button>
+              )}
             </div>
           </div>
         </ResponsiveContainer>

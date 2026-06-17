@@ -42,11 +42,11 @@ async function main() {
   const freePassword = await bcrypt.hash("Free@123456", 12);
 
   const admin = await prisma.user.upsert({
-    where: { email: "admin@carehomesdocs.org" },
+    where: { email: "carehomessupport444@gmail.com" },
     update: {},
     create: {
-      name: "Sarah Mitchell",
-      email: "admin@carehomesdocs.org",
+      name: "System Admin",
+      email: "carehomessupport444@gmail.com",
       password: adminPassword,
       role: "ADMIN",
       membership: {
@@ -354,6 +354,11 @@ async function main() {
   }
 
   console.log(`✅ Rebuttals: 2 APPROVED, 1 PENDING, 1 REJECTED`);
+  console.log("-----------------------------------------");
+  console.log("Admin Account:");
+  console.log("Email: carehomessupport444@gmail.com");
+  console.log("Password: Admin@123456");
+  console.log("-----------------------------------------");
   console.log("✅ Seed complete.");
 }
 

@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/permissions";
 import {
   approveRebuttal,
   rejectRebuttal,
+  requestFixRebuttal,
 } from "@/services/moderation.service";
 
 export async function POST(req: NextRequest) {
@@ -47,19 +48,24 @@ export async function POST(req: NextRequest) {
       rebuttal = await approveRebuttal(id);
     } else if (action === "reject") {
       rebuttal = await rejectRebuttal(id);
+    } else if (action === "request_fix") {
+      rebuttal = await requestFixRebuttal(id);
     } else {
       return NextResponse.json(
-        { error: "Invalid action. Use approve or reject only." },
+        { error: "Invalid action. Use approve, reject, or request_fix." },
         { status: 400 }
       );
     }
 
+    const messages: Record<string, string> = {
+      approve: "Rebuttal approved successfully",
+      reject: "Rebuttal rejected successfully",
+      request_fix: "Fix requested — member has been notified",
+    };
+
     return NextResponse.json({
       success: true,
-      message:
-        action === "approve"
-          ? "Rebuttal approved successfully"
-          : "Rebuttal rejected successfully",
+      message: messages[action] ?? "Action completed",
       rebuttal,
     });
   } catch (error) {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface RebuttalWithRelations {
@@ -10,7 +10,7 @@ interface RebuttalWithRelations {
   title: string;
   content: string;
   status: string;
-  createdAt: string;
+  createdAt: Date | string;
   user: {
     name: string | null;
     email: string;
@@ -31,7 +31,7 @@ export function RebuttalActionCard({ rebuttal }: RebuttalActionCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAction = async (action: "approve" | "reject") => {
+  const handleAction = async (action: "approve" | "reject" | "request_fix") => {
     setIsSubmitting(true);
     setError(null);
 
@@ -49,8 +49,9 @@ export function RebuttalActionCard({ rebuttal }: RebuttalActionCardProps) {
       }
 
       router.refresh(); // Refresh the page to remove the item from the pending list
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An error occurred";
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -103,6 +104,20 @@ export function RebuttalActionCard({ rebuttal }: RebuttalActionCardProps) {
             ) : (
               <>
                 <Check className="mr-2 h-4 w-4" /> Approve
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={() => handleAction("request_fix")}
+            disabled={isSubmitting}
+            variant="outline"
+            className="flex-1 lg:flex-none border-[var(--color-warning)] text-[var(--color-warning)] hover:bg-[var(--color-warning)]/10"
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <AlertTriangle className="mr-2 h-4 w-4" /> Request Fix
               </>
             )}
           </Button>

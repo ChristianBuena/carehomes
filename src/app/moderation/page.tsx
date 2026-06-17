@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
-import { ShieldAlert, AlertCircle, ArrowLeft } from "lucide-react";
+import { ShieldAlert, AlertCircle, ArrowLeft, ShieldCheck } from "lucide-react";
 import { RebuttalActionCard } from "./RebuttalActionCard";
 
 export const metadata = {
@@ -33,6 +33,18 @@ export default async function ModerationPage() {
     orderBy: { createdAt: "asc" }, // Oldest first
   });
 
+  // Quarterly access review count
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  const reviewNeededCount = await prisma.user.count({
+    where: {
+      OR: [
+        { lastReviewedAt: null },
+        { lastReviewedAt: { lt: ninetyDaysAgo } },
+      ],
+    },
+  });
+
   return (
     <div className="bg-[var(--color-bg)] min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -54,11 +66,22 @@ export default async function ModerationPage() {
             </p>
           </div>
           
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shrink-0 shadow-sm">
-            <div className="w-2 h-2 rounded-full bg-[var(--color-warning)] animate-pulse" />
-            <span className="text-sm font-medium text-[var(--color-text)]">
-              {pendingRebuttals.length} Pending
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shrink-0 shadow-sm">
+              <div className="w-2 h-2 rounded-full bg-[var(--color-warning)] animate-pulse" />
+              <span className="text-sm font-medium text-[var(--color-text)]">
+                {pendingRebuttals.length} Pending
+              </span>
+            </div>
+            <Link
+              href="/moderation/access-review"
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shrink-0 shadow-sm hover:border-[var(--color-secondary)] transition-colors"
+            >
+              <ShieldCheck className="h-4 w-4 text-[var(--color-secondary)]" />
+              <span className="text-sm font-medium text-[var(--color-text)]">
+                {reviewNeededCount} Review{reviewNeededCount !== 1 ? "s" : ""} Needed
+              </span>
+            </Link>
           </div>
         </div>
 

@@ -20,6 +20,9 @@ export function FacilitySearch() {
       return;
     }
 
+    const currentQ = searchParams.get("q") || "";
+    if (debouncedValue === currentQ) return; // Prevent infinite loop
+
     const params = new URLSearchParams(searchParams.toString());
     if (debouncedValue) {
       params.set("q", debouncedValue);

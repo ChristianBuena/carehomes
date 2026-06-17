@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createFacility, getFacilities } from "@/services/facility.service";
 import { verifyToken } from "@/lib/jwt";
-import { hasPermission } from "@/lib/permissions";
+import { hasPermission, canClaimFacility } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { canCreateFacility } from "@/config/tiers";
 
 export async function GET() {
   try {
@@ -33,8 +32,8 @@ export async function POST(req: NextRequest) {
     const user = await verifyToken(token);
     const userId = user.userId;
 
-    // ROLE PERMISSION CHECK
-    if (!hasPermission(user.role, "manage_facilities")) {
+    // PERMISSION CHECK — MEMBERs may claim; ADMINs use manage_facilities
+    if (!hasPermission(user.role, "claim_facility")) {
       return NextResponse.json(
         { error: "Forbidden: insufficient permissions" },
         { status: 403 }
@@ -57,7 +56,7 @@ export async function POST(req: NextRequest) {
       where: { createdById: userId },
     });
 
-    if (!canCreateFacility(membership.plan, currentCount)) {
+    if (!canClaimFacility(membership.plan, currentCount)) {
       return NextResponse.json(
         { error: "Tier limit reached" },
         { status: 403 }

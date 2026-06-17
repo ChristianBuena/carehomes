@@ -25,6 +25,7 @@ import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 // Add getUserFromRequest import at the top
 import { getUserFromRequest } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 
 import { ClaimFacilityButton } from "@/components/facilities/ClaimFacilityButton";
 
@@ -81,6 +82,19 @@ export default async function FacilityDetailPage({
   } else {
     isClaimedByOther = facility.createdById !== null;
   }
+
+  /**
+   * Submit Rebuttal is visible only when ALL conditions are met:
+   *   1. User is logged in
+   *   2. User role has submit_rebuttal permission (MEMBER only)
+   *   3. User has an ACTIVE membership
+   *   4. User owns this facility (isClaimedByCurrentUser)
+   */
+  const canSubmit =
+    !!user &&
+    hasPermission(user.role, "submit_rebuttal") &&
+    hasActiveMembership &&
+    isClaimedByCurrentUser;
 
   const city = facility.city ?? facility.address.split(",")[1]?.trim() ?? facility.address;
 
@@ -190,18 +204,20 @@ export default async function FacilityDetailPage({
 
             {/* Right: CTA */}
             <div className="shrink-0 flex flex-col sm:flex-row gap-3">
-              <Button
-                asChild
-                className="h-12 px-6 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] font-semibold shadow-md group"
-              >
-                <Link href={hasActiveMembership ? "/dashboard/rebuttals/new" : "/login"}>
-                  {hasActiveMembership ? "Submit Rebuttal" : "Submit Rebuttal (Members)"}
-                  <ArrowRight
-                    className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform"
-                    aria-hidden="true"
-                  />
-                </Link>
-              </Button>
+              {canSubmit && (
+                <Button
+                  asChild
+                  className="h-12 px-6 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] font-semibold shadow-md group"
+                >
+                  <Link href="/dashboard/rebuttals/new">
+                    Submit Rebuttal
+                    <ArrowRight
+                      className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform"
+                      aria-hidden="true"
+                    />
+                  </Link>
+                </Button>
+              )}
               <ClaimFacilityButton 
                 facilityId={facility.id} 
                 isClaimedByCurrentUser={isClaimedByCurrentUser}

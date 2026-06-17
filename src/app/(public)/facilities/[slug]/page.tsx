@@ -26,6 +26,8 @@ import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 // Add getUserFromRequest import at the top
 import { getUserFromRequest } from "@/lib/auth";
 
+import { ClaimFacilityButton } from "@/components/facilities/ClaimFacilityButton";
+
 export async function generateMetadata({
   params,
 }: {
@@ -65,12 +67,19 @@ export default async function FacilityDetailPage({
   // Get User and Membership state for dynamic CTA buttons
   const user = await getUserFromRequest();
   let hasActiveMembership = false;
+  let isClaimedByCurrentUser = false;
+  let isClaimedByOther = false;
+  
   if (user) {
     const dbUser = await prisma.user.findUnique({
       where: { id: user.userId },
       include: { membership: true },
     });
     hasActiveMembership = dbUser?.membership?.status === "ACTIVE";
+    isClaimedByCurrentUser = facility.createdById === user.userId;
+    isClaimedByOther = facility.createdById !== null && facility.createdById !== user.userId;
+  } else {
+    isClaimedByOther = facility.createdById !== null;
   }
 
   const city = facility.city ?? facility.address.split(",")[1]?.trim() ?? facility.address;
@@ -193,15 +202,12 @@ export default async function FacilityDetailPage({
                   />
                 </Link>
               </Button>
-              {!hasActiveMembership && (
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-12 px-6 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white font-semibold"
-                >
-                  <Link href="/pricing">Join to Claim Facility</Link>
-                </Button>
-              )}
+              <ClaimFacilityButton 
+                facilityId={facility.id} 
+                isClaimedByCurrentUser={isClaimedByCurrentUser}
+                hasActiveMembership={hasActiveMembership}
+                isClaimedByOther={isClaimedByOther}
+              />
             </div>
           </div>
         </ResponsiveContainer>
@@ -246,7 +252,7 @@ export default async function FacilityDetailPage({
         />
 
         {/* 2. Approved Rebuttals */}
-        <ApprovedRebuttalsSection rebuttals={publishedRebuttals} />
+        <ApprovedRebuttalsSection rebuttals={publishedRebuttals} hasActiveMembership={hasActiveMembership} />
       </ResponsiveContainer>
     </div>
     </>

@@ -240,6 +240,136 @@ async function main() {
       description:
         "Harbor Lights Senior Living is a large assisted living community located near the Long Beach waterfront. Licensed for 80 residents, the facility offers three distinct levels of care — independent, assisted, and memory care — within a single campus. Amenities include a rooftop terrace, on-site physical therapy, weekly group outings, and a 24-hour concierge service.",
     },
+    {
+      slug: "sunrise-care-home",
+      name: "Sunrise Care Home",
+      address: "2301 Broadway St, Sacramento, CA 95818",
+      city: "Sacramento",
+      county: "Sacramento",
+      facilityNumber: "217004631",
+      capacity: 6,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/217004631",
+      description:
+        "Sunrise Care Home is a six-bed residential facility in the heart of Sacramento offering round-the-clock personal care for seniors with complex needs. Staff are trained in Alzheimer's care, fall prevention, and hospice support coordination. The home maintains close relationships with local medical providers for streamlined care transitions.",
+    },
+    {
+      slug: "mission-hills-senior-care",
+      name: "Mission Hills Senior Care",
+      address: "774 Mission Hills Rd, Oceanside, CA 92057",
+      city: "Oceanside",
+      county: "San Diego",
+      facilityNumber: "374801002",
+      capacity: 25,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/374801002",
+      description:
+        "Mission Hills Senior Care is a mid-sized RCFE in Oceanside providing assisted living and respite care services. The facility features an activity room, enclosed garden, and weekly wellness programming. Our staff-to-resident ratio exceeds the state minimum to ensure individualized attention for every resident.",
+    },
+    {
+      slug: "sierra-pines-care-home",
+      name: "Sierra Pines Care Home",
+      address: "510 Pine Cone Ln, Redding, CA 96001",
+      city: "Redding",
+      county: "Shasta",
+      facilityNumber: "450200918",
+      capacity: 6,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/450200918",
+      description:
+        "Sierra Pines Care Home is a small family-operated RCFE in Redding offering personalized memory care and daily living assistance. Our home-like setting promotes dignity, independence, and social connection. We provide home-cooked meals, sensory activities, and regular family communication updates.",
+    },
+    {
+      slug: "pacific-grove-elder-care",
+      name: "Pacific Grove Elder Care",
+      address: "330 Lighthouse Ave, Pacific Grove, CA 93950",
+      city: "Pacific Grove",
+      county: "Monterey",
+      facilityNumber: "272005744",
+      capacity: 12,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/272005744",
+      description:
+        "Pacific Grove Elder Care is a twelve-bed RCFE steps from the Monterey Bay shoreline. We specialize in care for adults with Parkinson's disease and mobility challenges. The facility is fully ADA accessible with wide corridors, grab bars, and a therapy room for daily range-of-motion exercises.",
+    },
+    {
+      slug: "inland-valley-senior-home",
+      name: "Inland Valley Senior Home",
+      address: "1789 Magnolia Ave, Riverside, CA 92503",
+      city: "Riverside",
+      county: "Riverside",
+      facilityNumber: "336100274",
+      capacity: 40,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/336100274",
+      description:
+        "Inland Valley Senior Home is a licensed 40-bed RCFE in Riverside serving residents with varying levels of care needs. The facility offers structured day programs, medication management, and coordination with visiting physicians. Its central Riverside location makes it convenient for family visits and specialist appointments.",
+    },
+    {
+      slug: "bay-area-care-residence",
+      name: "Bay Area Care Residence",
+      address: "403 Hillside Blvd, Daly City, CA 94014",
+      city: "Daly City",
+      county: "San Mateo",
+      facilityNumber: "081300629",
+      capacity: 6,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/081300629",
+      description:
+        "Bay Area Care Residence is a six-bed RCFE in Daly City providing high-quality residential care for Filipino-American and other Pacific Islander seniors. Our Filipino-speaking staff deliver culturally competent care and traditional meal options. We maintain strong community ties with local churches and senior centers.",
+    },
+    {
+      slug: "central-coast-care-villa",
+      name: "Central Coast Care Villa",
+      address: "225 El Camino Real, San Luis Obispo, CA 93401",
+      city: "San Luis Obispo",
+      county: "San Luis Obispo",
+      facilityNumber: "407100385",
+      capacity: 18,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/407100385",
+      description:
+        "Central Coast Care Villa is a well-established RCFE in San Luis Obispo offering assisted living in a relaxed coastal atmosphere. Our 18-bed facility provides three levels of care, weekly outings, and a robust volunteer visitor program. Staff undergo annual dementia care certification to maintain high standards of service.",
+    },
+    {
+      slug: "antelope-valley-senior-living",
+      name: "Antelope Valley Senior Living",
+      address: "44210 Sierra Hwy, Lancaster, CA 93534",
+      city: "Lancaster",
+      county: "Los Angeles",
+      facilityNumber: "194500137",
+      capacity: 50,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/194500137",
+      description:
+        "Antelope Valley Senior Living is a 50-bed assisted living facility serving the high desert communities of Lancaster and Palmdale. The facility offers spacious private and shared suites, a secure outdoor courtyard, and daily social activities. Our team includes a full-time activities director and licensed nurses available on-call around the clock.",
+    },
+    {
+      slug: "napa-valley-care-home",
+      name: "Napa Valley Care Home",
+      address: "887 Silverado Trail, Napa, CA 94558",
+      city: "Napa",
+      county: "Napa",
+      facilityNumber: "289100492",
+      capacity: 6,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/289100492",
+      description:
+        "Napa Valley Care Home is a serene six-bed RCFE nestled among the vineyards of the Napa Valley. We specialize in care for seniors requiring assistance with activities of daily living in a peaceful, rural setting. Residents enjoy garden therapy, farm-to-table meals, and a strong social program connecting them with the wider Napa community.",
+    },
+    {
+      slug: "stockton-senior-care-center",
+      name: "Stockton Senior Care Center",
+      address: "1122 Pacific Ave, Stockton, CA 95204",
+      city: "Stockton",
+      county: "San Joaquin",
+      facilityNumber: "390200873",
+      capacity: 35,
+      ccldLink:
+        "https://www.ccld.dss.ca.gov/carefacilitysearch/FacDetail/390200873",
+      description:
+        "Stockton Senior Care Center is a 35-bed RCFE in the heart of the San Joaquin Valley offering comprehensive assisted living services. Our multilingual team speaks Spanish, Tagalog, and Punjabi to serve Stockton's diverse senior population. The facility features a large common room, outdoor walking path, and regular health screenings coordinated with local clinics.",
+    },
   ];
 
   const facilities: { slug: string; id: string }[] = [];
@@ -259,7 +389,7 @@ async function main() {
       },
       create: {
         ...facilityData,
-        createdById: admin.id,
+        // createdById: admin.id,
       },
     });
     facilities.push({ slug: facility.slug, id: facility.id });

@@ -30,6 +30,7 @@ export type Rebuttal = {
 interface ApprovedRebuttalsSectionProps {
   rebuttals?: Rebuttal[];
   isLoading?: boolean;
+  hasActiveMembership?: boolean;
 }
 
 function RebuttalCard({ rebuttal }: { rebuttal: Rebuttal }) {
@@ -122,6 +123,7 @@ function RebuttalCard({ rebuttal }: { rebuttal: Rebuttal }) {
 export function ApprovedRebuttalsSection({
   rebuttals,
   isLoading,
+  hasActiveMembership,
 }: ApprovedRebuttalsSectionProps) {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
@@ -146,9 +148,12 @@ export function ApprovedRebuttalsSection({
         </h2>
         <EmptyState
           variant="no-rebuttals"
-          action={{ label: "Become a Member", href: "/pricing" }}
+          action={{
+            label: hasActiveMembership ? "Submit Rebuttal" : "Become a Member",
+            href: hasActiveMembership ? "/dashboard/rebuttals/new" : "/pricing",
+          }}
         />
-        <MemberCTA />
+        <MemberCTA hasActiveMembership={hasActiveMembership} />
       </section>
     );
   }
@@ -186,12 +191,14 @@ export function ApprovedRebuttalsSection({
         ))}
       </div>
 
-      <MemberCTA />
+      <MemberCTA hasActiveMembership={hasActiveMembership} />
     </section>
   );
 }
 
-function MemberCTA() {
+function MemberCTA({ hasActiveMembership }: { hasActiveMembership?: boolean }) {
+  if (hasActiveMembership) return null; // Don't show the "Become a Member" banner to existing members
+
   return (
     <div className="mt-8 p-6 bg-[var(--color-bg)] rounded-xl border border-[var(--color-border)] text-center flex flex-col items-center justify-center gap-4">
       <p className="text-[var(--color-text)] font-medium">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -116,15 +116,22 @@ export function FacilityFilters({ onFilterChange }: FacilityFiltersProps) {
   const searchParams = useSearchParams();
   const filters = readFiltersFromParams(searchParams);
 
+  // Store searchParams in a ref so pushParams has a stable identity.
+  // Reading from the ref inside the callback ensures we always use the latest
+  // URL params without listing `searchParams` as a dep (which would recreate
+  // the callback on every URL change and cause an infinite re-render loop).
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+
   const pushParams = useCallback(
     (updater: (p: URLSearchParams) => void) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParamsRef.current.toString());
       updater(params);
       params.delete("page"); // reset pagination on filter change
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       onFilterChange?.();
     },
-    [searchParams, pathname, router, onFilterChange]
+    [pathname, router, onFilterChange]
   );
 
   // County multi-select

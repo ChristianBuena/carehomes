@@ -1,12 +1,34 @@
 import { prisma } from "@/lib/prisma";
 
+// ── Filters ──────────────────────────────────────────────────────────────────
+
+export interface FacilityFilters {
+  query?: string;
+  counties?: string[];
+  status?: "all" | "active" | "inactive";
+  capacity?: "any" | "lt10" | "10-25" | "26-50" | "50plus";
+  hasRebuttals?: boolean;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function buildCapacityFilter(capacity?: FacilityFilters["capacity"]) {
+  if (!capacity || capacity === "any") return undefined;
+  if (capacity === "lt10") return { lt: 10 };
+  if (capacity === "10-25") return { gte: 10, lte: 25 };
+  if (capacity === "26-50") return { gte: 26, lte: 50 };
+  if (capacity === "50plus") return { gt: 50 };
+  return undefined;
+}
+
+// ── Service Functions ─────────────────────────────────────────────────────────
+
 export async function createFacility(data: {
   name: string;
   address: string;
   description?: string;
   createdById?: string;
 }) {
-  // Auto-generate a slug from name + timestamp suffix for uniqueness
   const baseSlug = data.name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -24,19 +46,47 @@ export async function createFacility(data: {
   });
 }
 
-export async function getFacilities(filters?: { query?: string }) {
-  return prisma.facility.findMany({
-    where: filters?.query ? {
-      OR: [
-        { name: { contains: filters.query, mode: "insensitive" } },
-        { address: { contains: filters.query, mode: "insensitive" } },
-        { city: { contains: filters.query, mode: "insensitive" } },
-      ],
-    } : undefined,
+export async function getFacilities(filters?: FacilityFilters) {
+  const capacityFilter = buildCapacityFilter(filters?.capacity);
+
+  const where = {
+    AND: [
+      // Text search
+      filters?.query
+        ? {
+            OR: [
+              { name: { contains: filters.query, mode: "insensitive" as const } },
+              { address: { contains: filters.query, mode: "insensitive" as const } },
+              { city: { contains: filters.query, mode: "insensitive" as const } },
+            ],
+          }
+        : undefined,
+      // County multi-select
+      filters?.counties && filters.counties.length > 0
+        ? { county: { in: filters.counties } }
+        : undefined,
+      // Capacity range
+      capacityFilter ? { capacity: capacityFilter } : undefined,
+      // Has approved rebuttals
+      filters?.hasRebuttals
+        ? { rebuttals: { some: { status: "APPROVED" } } }
+        : undefined,
+    ].filter(Boolean) as object[],
+  };
+
+  const facilities = await prisma.facility.findMany({
+    where: Object.keys(where.AND).length > 0 ? where : undefined,
     include: {
-      createdBy: true,
+      createdBy: { select: { id: true, name: true, email: true } },
+      _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
     },
+    orderBy: { name: "asc" },
   });
+
+  return facilities.map((f) => ({
+    ...f,
+    rebuttalsCount: f._count.rebuttals,
+  }));
 }
 
 export async function getFacilityBySlug(slug: string) {
@@ -44,6 +94,7 @@ export async function getFacilityBySlug(slug: string) {
     where: { slug },
     include: {
       createdBy: true,
+      _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
     },
   });
 }

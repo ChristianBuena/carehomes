@@ -11,16 +11,50 @@ import { buildMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = buildMetadata({
   title: "Facility Directory",
-  description: "Browse licensed California care facilities. All listings include deep links to official CCLD records and any published member rebuttals.",
+  description:
+    "Browse licensed California care facilities. All listings include deep links to official CCLD records and any published member rebuttals.",
 });
 
 export default async function FacilitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    county?: string | string[];
+    status?: string;
+    capacity?: string;
+    rebuttals?: string;
+  }>;
 }) {
-  const { q } = await searchParams;
-  const dbFacilities = await getFacilities({ query: q });
+  const params = await searchParams;
+
+  // Normalise county — can be a single string or an array
+  const counties = params.county
+    ? Array.isArray(params.county)
+      ? params.county
+      : [params.county]
+    : [];
+
+  const rawStatus = params.status;
+  const status =
+    rawStatus === "active" || rawStatus === "inactive" ? rawStatus : "all";
+
+  const rawCapacity = params.capacity;
+  const capacity =
+    rawCapacity === "lt10" ||
+    rawCapacity === "10-25" ||
+    rawCapacity === "26-50" ||
+    rawCapacity === "50plus"
+      ? rawCapacity
+      : "any";
+
+  const dbFacilities = await getFacilities({
+    query: params.q,
+    counties,
+    status,
+    capacity,
+    hasRebuttals: params.rebuttals === "1",
+  });
 
   const facilities = dbFacilities.map((f) => ({
     id: f.id,
@@ -32,7 +66,7 @@ export default async function FacilitiesPage({
     capacity: f.capacity ?? 0,
     ccldLink: f.ccldLink ?? "",
     status: "active" as const,
-    rebuttalsCount: 0,
+    rebuttalsCount: f.rebuttalsCount,
     lastUpdated: f.updatedAt.toISOString(),
   }));
 
@@ -45,7 +79,8 @@ export default async function FacilitiesPage({
             Facility Directory
           </h1>
           <p className="text-lg text-[var(--color-surface)]/80 max-w-2xl">
-            Browse licensed California care facilities. All listings include deep links to official CCLD records.
+            Browse licensed California care facilities. All listings include
+            deep links to official CCLD records.
           </p>
         </ResponsiveContainer>
       </header>
@@ -53,7 +88,10 @@ export default async function FacilitiesPage({
       {/* Disclaimer */}
       <ResponsiveContainer className="mt-6">
         <div className="flex items-start gap-3 bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/30 text-[var(--color-text)] px-4 py-3 rounded-lg text-sm">
-          <AlertCircle className="h-4 w-4 text-[var(--color-warning)] shrink-0 mt-0.5" aria-hidden="true" />
+          <AlertCircle
+            className="h-4 w-4 text-[var(--color-warning)] shrink-0 mt-0.5"
+            aria-hidden="true"
+          />
           <span>
             Data may not be current. Always verify facility status at{" "}
             <a
@@ -73,7 +111,11 @@ export default async function FacilitiesPage({
         {/* Search + mobile filter toggle row */}
         <div className="flex gap-3 mb-8">
           <div className="flex-1">
-            <Suspense fallback={<div className="h-12 w-full rounded-xl bg-[var(--color-border)]/50 animate-pulse" />}>
+            <Suspense
+              fallback={
+                <div className="h-12 w-full rounded-xl bg-[var(--color-border)]/50 animate-pulse" />
+              }
+            >
               <FacilitySearch />
             </Suspense>
           </div>
@@ -109,7 +151,10 @@ function GridSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} className="h-64 rounded-xl bg-[var(--color-border)]/40 animate-pulse" />
+        <div
+          key={i}
+          className="h-64 rounded-xl bg-[var(--color-border)]/40 animate-pulse"
+        />
       ))}
     </div>
   );

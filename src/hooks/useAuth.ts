@@ -11,36 +11,80 @@ export type AuthUser = {
     id: string;
     status: string;
     plan: string;
-    nextBillingDate: Date | null;
+    // Comes as ISO string from JSON — not a Date object
+    nextBillingDate: string | null;
   } | null;
 };
 
+const CACHE_KEY = "auth_user_cache";
+
+function readCache(): AuthUser | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? (JSON.parse(raw) as AuthUser) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(user: AuthUser) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(user));
+  } catch {
+    // ignore (private browsing, quota exceeded)
+  }
+}
+
+function clearCache() {
+  try {
+    sessionStorage.removeItem(CACHE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 export function useAuth() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Seed state from sessionStorage immediately — eliminates loading flash on
+  // back-navigation since the layout remounts but the cache is still warm.
+  const [user, setUser] = useState<AuthUser | null>(() => readCache());
+  const [loading, setLoading] = useState(() => readCache() === null);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => readCache() !== null
+  );
 
   useEffect(() => {
+    let cancelled = false;
+
     async function checkAuth() {
       try {
         const res = await fetch("/api/auth/me");
+        if (cancelled) return;
+
         if (res.ok) {
           const data: AuthUser = await res.json();
           setUser(data);
           setIsAuthenticated(true);
+          writeCache(data);
         } else {
           setUser(null);
           setIsAuthenticated(false);
+          clearCache();
         }
-      } catch (error) {
-        setUser(null);
-        setIsAuthenticated(false);
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+          setIsAuthenticated(false);
+          clearCache();
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     checkAuth();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return { user, loading, isAuthenticated };

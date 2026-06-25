@@ -420,7 +420,7 @@ async function main() {
   const rebuttalSeeds = [
     {
       id: "seed-rebuttal-001",
-      title: "Response to Staffing Ratio Citation — August 2025",
+      title: "Response to Staffing Ratio Citation — June 2025",
       content:
         "Our facility respectfully submits this rebuttal to address the cited deficiency. Our records demonstrate that staffing schedules met the required minimum ratios at all times during the survey period. The citation references a brief overlap period during a shift transition, which is accounted for in our supervisor coverage policy. A corrective action memo was issued to all staff immediately following the survey, and our staffing coordinator now performs twice-daily headcount audits to ensure ongoing compliance with Title 22 §87411.",
       status: "APPROVED" as const,

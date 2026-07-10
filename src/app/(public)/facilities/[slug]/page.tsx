@@ -25,7 +25,7 @@ import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 // Add getUserFromRequest import at the top
 import { getUserFromRequest } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
+import { hasPermission, canClaimFacility } from "@/lib/permissions";
 
 import { ClaimFacilityButton } from "@/components/facilities/ClaimFacilityButton";
 
@@ -70,15 +70,23 @@ export default async function FacilityDetailPage({
   let hasActiveMembership = false;
   let isClaimedByCurrentUser = false;
   let isClaimedByOther = false;
+  let hasReachedLimit = false;
   
   if (user) {
     const dbUser = await prisma.user.findUnique({
       where: { id: user.userId },
-      include: { membership: true },
+      include: { 
+        membership: true,
+        _count: { select: { createdFacilities: true } }
+      },
     });
     hasActiveMembership = dbUser?.membership?.status === "ACTIVE";
     isClaimedByCurrentUser = facility.createdById === user.userId;
     isClaimedByOther = facility.createdById !== null && facility.createdById !== user.userId;
+
+    if (hasActiveMembership && dbUser?.membership) {
+      hasReachedLimit = !canClaimFacility(dbUser.membership.plan, dbUser._count.createdFacilities);
+    }
   } else {
     isClaimedByOther = facility.createdById !== null;
   }
@@ -223,6 +231,7 @@ export default async function FacilityDetailPage({
                 isClaimedByCurrentUser={isClaimedByCurrentUser}
                 hasActiveMembership={hasActiveMembership}
                 isClaimedByOther={isClaimedByOther}
+                hasReachedLimit={hasReachedLimit}
               />
             </div>
           </div>

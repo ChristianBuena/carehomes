@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     if (!canClaimFacility(membership.plan, currentCount)) {
       return NextResponse.json(
-        { error: "Tier limit reached" },
+        { error: "Facility limit reached — upgrade your plan to claim more facilities." },
         { status: 403 }
       );
     }

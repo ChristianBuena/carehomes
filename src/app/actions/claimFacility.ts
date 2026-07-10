@@ -3,7 +3,7 @@
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { canCreateFacility } from "@/config/tiers";
+import { canClaimFacility } from "@/lib/permissions";
 
 export async function claimFacility(facilityId: string) {
   try {
@@ -25,8 +25,8 @@ export async function claimFacility(facilityId: string) {
       where: { createdById: user.userId },
     });
 
-    if (!canCreateFacility(membership.plan, currentCount)) {
-      return { success: false, error: "You have reached the maximum number of facilities for your current tier." };
+    if (!canClaimFacility(membership.plan, currentCount)) {
+      return { success: false, error: "Facility limit reached — upgrade your plan to claim more facilities." };
     }
 
     // Check facility existence and ownership

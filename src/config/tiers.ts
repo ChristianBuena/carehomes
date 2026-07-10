@@ -19,16 +19,6 @@ export const TIER_LIMITS: Record<MembershipPlan, number> = {
 };
 
 /**
- * Check if user can claim/create another facility given their plan and current count.
- */
-export function canCreateFacility(
-  plan: MembershipPlan,
-  currentCount: number
-): boolean {
-  return currentCount < TIER_LIMITS[plan];
-}
-
-/**
  * Get remaining facility slots for a user.
  */
 export function getRemainingSlots(

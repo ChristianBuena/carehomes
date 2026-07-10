@@ -6,9 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Users, Building2, FileText, ClipboardCheck, Settings, CreditCard, PlusCircle } from "lucide-react";
-import { hasPermission } from "@/lib/permissions";
-import { canCreateFacility } from "@/config/tiers";
-
+import { hasPermission, canClaimFacility } from "@/lib/permissions";
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -70,7 +68,7 @@ export default async function DashboardPage({
     ]);
   }
 
-  const canClaim = membership && hasActiveMembership ? canCreateFacility(membership.plan, facilityCount) : false;
+  const canClaim = membership && hasActiveMembership ? canClaimFacility(membership.plan, facilityCount) : false;
 
   return (
     <div className="bg-[var(--color-bg)] min-h-screen py-12 px-4 sm:px-6 lg:px-8">

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getUserFromRequest } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { Settings as SettingsIcon, User, Mail, Shield, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +12,9 @@ export const metadata = {
 export default async function SettingsPage() {
   const user = await getUserFromRequest();
   if (!user) redirect("/login");
+
+  const dbUser = await prisma.user.findUnique({ where: { id: user.userId } });
+  if (!dbUser) redirect("/login");
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
@@ -42,7 +46,7 @@ export default async function SettingsPage() {
                 <input
                   type="text"
                   disabled
-                  defaultValue={user.name || ""}
+                  defaultValue={dbUser.name || ""}
                   className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md text-[var(--color-text)] text-sm cursor-not-allowed"
                 />
               </div>
@@ -56,7 +60,7 @@ export default async function SettingsPage() {
                 <input
                   type="email"
                   disabled
-                  defaultValue={user.email}
+                  defaultValue={dbUser.email}
                   className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md text-[var(--color-text)] text-sm cursor-not-allowed"
                 />
               </div>

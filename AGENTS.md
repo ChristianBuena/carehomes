@@ -6,8 +6,6 @@ CareHomesSupportDocs.org is a nonprofit membership platform helping licensed Cal
 operators manage, submit, and publish rebuttals to regulatory citations (CCLD) in a compliant,
 transparent way.
 
-Current focus: **CAR-6 Public Website** — building all public-facing pages and UI.
-
 ---
 
 ## Tech Stack

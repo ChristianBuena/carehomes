@@ -23,7 +23,7 @@ export const sendEmail = async ({
 }: SendEmailParams) => {
   try {
     await transporter.sendMail({
-      from: `CareHomes OTP <${process.env.EMAIL_USER}>`,
+      from: `CareHomesSupportDocs.org <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,

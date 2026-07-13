@@ -78,6 +78,7 @@ model User {
   moderatedRebuttals Rebuttal[] @relation("ModeratedRebuttals")
 
   createdFacilities Facility[]
+  citationDeadlines CitationDeadline[]
 
   @@index([email])
   @@index([organizationId])
@@ -198,4 +199,24 @@ model MfaOtp {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+//
+// CITATION DEADLINE SYSTEM
+//
+
+model CitationDeadline {
+  id         String   @id @default(cuid())
+  citationId String
+  dueDate    DateTime
+  notes      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // OWNER
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

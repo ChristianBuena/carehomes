@@ -43,11 +43,11 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await hashPassword(password);
 
-    const user = await prisma.user.create({
+    // 1. Create Organization first (one per account at signup)
+    const organization = await prisma.organization.create({
       data: {
-        name,
-        email,
-        password: hashedPassword,
+        name: name || email,
+        // 2. Create Membership scoped to the org (not the user)
         membership: {
           create: {
             plan: 'NONE',
@@ -55,8 +55,15 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-      include: {
-        membership: true,
+    });
+
+    // 3. Create User linked to the Organization
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        organizationId: organization.id,
       },
     });
 

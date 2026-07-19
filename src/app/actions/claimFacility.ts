@@ -3,7 +3,7 @@
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { canCreateFacility } from "@/config/tiers";
+import { canClaimFacility } from "@/lib/permissions";
 
 export async function claimFacility(facilityId: string) {
   try {
@@ -13,20 +13,20 @@ export async function claimFacility(facilityId: string) {
     }
 
     const membership = await prisma.membership.findUnique({
-      where: { userId: user.userId },
+      where: { organizationId: user.orgId },
     });
 
     if (!membership || membership.status !== "ACTIVE") {
       return { success: false, error: "You must have an active membership to claim a facility." };
     }
 
-    // Check quota
+    // Check quota (against org, not user)
     const currentCount = await prisma.facility.count({
-      where: { createdById: user.userId },
+      where: { organizationId: user.orgId },
     });
 
-    if (!canCreateFacility(membership.plan, currentCount)) {
-      return { success: false, error: "You have reached the maximum number of facilities for your current tier." };
+    if (!canClaimFacility(membership.plan, currentCount)) {
+      return { success: false, error: "Facility limit reached — upgrade your plan to claim more facilities." };
     }
 
     // Check facility existence and ownership
@@ -48,7 +48,7 @@ export async function claimFacility(facilityId: string) {
     // Claim the facility
     await prisma.facility.update({
       where: { id: facilityId },
-      data: { createdById: user.userId },
+      data: { createdById: user.userId, organizationId: user.orgId },
     });
 
     // Revalidate relevant pages

@@ -41,10 +41,10 @@ export async function POST(req: Request) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
-        const userId = session.metadata?.userId;
+        const orgId = session.metadata?.orgId;
         const priceId = session.metadata?.priceId;
 
-        if (!userId || !priceId) {
+        if (!orgId || !priceId) {
           console.error("Missing metadata in checkout session");
           return NextResponse.json({ received: true });
         }
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
         }
 
         await prisma.membership.upsert({
-          where: { userId },
+          where: { organizationId: orgId },
           update: {
             plan: tier,
             status: "ACTIVE",
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
             stripeSubscriptionId: session.subscription as string,
           },
           create: {
-            userId,
+            organizationId: orgId,
             plan: tier,
             status: "ACTIVE",
             maxFacilities: tierConfig[tier].maxFacilities,
@@ -76,12 +76,12 @@ export async function POST(req: Request) {
           },
         });
 
-        console.log("Membership activated:", userId);
+        console.log("Membership activated for org:", orgId);
 
         // SEND CONFIRMATION EMAIL
         try {
-          const user = await prisma.user.findUnique({
-            where: { id: userId },
+          const user = await prisma.user.findFirst({
+            where: { organizationId: orgId },
             select: { email: true, name: true },
           });
 

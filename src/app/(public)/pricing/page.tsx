@@ -91,7 +91,7 @@ export default async function PricingPage() {
 
   if (user) {
     const membership = await prisma.membership.findUnique({
-      where: { userId: user.userId },
+      where: { organizationId: user.orgId },
       select: { plan: true, status: true },
     });
     if (membership?.status === "ACTIVE") {

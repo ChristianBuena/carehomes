@@ -38,6 +38,23 @@ enum MembershipStatus {
 }
 
 //
+// ORGANIZATION — multi-seat owner of one membership and N facilities
+//
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  membership Membership?
+  facilities Facility[]
+
+  @@index([id])
+}
+
+//
 // USER
 //
 
@@ -52,41 +69,47 @@ model User {
   updatedAt      DateTime  @updatedAt
   lastReviewedAt DateTime?
 
-  // RELATIONS
-  membership Membership?
+  // ORGANIZATION (multi-seat)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
+  // RELATIONS
   rebuttals          Rebuttal[]
   moderatedRebuttals Rebuttal[] @relation("ModeratedRebuttals")
 
   createdFacilities Facility[]
 
   @@index([email])
+  @@index([organizationId])
 }
 
 //
 // MEMBERSHIP (STRIPE + TIERS)
+// Now owned by Organization, not User.
 //
 
 model Membership {
-  id                   String   @id @default(cuid())
-  userId               String    @unique
+  id String @id @default(cuid())
 
-  plan                 MembershipPlan @default(NONE)
-  status               MembershipStatus @default(INACTIVE)
+  // Membership belongs to the Organization
+  organizationId String @unique
 
-  maxFacilities        Int       @default(0)
+  plan   MembershipPlan   @default(NONE)
+  status MembershipStatus @default(INACTIVE)
+
+  maxFacilities Int @default(0)
 
   stripeCustomerId     String?
   stripeSubscriptionId String?
 
-  startDate            DateTime?
-  endDate              DateTime?
-  nextBillingDate      DateTime?
+  startDate       DateTime?
+  endDate         DateTime?
+  nextBillingDate DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([plan])
   @@index([status])
@@ -97,11 +120,11 @@ model Membership {
 //
 
 model Rebuttal {
-  id      String         @id @default(cuid())
-  title   String
-  content String
+  id          String         @id @default(cuid())
+  title       String
+  content     String
   documentUrl String?
-  status  RebuttalStatus @default(PENDING)
+  status      RebuttalStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -142,9 +165,13 @@ model Facility {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // OWNER
+  // AUDIT TRAIL — who physically claimed this facility (never changes)
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  // QUOTA SCOPE — which org owns this facility (used for limit checks)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   // REBUTTALS
   rebuttals Rebuttal[]
@@ -152,6 +179,7 @@ model Facility {
   @@index([slug])
   @@index([name])
   @@index([createdById])
+  @@index([organizationId])
 }
 
 //
@@ -164,8 +192,8 @@ model MfaOtp {
   code      String
   expiresAt DateTime
 
-  attempts  Int      @default(0)
-  used      Boolean  @default(false)
+  attempts Int     @default(0)
+  used     Boolean @default(false)
 
   createdAt DateTime @default(now())
 

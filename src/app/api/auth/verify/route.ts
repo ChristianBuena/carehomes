@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
         id: true,
         email: true,
         role: true,
+        organizationId: true,
       },
     });
 
@@ -61,11 +62,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!user.organizationId) {
+      return NextResponse.json(
+        { error: "User has no organization — contact support" },
+        { status: 500 }
+      );
+    }
+
     // 6. Generate JWT
     const token = await signToken({
       userId: user.id,
       email: user.email,
       role: user.role,
+      orgId: user.organizationId,
     });
 
     // 7. Create response + set cookie

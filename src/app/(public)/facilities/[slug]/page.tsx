@@ -76,16 +76,20 @@ export default async function FacilityDetailPage({
     const dbUser = await prisma.user.findUnique({
       where: { id: user.userId },
       include: { 
-        membership: true,
-        _count: { select: { createdFacilities: true } }
+        organization: {
+          include: {
+            membership: true,
+            _count: { select: { facilities: true } }
+          }
+        }
       },
     });
-    hasActiveMembership = dbUser?.membership?.status === "ACTIVE";
+    hasActiveMembership = dbUser?.organization?.membership?.status === "ACTIVE";
     isClaimedByCurrentUser = facility.createdById === user.userId;
     isClaimedByOther = facility.createdById !== null && facility.createdById !== user.userId;
 
-    if (hasActiveMembership && dbUser?.membership) {
-      hasReachedLimit = !canClaimFacility(dbUser.membership.plan, dbUser._count.createdFacilities);
+    if (hasActiveMembership && dbUser?.organization?.membership) {
+      hasReachedLimit = !canClaimFacility(dbUser.organization.membership.plan, dbUser.organization._count.facilities);
     }
   } else {
     isClaimedByOther = facility.createdById !== null;

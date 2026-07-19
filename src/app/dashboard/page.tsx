@@ -21,14 +21,18 @@ export default async function DashboardPage({
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.userId },
-    include: { membership: true },
+    include: { 
+      organization: {
+        include: { membership: true }
+      }
+    },
   });
 
   if (!dbUser) {
     redirect("/login");
   }
 
-  const { membership } = dbUser;
+  const membership = dbUser.organization?.membership;
   const hasActiveMembership = membership?.status === "ACTIVE";
 
   // Data fetching based on role

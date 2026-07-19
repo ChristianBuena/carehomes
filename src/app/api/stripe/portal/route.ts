@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     const membership = await prisma.membership.findUnique({
-      where: { userId: user.userId },
+      where: { organizationId: user.orgId },
     });
 
     if (!membership || !membership.stripeCustomerId) {

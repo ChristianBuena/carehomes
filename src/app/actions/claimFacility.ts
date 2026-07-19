@@ -13,16 +13,16 @@ export async function claimFacility(facilityId: string) {
     }
 
     const membership = await prisma.membership.findUnique({
-      where: { userId: user.userId },
+      where: { organizationId: user.orgId },
     });
 
     if (!membership || membership.status !== "ACTIVE") {
       return { success: false, error: "You must have an active membership to claim a facility." };
     }
 
-    // Check quota
+    // Check quota (against org, not user)
     const currentCount = await prisma.facility.count({
-      where: { createdById: user.userId },
+      where: { organizationId: user.orgId },
     });
 
     if (!canClaimFacility(membership.plan, currentCount)) {
@@ -48,7 +48,7 @@ export async function claimFacility(facilityId: string) {
     // Claim the facility
     await prisma.facility.update({
       where: { id: facilityId },
-      data: { createdById: user.userId },
+      data: { createdById: user.userId, organizationId: user.orgId },
     });
 
     // Revalidate relevant pages

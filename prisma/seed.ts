@@ -41,14 +41,10 @@ async function main() {
   const memberPassword = await bcrypt.hash("Member@123456", 12);
   const freePassword = await bcrypt.hash("Free@123456", 12);
 
-  const admin = await prisma.user.upsert({
-    where: { email: "carehomessupport444@gmail.com" },
-    update: {},
-    create: {
-      name: "System Admin",
-      email: "carehomessupport444@gmail.com",
-      password: adminPassword,
-      role: "ADMIN",
+  // 1a. Organizations
+  const adminOrg = await prisma.organization.create({
+    data: {
+      name: "System Admin Org",
       membership: {
         create: {
           plan: "TIER_C",
@@ -64,14 +60,9 @@ async function main() {
     },
   });
 
-  const member = await prisma.user.upsert({
-    where: { email: "member@carehomesdocs.org" },
-    update: {},
-    create: {
-      name: "James Reyes",
-      email: "member@carehomesdocs.org",
-      password: memberPassword,
-      role: "MEMBER",
+  const memberOrg = await prisma.organization.create({
+    data: {
+      name: "James Reyes Org",
       membership: {
         create: {
           plan: "TIER_B",
@@ -87,14 +78,9 @@ async function main() {
     },
   });
 
-  const freeUser = await prisma.user.upsert({
-    where: { email: "free@carehomesdocs.org" },
-    update: {},
-    create: {
-      name: "Linda Tran",
-      email: "free@carehomesdocs.org",
-      password: freePassword,
-      role: "MEMBER",
+  const freeOrg = await prisma.organization.create({
+    data: {
+      name: "Linda Tran Org",
       membership: {
         create: {
           plan: "NONE",
@@ -102,6 +88,42 @@ async function main() {
           maxFacilities: 0,
         },
       },
+    },
+  });
+
+  const admin = await prisma.user.upsert({
+    where: { email: "carehomessupport444@gmail.com" },
+    update: { organizationId: adminOrg.id },
+    create: {
+      name: "System Admin",
+      email: "carehomessupport444@gmail.com",
+      password: adminPassword,
+      role: "ADMIN",
+      organizationId: adminOrg.id,
+    },
+  });
+
+  const member = await prisma.user.upsert({
+    where: { email: "member@carehomesdocs.org" },
+    update: { organizationId: memberOrg.id },
+    create: {
+      name: "James Reyes",
+      email: "member@carehomesdocs.org",
+      password: memberPassword,
+      role: "MEMBER",
+      organizationId: memberOrg.id,
+    },
+  });
+
+  const freeUser = await prisma.user.upsert({
+    where: { email: "free@carehomesdocs.org" },
+    update: { organizationId: freeOrg.id },
+    create: {
+      name: "Linda Tran",
+      email: "free@carehomesdocs.org",
+      password: freePassword,
+      role: "MEMBER",
+      organizationId: freeOrg.id,
     },
   });
 

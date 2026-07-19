@@ -15,6 +15,8 @@ export type AuthTokenPayload = {
   userId: string;
   email: string;
   role: "MEMBER" | "ADMIN" | "MODERATOR";
+  /** ID of the Organization this user belongs to (set at signup, present in every JWT). */
+  orgId: string;
 };
 
 /**

@@ -28,6 +28,7 @@ export async function createFacility(data: {
   address: string;
   description?: string;
   createdById?: string;
+  organizationId?: string;
 }) {
   const baseSlug = data.name
     .toLowerCase()
@@ -42,6 +43,7 @@ export async function createFacility(data: {
       address: data.address,
       description: data.description,
       createdById: data.createdById,
+      organizationId: data.organizationId,
     },
   });
 }

@@ -80,6 +80,8 @@ model User {
   createdFacilities Facility[]
   citationDeadlines CitationDeadline[]
 
+  moderationLogs ModerationLog[]
+
   @@index([email])
   @@index([organizationId])
 }
@@ -141,6 +143,8 @@ model Rebuttal {
   // MODERATION
   moderatedById String?
   moderatedBy   User?   @relation("ModeratedRebuttals", fields: [moderatedById], references: [id])
+
+  moderationLogs ModerationLog[]
 
   @@index([userId])
   @@index([status])
@@ -219,4 +223,31 @@ model CitationDeadline {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+//
+// MODERATION AUDIT TRAIL
+//
+
+model ModerationLog {
+  id         String @id @default(cuid())
+
+  // WHAT CHANGED
+  fromStatus RebuttalStatus
+  toStatus   RebuttalStatus
+  notes      String?
+
+  // WHEN
+  createdAt  DateTime @default(now())
+
+  // WHO
+  moderatorId String
+  moderator   User   @relation(fields: [moderatorId], references: [id])
+
+  // WHICH rebuttal
+  rebuttalId String
+  rebuttal   Rebuttal @relation(fields: [rebuttalId], references: [id], onDelete: Cascade)
+
+  @@index([rebuttalId])
+  @@index([moderatorId])
 }

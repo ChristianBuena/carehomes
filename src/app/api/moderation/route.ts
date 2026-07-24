@@ -5,6 +5,7 @@ import {
   approveRebuttal,
   rejectRebuttal,
   requestFixRebuttal,
+  getModerationLogs,
 } from "@/services/moderation.service";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
@@ -14,6 +15,31 @@ const ACTION_PERMISSION_MAP: Record<string, Permission> = {
   reject: "reject_rebuttal",
   request_fix: "request_fix_rebuttal",
 };
+
+export async function GET(req: NextRequest) {
+  try {
+    const token = req.cookies.get("auth-token")?.value;
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const user = await verifyToken(token);
+
+    if (!hasPermission(user.role, "moderate_rebuttals")) {
+      return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
+    }
+
+    const {searchParams} = new URL(req.url);
+    const rebuttalId = searchParams.get("rebuttalId");
+
+    if (!rebuttalId) {
+      return NextResponse.json({ error: "rebuttalId is required" }, { status: 400 });
+    }
+
+    const logs = await getModerationLogs(rebuttalId);
+    return NextResponse.json({ success: true, logs });
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch moderation logs" }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -91,13 +117,14 @@ export async function POST(req: NextRequest) {
 
     // ── 7. Execute action ──────────────────────────────────────────────────
     let rebuttal;
+    const actionNotes = notes || reason;
 
     if (action === "approve") {
-      rebuttal = await approveRebuttal(id);
+      rebuttal = await approveRebuttal(id, user.userId, actionNotes);
     } else if (action === "reject") {
-      rebuttal = await rejectRebuttal(id);
+      rebuttal = await rejectRebuttal(id, user.userId, actionNotes);
     } else {
-      rebuttal = await requestFixRebuttal(id);
+      rebuttal = await requestFixRebuttal(id, user.userId, actionNotes);
     }
 
     // ── 8. Send notification email to member ───────────────────────────────

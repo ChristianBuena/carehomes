@@ -4,6 +4,7 @@ export async function createRebuttal(data: {
   title: string;
   content: string;
   userId: string;
+  facilityId: string;
 }) {
   return prisma.rebuttal.create({
     data,

@@ -15,6 +15,7 @@ import {
   ClipboardCheck,
   Users,
   CreditCard,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
@@ -23,6 +24,7 @@ const NAV_LINKS = [
   { name: "Dashboard", href: "/dashboard", icon: Home, permission: null },
   { name: "My Facilities", href: "/dashboard/facilities", icon: Building2, permission: "view_own_facilities" },
   { name: "My Rebuttals", href: "/dashboard/rebuttals", icon: FileText, permission: "view_own_rebuttals" },
+  { name: "Citation Deadlines", href: "/dashboard/deadlines", icon: Calendar, permission: "view_own_facilities" },
   { name: "Member Library", href: "/dashboard/library", icon: BookOpen, permission: "view_own_facilities" }, // keeping library for members
   { name: "Moderation Queue", href: "/dashboard/moderation", icon: ClipboardCheck, permission: "moderate_rebuttals" },
   { name: "Manage Users", href: "/dashboard/users", icon: Users, permission: "manage_users" },

@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await verifyToken(token);
-    const userId = user.userId;
 
     // PERMISSION CHECK — MEMBERs may claim; ADMINs use manage_facilities
     if (!hasPermission(user.role, "claim_facility")) {
@@ -40,9 +39,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TIER CHECK 
+    // TIER CHECK — look up membership by org, not by user
     const membership = await prisma.membership.findUnique({
-      where: { userId },
+      where: { organizationId: user.orgId },
     });
 
     if (!membership || membership.status !== "ACTIVE") {
@@ -52,13 +51,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Quota scoped to org (not individual user)
     const currentCount = await prisma.facility.count({
-      where: { createdById: userId },
+      where: { organizationId: user.orgId },
     });
 
     if (!canClaimFacility(membership.plan, currentCount)) {
       return NextResponse.json(
-        { error: "Tier limit reached" },
+        { error: "Facility limit reached — upgrade your plan to claim more facilities." },
         { status: 403 }
       );
     }
@@ -73,12 +73,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // CREATE FACILITY
+    // CREATE FACILITY — audit trail (createdById) + quota scope (organizationId)
     const facility = await createFacility({
       name: body.name,
       address: body.address,
       description: body.description,
-      createdById: userId,
+      createdById: user.userId,
+      organizationId: user.orgId,
     });
 
     return NextResponse.json(facility, { status: 201 });

@@ -88,7 +88,9 @@ export function hasPermission(role: string, permission: Permission): boolean {
  * Tier B  → 3 facilities
  * Tier C  → 10 facilities
  */
-export const TIER_FACILITY_LIMITS: Record<string, number> = {
+export type TierPlan = "NONE" | "TIER_A" | "TIER_B" | "TIER_C";
+
+export const TIER_FACILITY_LIMITS: Record<TierPlan, number> = {
   NONE: 0,
   TIER_A: 1,
   TIER_B: 3,
@@ -99,9 +101,9 @@ export const TIER_FACILITY_LIMITS: Record<string, number> = {
  * Check if a member can claim more facilities based on their tier
  */
 export function canClaimFacility(
-  plan: string,
+  plan: TierPlan | string,
   currentFacilityCount: number
 ): boolean {
-  const limit = TIER_FACILITY_LIMITS[plan] ?? 0;
+  const limit = TIER_FACILITY_LIMITS[plan as TierPlan] ?? 0;
   return currentFacilityCount < limit;
 }

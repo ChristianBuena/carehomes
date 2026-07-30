@@ -28,7 +28,11 @@ export async function POST(req: NextRequest) {
     // GET REAL USER
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { membership: true },
+      include: { 
+        organization: {
+          include: { membership: true }
+        }
+      },
     });
 
     if (!user) {
@@ -43,6 +47,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
+      orgId: user.organizationId as string,
     });
 
     // RESPONSE
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
         name: user.name,
         email: user.email,
         role: user.role,
-        membership: user.membership,
+        membership: user.organization?.membership,
       },
     });
 

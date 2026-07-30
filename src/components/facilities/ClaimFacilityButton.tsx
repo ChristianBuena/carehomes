@@ -11,6 +11,7 @@ interface ClaimFacilityButtonProps {
   isClaimedByCurrentUser: boolean;
   hasActiveMembership: boolean;
   isClaimedByOther: boolean;
+  hasReachedLimit?: boolean;
 }
 
 export function ClaimFacilityButton({
@@ -18,6 +19,7 @@ export function ClaimFacilityButton({
   isClaimedByCurrentUser,
   hasActiveMembership,
   isClaimedByOther,
+  hasReachedLimit = false,
 }: ClaimFacilityButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +59,19 @@ export function ClaimFacilityButton({
         className="h-12 px-6 border-white/20 bg-transparent text-white/50 font-semibold cursor-not-allowed"
       >
         Already Claimed
+      </Button>
+    );
+  }
+
+  if (hasReachedLimit) {
+    return (
+      <Button
+        variant="outline"
+        disabled
+        title="Facility limit reached — upgrade your plan to claim more facilities."
+        className="h-12 px-6 border-white/20 bg-transparent text-white/50 font-semibold cursor-not-allowed"
+      >
+        Limit Reached
       </Button>
     );
   }

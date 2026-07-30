@@ -21,7 +21,7 @@ export default async function MyFacilitiesPage() {
       },
       orderBy: { name: "asc" },
     }),
-    prisma.membership.findUnique({ where: { userId: user.userId } }),
+    prisma.membership.findUnique({ where: { organizationId: user.orgId } }),
   ]);
 
   const maxFacilities = membership?.maxFacilities ?? 0;

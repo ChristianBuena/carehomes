@@ -37,14 +37,14 @@ export async function POST(req: NextRequest) {
 
     //  UPSERT MEMBERSHIP
     const membership = await prisma.membership.upsert({
-      where: { userId },
+      where: { organizationId: user.orgId },
       update: {
         plan,
         status: "ACTIVE",
         maxFacilities,
       },
       create: {
-        userId,
+        organizationId: user.orgId,
         plan,
         status: "ACTIVE",
         maxFacilities,

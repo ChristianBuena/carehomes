@@ -25,7 +25,11 @@ export type Permission =
   | "publish_rebuttals"      // ADMIN + MODERATOR — approved rebuttals visible on public site
 
   // Membership
-  | "manage_memberships";    // ADMIN only — view and modify any membership
+  | "manage_memberships"     // ADMIN only — view and modify any membership
+
+  // Template Library
+  | "access_library"         // MEMBER + ADMIN + MODERATOR — view and download templates
+  | "manage_templates";      // ADMIN only — create, edit, delete templates
 
 export const permissions: Record<Role, Permission[]> = {
   ADMIN: [
@@ -43,6 +47,8 @@ export const permissions: Record<Role, Permission[]> = {
     "request_fix_rebuttal",
     "publish_rebuttals",
     "manage_memberships",
+    "access_library",
+    "manage_templates",
   ],
 
   MODERATOR: [
@@ -52,6 +58,7 @@ export const permissions: Record<Role, Permission[]> = {
     "reject_rebuttal",
     "request_fix_rebuttal",
     "publish_rebuttals",
+    "access_library",
   ],
 
   MEMBER: [
@@ -60,6 +67,7 @@ export const permissions: Record<Role, Permission[]> = {
     "submit_rebuttal",
     "view_own_rebuttals",
     "edit_own_rebuttal",
+    "access_library",
   ],
 };
 

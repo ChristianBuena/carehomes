@@ -63,6 +63,9 @@ model User {
 
   moderationLogs ModerationLog[]
 
+  uploadedTemplates Template[]         @relation("UploadedTemplates")
+  templateDownloads TemplateDownload[] @relation("TemplateDownloads")
+
   @@index([email])
 }
 
@@ -222,4 +225,59 @@ model ModerationLog {
 
   @@index([rebuttalId])
   @@index([moderatorId])
+}
+
+//
+// TEMPLATE LIBRARY
+//
+
+enum TemplateCategory {
+  REBUTTAL
+  CHECKLIST
+  GUIDE
+}
+
+enum TemplateFileFormat {
+  PDF
+  DOCX
+}
+
+model Template {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  category    TemplateCategory
+  fileFormat  TemplateFileFormat
+  fileUrl     String             // path or URL to the file
+  notionUrl   String?            // optional link to Notion knowledge base page
+  isActive    Boolean            @default(true)
+  downloadCount Int              @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // UPLOADER (admin)
+  uploadedById String?
+  uploadedBy   User?   @relation("UploadedTemplates", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  downloads TemplateDownload[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model TemplateDownload {
+  id         String @id @default(cuid())
+  createdAt  DateTime @default(now())
+
+  // WHO downloaded
+  userId String
+  user   User   @relation("TemplateDownloads", fields: [userId], references: [id], onDelete: Cascade)
+
+  // WHICH template
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([userId])
 }

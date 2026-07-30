@@ -16,6 +16,7 @@ import {
   Users,
   CreditCard,
   Calendar,
+  Library,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
@@ -25,8 +26,9 @@ const NAV_LINKS = [
   { name: "My Facilities", href: "/dashboard/facilities", icon: Building2, permission: "view_own_facilities" },
   { name: "My Rebuttals", href: "/dashboard/rebuttals", icon: FileText, permission: "view_own_rebuttals" },
   { name: "Citation Deadlines", href: "/dashboard/deadlines", icon: Calendar, permission: "view_own_facilities" },
-  { name: "Member Library", href: "/dashboard/library", icon: BookOpen, permission: "view_own_facilities" }, // keeping library for members
+  { name: "Member Library", href: "/dashboard/library", icon: BookOpen, permission: "access_library" },
   { name: "Moderation Queue", href: "/dashboard/moderation", icon: ClipboardCheck, permission: "moderate_rebuttals" },
+  { name: "Manage Templates", href: "/dashboard/templates", icon: Library, permission: "manage_templates" },
   { name: "Manage Users", href: "/dashboard/users", icon: Users, permission: "manage_users" },
   { name: "Manage Facilities", href: "/dashboard/facilities/manage", icon: Settings, permission: "manage_facilities" },
   { name: "Memberships", href: "/dashboard/memberships", icon: CreditCard, permission: "manage_memberships" },
@@ -50,7 +52,7 @@ export default function DashboardLayout({
   const visibleNavItems = NAV_LINKS.filter((item) => {
     if (!user || !user.role) return item.permission === null;
     
-    // Hide these explicitly for ADMIN even though they technically have the permission
+    // Hide member-only items from ADMIN dashboard (admins use management pages instead)
     if (user.role === "ADMIN" && (item.name === "My Facilities" || item.name === "My Rebuttals" || item.name === "Member Library")) {
       return false;
     }

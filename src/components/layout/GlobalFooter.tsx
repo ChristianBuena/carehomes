@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import { Shield, ExternalLink } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
@@ -46,21 +46,36 @@ export function GlobalFooter() {
               </ul>
             </div>
             
-            {/* Col 3: Legal */}
+            {/* Col 3: Resources + Legal */}
             <div>
-              <h3 className="text-sm font-semibold leading-6 text-white">Legal</h3>
+              <h3 className="text-sm font-semibold leading-6 text-white">Resources</h3>
               <ul role="list" className="mt-6 space-y-4">
-                {siteConfig.footerNav.find(group => group.title === "Legal")?.links.map((item) => (
-                  <li key={item.label}>
-                    <Link href={item.href} className="text-sm leading-6 hover:text-white transition-colors">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
+                {siteConfig.footerNav
+                  .filter(group => group.title === "Resources" || group.title === "Legal")
+                  .flatMap(group => group.links)
+                  .map((item) => (
+                    <li key={item.label}>
+                      {item.external ? (
+                        <a
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm leading-6 hover:text-white transition-colors inline-flex items-center gap-1"
+                        >
+                          {item.label}
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        </a>
+                      ) : (
+                        <Link href={item.href} className="text-sm leading-6 hover:text-white transition-colors">
+                          {item.label}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
               </ul>
             </div>
 
-            {/* Col 4: Contact */}
+            {/* Col 4: Contact + Knowledge Base */}
             <div>
               <h3 className="text-sm font-semibold leading-6 text-white">Contact</h3>
               <ul role="list" className="mt-6 space-y-4">
@@ -70,7 +85,25 @@ export function GlobalFooter() {
                   </a>
                 </li>
               </ul>
-              <div className="mt-6 p-4 rounded-md bg-white/5 border border-white/10">
+
+              {/* Knowledge Base link */}
+              <div className="mt-6 p-4 rounded-md bg-white/10 border border-white/15">
+                <h4 className="text-xs font-semibold text-white mb-2">Knowledge Base</h4>
+                <p className="text-xs text-white/70 leading-relaxed mb-3">
+                  Access free guidance, rebuttal tips, redaction standards, and downloadable templates.
+                </p>
+                <a
+                  href={siteConfig.notionKbUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-accent)] hover:text-white transition-colors"
+                >
+                  Open Knowledge Base
+                  <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                </a>
+              </div>
+
+              <div className="mt-4 p-4 rounded-md bg-white/5 border border-white/10">
                 <p className="text-xs text-white/70 leading-relaxed">
                   <strong>Notice:</strong> We cannot provide legal advice. If you require legal assistance regarding CCLD citations, please consult a qualified attorney.
                 </p>

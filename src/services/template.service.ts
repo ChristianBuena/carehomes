@@ -110,10 +110,18 @@ export async function checkLibraryAccess(
 ): Promise<boolean> {
   if (role === "ADMIN" || role === "MODERATOR") return true;
 
-  const membership = await prisma.membership.findUnique({
-    where: { userId },
-    select: { status: true },
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      organization: {
+        select: {
+          membership: {
+            select: { status: true }
+          }
+        }
+      }
+    }
   });
 
-  return membership?.status === "ACTIVE";
+  return user?.organization?.membership?.status === "ACTIVE";
 }

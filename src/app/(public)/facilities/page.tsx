@@ -8,6 +8,9 @@ import { FacilityGrid } from "@/components/facilities/FacilityGrid";
 import { AlertCircle } from "lucide-react";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 import { buildMetadata } from "@/lib/metadata";
+import type { FacilityListItem } from "@/types/facility.types";
+
+const PAGE_SIZE = 9;
 
 export const metadata: Metadata = buildMetadata({
   title: "Facility Directory",
@@ -24,6 +27,7 @@ export default async function FacilitiesPage({
     status?: string;
     capacity?: string;
     rebuttals?: string;
+    page?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -48,15 +52,19 @@ export default async function FacilitiesPage({
       ? rawCapacity
       : "any";
 
-  const dbFacilities = await getFacilities({
+  const page = Math.max(1, Number(params.page ?? "1"));
+
+  const { facilities: dbFacilities, total } = await getFacilities({
     query: params.q,
     counties,
     status,
     capacity,
     hasRebuttals: params.rebuttals === "1",
+    page,
+    pageSize: PAGE_SIZE,
   });
 
-  const facilities = dbFacilities.map((f) => ({
+  const facilities: FacilityListItem[] = dbFacilities.map((f) => ({
     id: f.id,
     slug: f.slug,
     facilityNumber: f.facilityNumber ?? "N/A",
@@ -138,7 +146,12 @@ export default async function FacilitiesPage({
           {/* Results */}
           <div className="flex-1 min-w-0">
             <Suspense fallback={<GridSkeleton />}>
-              <FacilityGrid facilities={facilities} />
+              <FacilityGrid
+                facilities={facilities}
+                total={total}
+                page={page}
+                pageSize={PAGE_SIZE}
+              />
             </Suspense>
           </div>
         </div>

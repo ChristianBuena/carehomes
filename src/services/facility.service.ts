@@ -8,6 +8,8 @@ export interface FacilityFilters {
   status?: "all" | "active" | "inactive";
   capacity?: "any" | "lt10" | "10-25" | "26-50" | "50plus";
   hasRebuttals?: boolean;
+  page?: number;
+  pageSize?: number;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -19,6 +21,39 @@ function buildCapacityFilter(capacity?: FacilityFilters["capacity"]) {
   if (capacity === "26-50") return { gte: 26, lte: 50 };
   if (capacity === "50plus") return { gt: 50 };
   return undefined;
+}
+
+function buildWhereClause(filters?: FacilityFilters) {
+  if (!filters) return undefined;
+
+  const capacityFilter = buildCapacityFilter(filters.capacity);
+
+  const conditions = [
+    // Text search: name, address, city, county, facilityNumber
+    filters.query
+      ? {
+          OR: [
+            { name: { contains: filters.query, mode: "insensitive" as const } },
+            { address: { contains: filters.query, mode: "insensitive" as const } },
+            { city: { contains: filters.query, mode: "insensitive" as const } },
+            { county: { contains: filters.query, mode: "insensitive" as const } },
+            { facilityNumber: { contains: filters.query, mode: "insensitive" as const } },
+          ],
+        }
+      : undefined,
+    // County multi-select
+    filters.counties && filters.counties.length > 0
+      ? { county: { in: filters.counties } }
+      : undefined,
+    // Capacity range
+    capacityFilter ? { capacity: capacityFilter } : undefined,
+    // Has approved rebuttals
+    filters.hasRebuttals
+      ? { rebuttals: { some: { status: "APPROVED" } } }
+      : undefined,
+  ].filter(Boolean) as object[];
+
+  return conditions.length > 0 ? { AND: conditions } : undefined;
 }
 
 // ── Service Functions ─────────────────────────────────────────────────────────
@@ -49,46 +84,31 @@ export async function createFacility(data: {
 }
 
 export async function getFacilities(filters?: FacilityFilters) {
-  const capacityFilter = buildCapacityFilter(filters?.capacity);
+  const where = buildWhereClause(filters);
+  const page = Math.max(1, filters?.page ?? 1);
+  const pageSize = Math.max(1, Math.min(100, filters?.pageSize ?? 9));
 
-  const where = {
-    AND: [
-      // Text search
-      filters?.query
-        ? {
-            OR: [
-              { name: { contains: filters.query, mode: "insensitive" as const } },
-              { address: { contains: filters.query, mode: "insensitive" as const } },
-              { city: { contains: filters.query, mode: "insensitive" as const } },
-            ],
-          }
-        : undefined,
-      // County multi-select
-      filters?.counties && filters.counties.length > 0
-        ? { county: { in: filters.counties } }
-        : undefined,
-      // Capacity range
-      capacityFilter ? { capacity: capacityFilter } : undefined,
-      // Has approved rebuttals
-      filters?.hasRebuttals
-        ? { rebuttals: { some: { status: "APPROVED" } } }
-        : undefined,
-    ].filter(Boolean) as object[],
+  const [facilities, total] = await Promise.all([
+    prisma.facility.findMany({
+      where,
+      include: {
+        createdBy: { select: { id: true, name: true, email: true } },
+        _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
+      },
+      orderBy: { name: "asc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.facility.count({ where }),
+  ]);
+
+  return {
+    facilities: facilities.map((f) => ({
+      ...f,
+      rebuttalsCount: f._count.rebuttals,
+    })),
+    total,
   };
-
-  const facilities = await prisma.facility.findMany({
-    where: Object.keys(where.AND).length > 0 ? where : undefined,
-    include: {
-      createdBy: { select: { id: true, name: true, email: true } },
-      _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
-    },
-    orderBy: { name: "asc" },
-  });
-
-  return facilities.map((f) => ({
-    ...f,
-    rebuttalsCount: f._count.rebuttals,
-  }));
 }
 
 export async function getFacilityBySlug(slug: string) {

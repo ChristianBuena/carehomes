@@ -1,13 +1,32 @@
 import Link from "next/link";
 import { MapPin, ArrowRight, FileText, CheckCircle2 } from "lucide-react";
-import { MOCK_FACILITIES } from "@/lib/mock-data/facilities";
+import { prisma } from "@/lib/prisma";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
-// Server Component — sort by lastUpdated, take top 3
-function getRecentFacilities() {
-  return [...MOCK_FACILITIES]
-    .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
-    .slice(0, 3);
+// Server Component — fetch 3 most recently updated facilities from the DB
+async function getRecentFacilities() {
+  const facilities = await prisma.facility.findMany({
+    orderBy: { updatedAt: "desc" },
+    take: 3,
+    include: {
+      _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
+    },
+  });
+
+  return facilities.map((f) => ({
+    id: f.id,
+    slug: f.slug,
+    name: f.name,
+    city: f.city ?? f.address.split(",")[1]?.trim() ?? f.address,
+    county: f.county ?? "Unknown",
+    status: "active" as const,
+    rebuttalsCount: f._count.rebuttals,
+    lastUpdated: f.updatedAt.toISOString(),
+  }));
+}
+
+async function getTotalFacilityCount() {
+  return prisma.facility.count();
 }
 
 function formatDate(dateStr: string): string {
@@ -18,8 +37,11 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export function RecentFacilitiesSection() {
-  const facilities = getRecentFacilities();
+export async function RecentFacilitiesSection() {
+  const [facilities, totalCount] = await Promise.all([
+    getRecentFacilities(),
+    getTotalFacilityCount(),
+  ]);
 
   return (
     <section
@@ -118,7 +140,7 @@ export function RecentFacilitiesSection() {
             href="/facilities"
             className="inline-flex items-center justify-center gap-2 bg-[var(--color-primary)] text-[var(--color-surface)] font-semibold px-6 min-h-[44px] rounded-full hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
           >
-            Browse all {MOCK_FACILITIES.length} facilities
+            Browse all {totalCount} facilities
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>

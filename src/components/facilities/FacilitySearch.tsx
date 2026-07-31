@@ -45,7 +45,7 @@ export function FacilitySearch() {
         type="search"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Search by facility name, city, or county…"
+        placeholder="Search by facility name, city, county, or facility number…"
         aria-label="Search facilities"
         className="w-full h-12 pl-12 pr-12 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent shadow-sm transition"
       />

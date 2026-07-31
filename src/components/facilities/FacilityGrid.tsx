@@ -1,54 +1,42 @@
 "use client";
 
-import { useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import type { Facility } from "@/lib/mock-data/facilities";
+import type { FacilityListItem } from "@/types/facility.types";
 import { FacilityCard } from "@/components/facilities/FacilityCard";
-import { readFiltersFromParams } from "@/components/facilities/FacilityFilters";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { NoResultsEmptyState } from "@/components/ui/NoResultsEmptyState";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const PAGE_SIZE = 9;
-
 interface FacilityGridProps {
-  facilities: Facility[];
+  /** Pre-filtered, pre-paginated facilities from the server */
+  facilities: FacilityListItem[];
+  /** Total matching facilities (before pagination) */
+  total: number;
+  /** Current page number (1-indexed) */
+  page: number;
+  /** Items per page */
+  pageSize: number;
 }
 
-export function FacilityGrid({ facilities }: FacilityGridProps) {
+export function FacilityGrid({ facilities, total, page, pageSize }: FacilityGridProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  const q = searchParams.get("q")?.toLowerCase() ?? "";
-  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
-  const filters = readFiltersFromParams(searchParams);
+  const q = searchParams.get("q") ?? "";
+  const totalPages = Math.ceil(total / pageSize);
 
-  const filtered = useMemo(() => {
-    return facilities.filter((f) => {
-      // Text search: name, city, county
-      if (q && !f.name.toLowerCase().includes(q) && !f.city.toLowerCase().includes(q) && !f.county.toLowerCase().includes(q)) return false;
-      // County — multi-select (any match)
-      if (filters.counties.length > 0 && !filters.counties.includes(f.county)) return false;
-      // Status
-      if (filters.status !== "all" && f.status !== filters.status) return false;
-      // Capacity
-      if (filters.capacity === "lt10" && f.capacity >= 10) return false;
-      if (filters.capacity === "10-25" && (f.capacity < 10 || f.capacity > 25)) return false;
-      if (filters.capacity === "26-50" && (f.capacity < 26 || f.capacity > 50)) return false;
-      if (filters.capacity === "50plus" && f.capacity <= 50) return false;
-      // Has rebuttals
-      if (filters.hasRebuttals && f.rebuttalsCount === 0) return false;
-      return true;
-    });
-  }, [facilities, q, filters]);
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Range display
+  const rangeStart = total > 0 ? (page - 1) * pageSize + 1 : 0;
+  const rangeEnd = Math.min(page * pageSize, total);
 
   function goToPage(p: number) {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(p));
+    if (p <= 1) {
+      params.delete("page");
+    } else {
+      params.set("page", String(p));
+    }
     router.replace(`${pathname}?${params.toString()}`, { scroll: true });
   }
 
@@ -58,18 +46,17 @@ export function FacilityGrid({ facilities }: FacilityGridProps) {
       <p className="text-sm text-[var(--color-muted)]">
         Showing{" "}
         <span className="font-semibold text-[var(--color-text)]">
-          {paginated.length > 0 ? (page - 1) * PAGE_SIZE + 1 : 0}–
-          {Math.min(page * PAGE_SIZE, filtered.length)}
+          {rangeStart}–{rangeEnd}
         </span>{" "}
         of{" "}
-        <span className="font-semibold text-[var(--color-text)]">{filtered.length}</span>{" "}
+        <span className="font-semibold text-[var(--color-text)]">{total}</span>{" "}
         facilities
       </p>
 
       {/* Grid */}
-      {paginated.length > 0 ? (
+      {facilities.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {paginated.map((facility) => (
+          {facilities.map((facility) => (
             <FacilityCard key={facility.id} facility={facility} />
           ))}
         </div>

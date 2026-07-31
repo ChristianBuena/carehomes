@@ -229,7 +229,7 @@ export default function MemberLibraryPage() {
           central hub for regulatory guidance, SOW references, and operator
           workflows.{" "}
           <a
-            href="https://notion.so"
+            href={process.env.NEXT_PUBLIC_NOTION_KB_URL || "https://notion.so"}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 font-medium text-[var(--color-secondary)] underline underline-offset-2 hover:opacity-80 transition"

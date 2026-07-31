@@ -48,6 +48,8 @@ export interface SiteConfig {
   socialLinks: SocialLink[];
   /** General contact email */
   contactEmail: string;
+  /** Public Notion Knowledge Base URL */
+  notionKbUrl: string;
 }
 
 /**
@@ -77,6 +79,11 @@ export const siteConfig: SiteConfig = {
       links: [
         { label: "How It Works", href: "/how-it-works" },
         { label: "Pricing", href: "/pricing" },
+        {
+          label: "Knowledge Base",
+          href: process.env.NEXT_PUBLIC_NOTION_KB_URL || "https://notion.so",
+          external: true,
+        },
       ],
     },
     {
@@ -95,4 +102,5 @@ export const siteConfig: SiteConfig = {
     { platform: "LinkedIn", href: "https://linkedin.com/company/carehomessupportdocs" },
   ],
   contactEmail: "support@carehomessupportdocs.org",
+  notionKbUrl: process.env.NEXT_PUBLIC_NOTION_KB_URL || "https://notion.so",
 };

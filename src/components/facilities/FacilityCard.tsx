@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ExternalLink, MapPin, Users, FileText, ArrowRight } from "lucide-react";
-import type { Facility } from "@/lib/mock-data/facilities";
+import type { FacilityListItem } from "@/types/facility.types";
 
 interface FacilityCardProps {
-  facility: Facility;
+  facility: FacilityListItem;
 }
 
 export function FacilityCard({ facility }: FacilityCardProps) {

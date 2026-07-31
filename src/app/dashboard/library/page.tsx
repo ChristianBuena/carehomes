@@ -239,6 +239,31 @@ export default function MemberLibraryPage() {
         </span>
       </div>
 
+      {/* Interactive Forms Callout */}
+      <div className="bg-white border border-[var(--color-border)] rounded-xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-[var(--color-primary)]" />
+          <h3 className="font-bold text-[var(--color-text)]">Interactive Fillable Forms</h3>
+        </div>
+        <p className="text-sm text-[var(--color-muted)] leading-relaxed">
+          Need to generate compliance documents? Use our interactive web forms to generate print-ready PDFs directly from your browser, no external software required.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => router.push("/dashboard/forms/rebuttal")}
+            className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors text-center"
+          >
+            Facility Rebuttal Response Form
+          </button>
+          <button
+            onClick={() => router.push("/dashboard/forms/redaction")}
+            className="px-4 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] text-sm font-medium rounded-lg hover:border-[var(--color-primary)]/40 hover:text-[var(--color-primary)] transition-colors text-center"
+          >
+            Redaction Attestation Form
+          </button>
+        </div>
+      </div>
+
       {/* Category tabs + search */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         {/* Tabs */}

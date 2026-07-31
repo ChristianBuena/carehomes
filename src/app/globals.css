@@ -82,4 +82,40 @@
       background-position: -200% 0;
     }
   }
+
+  @media print {
+    /* Hide dashboard layout elements */
+    aside, header, nav, .print-hide {
+      display: none !important;
+    }
+    
+    /* Reset layout wrapper */
+    body {
+      background-color: white !important;
+    }
+    main {
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: visible !important;
+    }
+    .print-full-width {
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* Input styling for print */
+    input, textarea {
+      border: 1px solid #ccc !important;
+      background: transparent !important;
+      color: black !important;
+    }
+
+    /* Page break handling */
+    .print-avoid-break {
+      break-inside: avoid;
+    }
+  }
 }

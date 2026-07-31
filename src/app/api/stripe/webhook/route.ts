@@ -11,6 +11,23 @@ const tierConfig: Record<string, { maxFacilities: number; label: string; price: 
   TIER_C: { maxFacilities: 10, label: "Tier C", price: "$500/year" },
 };
 
+// Helper to get the first user of a membership's organization for email notifications
+async function getMembershipUser(stripeSubscriptionId: string) {
+  const membership = await prisma.membership.findFirst({
+    where: { stripeSubscriptionId },
+    include: {
+      organization: {
+        include: {
+          users: {
+            take: 1, // Get the primary user
+          },
+        },
+      },
+    },
+  });
+  return membership?.organization?.users[0];
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
 
@@ -36,8 +53,7 @@ export async function POST(req: Request) {
 
   try {
     switch (event.type) {
-
-      // PAYMENT SUCCESS → ACTIVATE SUBSCRIPTION
+      // 1. PAYMENT SUCCESS → ACTIVATE OR RENEW SUBSCRIPTION
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
@@ -57,6 +73,15 @@ export async function POST(req: Request) {
           tier = "TIER_C";
         }
 
+        // Get subscription details for dates
+        let endDate: Date | undefined;
+        let nextBillingDate: Date | undefined;
+        if (session.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+          endDate = new Date((subscription as any).current_period_end * 1000);
+          nextBillingDate = endDate;
+        }
+
         await prisma.membership.upsert({
           where: { organizationId: orgId },
           update: {
@@ -65,6 +90,8 @@ export async function POST(req: Request) {
             maxFacilities: tierConfig[tier].maxFacilities,
             stripeCustomerId: session.customer as string,
             stripeSubscriptionId: session.subscription as string,
+            endDate,
+            nextBillingDate,
           },
           create: {
             organizationId: orgId,
@@ -73,6 +100,9 @@ export async function POST(req: Request) {
             maxFacilities: tierConfig[tier].maxFacilities,
             stripeCustomerId: session.customer as string,
             stripeSubscriptionId: session.subscription as string,
+            startDate: new Date(),
+            endDate,
+            nextBillingDate,
           },
         });
 
@@ -114,28 +144,137 @@ export async function POST(req: Request) {
                 </div>
               `,
             });
-
-            console.log("Confirmation email sent to:", user.email);
           }
         } catch (emailError) {
-          // Don't fail the webhook if email fails — membership is already activated
           console.error("Failed to send confirmation email:", emailError);
         }
 
         break;
       }
 
-      // SUBSCRIPTION RENEWED
+      // 2. SUBSCRIPTION RENEWED (invoice paid successfully)
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = (invoice as any).subscription as string;
 
-        console.log("Invoice paid:", invoice.id);
+        if (!subscriptionId) break;
 
-        // optional: extend membership status
+        console.log("Invoice paid successfully for subscription:", subscriptionId);
+
+        // Fetch subscription to get the accurate updated period end
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const endDate = new Date((subscription as any).current_period_end * 1000);
+
+        await prisma.membership.updateMany({
+          where: { stripeSubscriptionId: subscriptionId },
+          data: {
+            status: "ACTIVE", // reset to active if it was past due
+            endDate,
+            nextBillingDate: endDate,
+          },
+        });
+
+        // Only send renewal emails for actual cycle renewals, not the first checkout payment
+        if (invoice.billing_reason === "subscription_cycle") {
+          const user = await getMembershipUser(subscriptionId);
+          if (user) {
+            await sendEmail({
+              to: user.email,
+              subject: "Your Membership Has Renewed",
+              text: `Hi ${user.name},\n\nYour membership has successfully renewed. Your next billing date is ${endDate.toLocaleDateString()}.\n\nThank you for using CareHomesSupportDocs!`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;">
+                  <h2>Membership Renewed!</h2>
+                  <p>Hi <strong>${user.name}</strong>,</p>
+                  <p>Your subscription has been successfully renewed.</p>
+                  <p><strong>Next Billing Date:</strong> ${endDate.toLocaleDateString()}</p>
+                  <p>Thank you for continuing to use CareHomesSupportDocs!</p>
+                </div>
+              `,
+            });
+          }
+        }
         break;
       }
 
-      // SUBSCRIPTION CANCELED
+      // 3. SUBSCRIPTION PAYMENT FAILED
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = (invoice as any).subscription as string;
+
+        if (!subscriptionId) break;
+
+        console.log("Invoice payment failed for subscription:", subscriptionId);
+
+        await prisma.membership.updateMany({
+          where: { stripeSubscriptionId: subscriptionId },
+          data: {
+            status: "PAST_DUE",
+          },
+        });
+
+        const user = await getMembershipUser(subscriptionId);
+        if (user) {
+          const isGracePeriod = invoice.attempt_count > 1;
+          const subject = isGracePeriod
+            ? "Final Warning: Membership Payment Failed"
+            : "Action Required: Membership Payment Failed";
+
+          await sendEmail({
+            to: user.email,
+            subject,
+            text: `Hi ${user.name},\n\nWe were unable to process your most recent membership payment.\n\nPlease update your billing information to avoid losing access to your facilities and features.\n\nhttps://carehomessupportdocs.org/dashboard\n\n— CareHomesSupportDocs Team`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;">
+                <h2 style="color: #dc2626;">Payment Failed</h2>
+                <p>Hi <strong>${user.name}</strong>,</p>
+                <p>We were unable to process your recent membership payment. Your account is now marked as <strong>Past Due</strong>.</p>
+                ${isGracePeriod ? "<p><strong>This is a final warning. Your subscription will be canceled soon if payment is not resolved.</strong></p>" : ""}
+                <p>Please log in to your dashboard to update your billing information and keep your account active.</p>
+                <div style="margin: 24px 0;">
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background: #dc2626; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">Update Billing Info</a>
+                </div>
+              </div>
+            `,
+          });
+        }
+        break;
+      }
+
+      // 4. UPCOMING INVOICE (3-day reminder)
+      case "invoice.upcoming": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = (invoice as any).subscription as string;
+
+        if (!subscriptionId) break;
+
+        const user = await getMembershipUser(subscriptionId);
+        if (user) {
+          const amount = new Intl.NumberFormat("en-US", { style: "currency", currency: invoice.currency }).format((invoice.amount_due || 0) / 100);
+          const nextDate = new Date(invoice.next_payment_attempt ? invoice.next_payment_attempt * 1000 : (invoice.period_end * 1000));
+
+          await sendEmail({
+            to: user.email,
+            subject: "Upcoming Membership Renewal",
+            text: `Hi ${user.name},\n\nThis is a quick reminder that your membership will automatically renew on ${nextDate.toLocaleDateString()} for ${amount}.\n\nNo action is required if you wish to keep your membership active.\n\n— CareHomesSupportDocs Team`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;">
+                <h2>Upcoming Renewal</h2>
+                <p>Hi <strong>${user.name}</strong>,</p>
+                <p>Your membership is scheduled to automatically renew soon.</p>
+                <ul>
+                  <li><strong>Renewal Date:</strong> ${nextDate.toLocaleDateString()}</li>
+                  <li><strong>Amount:</strong> ${amount}</li>
+                </ul>
+                <p>If you need to make changes, please visit your dashboard.</p>
+              </div>
+            `,
+          });
+        }
+        break;
+      }
+
+      // 5. SUBSCRIPTION CANCELED
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
 
@@ -151,6 +290,26 @@ export async function POST(req: Request) {
         });
 
         console.log("Subscription canceled:", sub.id);
+
+        const user = await getMembershipUser(sub.id);
+        if (user) {
+          await sendEmail({
+            to: user.email,
+            subject: "Your Membership Has Been Canceled",
+            text: `Hi ${user.name},\n\nYour CareHomesSupportDocs membership has been canceled.\n\nYou will no longer have premium access to your claimed facilities. You can always reactivate your membership from the dashboard.\n\n— CareHomesSupportDocs Team`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;">
+                <h2>Membership Canceled</h2>
+                <p>Hi <strong>${user.name}</strong>,</p>
+                <p>Your membership has been successfully canceled.</p>
+                <p>You no longer have premium access to your facilities. If you change your mind, you can re-subscribe at any time from your dashboard.</p>
+                <div style="margin: 24px 0;">
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL}/pricing" style="background: #1d3557; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">View Plans</a>
+                </div>
+              </div>
+            `,
+          });
+        }
         break;
       }
 

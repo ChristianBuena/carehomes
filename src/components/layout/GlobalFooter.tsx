@@ -16,7 +16,7 @@ export function GlobalFooter() {
           
           {/* Col 1: Logo + nonprofit tagline + disclaimer blurb */}
           <div className="space-y-6 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2" aria-label="CareHomesSupportDocs.org Home">
+            <Link href="/" className="flex items-center gap-2" aria-label="CareHomesSupportDocs.com Home">
               <Shield className="h-7 w-7 text-[var(--color-accent)]" aria-hidden="true" />
               <span className="text-xl font-bold tracking-tight text-white">
                 CareHomesSupportDocs
@@ -26,7 +26,7 @@ export function GlobalFooter() {
               A nonprofit membership platform helping licensed California care facility operators.
             </p>
             <p className="text-xs leading-5 text-white/60">
-              CareHomesSupportDocs.org is a nonprofit platform. We are not a government agency, law firm, or regulatory body.
+              CareHomesSupportDocs.com is a nonprofit platform. We are not a government agency, law firm, or regulatory body.
             </p>
           </div>
           

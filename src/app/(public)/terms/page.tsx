@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Terms of Service (DRAFT)",
+  title: "Terms of Service",
   description:
     "Terms of Service and usage agreement for the CareHomesSupportDocs platform.",
 });
@@ -34,7 +34,7 @@ export default function TermsPage() {
   const lastUpdated = "June 15, 2026";
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebPage",
+    "@type": "TermsOfService",
     name: "Terms of Service",
     description:
       "Terms of Service and usage agreement for the CareHomesSupportDocs platform.",

@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Contact Us",
+  description:
+    "Contact CareHomesSupportDocs.comr questions about memberships, regulatory rebuttals, platform support, and general inquiries.",
+});
+
 export default function ContactPage() {
   return (
     <div className="max-w-3xl mx-auto p-10">
@@ -17,5 +26,5 @@ export default function ContactPage() {
         Contact form will be added in a later update.
       </p>
     </div>
-  )
+  );
 }

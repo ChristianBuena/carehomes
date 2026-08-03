@@ -80,20 +80,37 @@ const DISCLAIMERS = [
 ];
 
 export default function DisclaimerPage() {
-  const lastUpdated = "June 15, 2026"; // Hardcoded for now
+  const lastUpdated = "August 15, 2023"; // Hardcoded for now
 
   const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Legal Disclaimer",
-    description:
-      "Important legal disclaimers regarding the use of CareHomesSupportDocs.org.",
-    publisher: {
-      "@type": "Organization",
-      name: "CareHomesSupportDocs.org",
-    },
-    dateModified: new Date(lastUpdated).toISOString(),
-  };
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+
+  "@id": "https://carehomessupportdocs.com/disclaimer",
+  url: "https://carehomessupportdocs.com/disclaimer",
+
+  name: "Legal Disclaimer",
+  description:
+    "Important legal disclaimers regarding the use of CareHomesSupportDocs.com, including our status as an independent nonprofit and our policies on legal advice and content accuracy.",
+
+  inLanguage: "en-US",
+
+  isPartOf: {
+    "@type": "WebSite",
+    "@id": "https://carehomessupportdocs.com/#website",
+    name: "CareHomesSupportDocs",
+    url: "https://carehomessupportdocs.com",
+  },
+
+  publisher: {
+    "@type": "Organization",
+    "@id": "https://carehomessupportdocs.com/#organization",
+    name: "CareHomesSupportDocs",
+    url: "https://carehomessupportdocs.com",
+  },
+
+  dateModified: new Date(lastUpdated).toISOString(),
+};
 
   return (
     <>

@@ -53,7 +53,7 @@ export function OfficialRecordSection({
                 aria-hidden="true"
               />
               This link opens an external government website.
-              CareHomesSupportDocs.org is not affiliated with CCLD.
+              CareHomesSupportDocs.com is not affiliated with CCLD.
             </p>
           </>
         ) : (
@@ -66,7 +66,7 @@ export function OfficialRecordSection({
             <p className="text-sm text-[var(--color-muted)] leading-relaxed">
               Official link not yet available.{" "}
               <a
-                href="mailto:support@carehomessupportdocs.org"
+                href="mailto:support@carehomessupportdocs.com"
                 className="font-medium text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors underline"
               >
                 Contact us

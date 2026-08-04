@@ -40,7 +40,7 @@ export default function ProvidersClientPage() {
         </div>
 
         <DisclaimerCallout variant="warning" className="mb-8">
-          Listings on this page are provided as a neutral reference only. CareHomesSupportDocs.org does not endorse, vet, or have any financial relationship with listed providers. This is not a referral service. Always conduct your own due diligence. Using this directory does not create an attorney-client relationship.
+          Listings on this page are provided as a neutral reference only. CareHomesSupportDocs.com does not endorse, vet, or have any financial relationship with listed providers. This is not a referral service. Always conduct your own due diligence. Using this directory does not create an attorney-client relationship.
         </DisclaimerCallout>
 
         <ProviderFilters providers={providers} />

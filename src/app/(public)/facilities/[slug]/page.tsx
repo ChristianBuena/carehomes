@@ -37,7 +37,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const facility = await getFacilityBySlug(slug);
   if (!facility) {
-    return { title: "Facility Not Found | CareHomesSupportDocs.org" };
+    return { title: "Facility Not Found | CareHomesSupportDocs.com" };
   }
   const name = facility.name;
   const city = facility.city ?? facility.address.split(",")[1]?.trim() ?? facility.address;
@@ -46,7 +46,7 @@ export async function generateMetadata({
     title: `${name} — ${city}, CA`,
     description: `View the official CCLD record and published rebuttals for ${name} in ${city}, California.`,
     openGraph: {
-      title: `${name} | CareHomesSupportDocs.org`,
+      title: `${name} | CareHomesSupportDocs.com`,
       description: `Licensed California care facility in ${city}. View rebuttals and official CCLD records.`,
       type: "website",
     },

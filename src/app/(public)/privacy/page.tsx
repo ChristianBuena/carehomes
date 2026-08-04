@@ -7,9 +7,9 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Privacy Policy (DRAFT)",
+  title: "Privacy Policy ",
   description:
-    "Learn how CareHomesSupportDocs.org collects, uses, and protects your information.",
+    "Learn how CareHomesSupportDocs.com collects, uses, stores, and protects personal information for members and visitors."
 });
 
 const TOC_ITEMS = [
@@ -34,10 +34,10 @@ export default function PrivacyPolicyPage() {
     "@type": "WebPage",
     name: "Privacy Policy",
     description:
-      "Learn how CareHomesSupportDocs.org collects, uses, and protects your information.",
+      "Learn how CareHomesSupportDocs.com collects, uses, and protects your information.",
     publisher: {
       "@type": "Organization",
-      name: "CareHomesSupportDocs.org",
+      name: "CareHomesSupportDocs.com",
     },
     dateModified: new Date(lastUpdated).toISOString(),
   };
@@ -102,7 +102,7 @@ export default function PrivacyPolicyPage() {
                     1. Introduction & Scope
                   </h2>
                   <p>
-                    CareHomesSupportDocs.org ("we", "our", "us") respects your
+                    CareHomesSupportDocs.com ("we", "our", "us") respects your
                     privacy. This Privacy Policy outlines how we collect, use,
                     disclose, and safeguard your information when you visit our
                     website or use our platform services.
@@ -273,8 +273,8 @@ export default function PrivacyPolicyPage() {
                   <p>
                     If you have any questions, concerns, or privacy-related
                     requests, please contact our Privacy Officer at{" "}
-                    <a href="mailto:privacy@carehomessupportdocs.org">
-                      privacy@carehomessupportdocs.org
+                    <a href="mailto:privacy@carehomessupportdocs.com">
+                      privacy@carehomessupportdocs.com
                     </a>
                     .
                   </p>

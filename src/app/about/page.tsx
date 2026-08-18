@@ -1,3 +1,13 @@
+import type { Metadata } from "next"
+import { buildMetadata } from "@/lib/metadata"
+
+export const metadata: Metadata = buildMetadata({
+  title: "About Us — CareHomesSupportDocs.com",
+  description:
+    "Learn about CareHomesSupportDocs.com, our mission, and how we help licensed California care facility operators manage and publish regulatory rebuttals with transparency and compliance.",
+
+});
+
 export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto p-10">

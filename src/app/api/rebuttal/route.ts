@@ -86,12 +86,12 @@ export async function POST(req: NextRequest) {
         moderators.map((mod) =>
           sendEmail({
             to: mod.email,
-            subject: `CareHomesSupportDocs.org — New Rebuttal Submitted for Review`,
+            subject: `CareHomesSupportDocs.com — New Rebuttal Submitted for Review`,
             text: `Hi ${mod.name},\n\nA new rebuttal has been submitted and requires your review.\n\nFacility: ${facility.name}\nRebuttal Title: ${title}\nSubmitted: ${submissionDate}\n\nReview it here: ${moderationLink}\n\n— CareHomesSupportDocs Team`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 8px;">
                 <div style="background: #1d3557; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 22px;">CareHomesSupportDocs.org</h1>
+                  <h1 style="color: #ffffff; margin: 0; font-size: 22px;">CareHomesSupportDocs.com</h1>
                 </div>
                 <div style="background: #ffffff; padding: 32px; border-radius: 0 0 8px 8px;">
                   <h2 style="color: #1d3557; margin-top: 0;">📋 New Rebuttal Submitted</h2>
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
                   <div style="text-align: center; margin: 32px 0;">
                     <a href="${moderationLink}" style="background: #1d3557; color: #ffffff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Go to Moderation Dashboard</a>
                   </div>
-                  <p style="color: #6b7280; font-size: 13px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 16px;">You are receiving this because you are an Admin or Moderator on CareHomesSupportDocs.org.<br/>— CareHomesSupportDocs Team</p>
+                  <p style="color: #6b7280; font-size: 13px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 16px;">You are receiving this because you are an Admin or Moderator on CareHomesSupportDocs.com.<br/>— CareHomesSupportDocs Team</p>
                 </div>
               </div>
             `,

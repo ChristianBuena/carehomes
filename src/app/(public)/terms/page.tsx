@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Terms of Service (DRAFT)",
+  title: "Terms of Service",
   description:
     "Terms of Service and usage agreement for the CareHomesSupportDocs platform.",
 });
@@ -34,13 +34,13 @@ export default function TermsPage() {
   const lastUpdated = "June 15, 2026";
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebPage",
+    "@type": "TermsOfService",
     name: "Terms of Service",
     description:
       "Terms of Service and usage agreement for the CareHomesSupportDocs platform.",
     publisher: {
       "@type": "Organization",
-      name: "CareHomesSupportDocs.org",
+      name: "CareHomesSupportDocs.com",
     },
     dateModified: new Date(lastUpdated).toISOString(),
   };
@@ -68,7 +68,7 @@ export default function TermsPage() {
             </h1>
             <p className="text-[var(--color-surface)]/80 text-lg max-w-2xl">
               Please read these terms carefully before using the
-              CareHomesSupportDocs.org platform.
+              CareHomesSupportDocs.com platform.
             </p>
           </ResponsiveContainer>
         </header>
@@ -106,7 +106,7 @@ export default function TermsPage() {
                     1. Acceptance of Terms
                   </h2>
                   <p>
-                    By accessing or using CareHomesSupportDocs.org ("the Site"),
+                    By accessing or using CareHomesSupportDocs.com (the Site"),
                     you agree to be bound by these Terms of Service. If you do
                     not agree to these terms, you may not use the Site.
                   </p>
@@ -117,7 +117,7 @@ export default function TermsPage() {
                     2. Description of Service
                   </h2>
                   <p>
-                    CareHomesSupportDocs.org provides a platform for licensed
+                    CareHomesSupportDocs.com provides a platform for licensed
                     California care facility operators to publish rebuttals to
                     public regulatory citations issued by the CCLD. We are a
                     neutral host and do not endorse the contents of member
@@ -174,11 +174,11 @@ export default function TermsPage() {
                   </h2>
                   <p>
                     You retain ownership of the content you submit. By
-                    submitting content, you grant CareHomesSupportDocs.org a
+                    submitting content, you grant CareHomesSupportDocs.com a
                     non-exclusive, worldwide, royalty-free license to publish,
                     distribute, and display the content on the Site. The
                     platform's code, design, and logos remain the exclusive
-                    property of CareHomesSupportDocs.org.
+                    property of CareHomesSupportDocs.com.
                   </p>
                 </section>
 
@@ -224,7 +224,7 @@ export default function TermsPage() {
                     10. Limitation of Liability
                   </h2>
                   <p>
-                    In no event shall CareHomesSupportDocs.org, its directors,
+                    In no event shall CareHomesSupportDocs.com, its directors,
                     employees, or agents be liable for any indirect, incidental,
                     special, consequential, or punitive damages arising out of
                     your use of the Site or the content published on it.
@@ -237,7 +237,7 @@ export default function TermsPage() {
                   </h2>
                   <p>
                     You agree to indemnify and hold harmless
-                    CareHomesSupportDocs.org from any claims, damages,
+                    CareHomesSupportDocs.com from any claims, damages,
                     liabilities, and expenses (including legal fees) arising
                     from your use of the Site, your submitted content, or your
                     violation of these Terms.
@@ -280,8 +280,8 @@ export default function TermsPage() {
                   <p>
                     If you have any questions about these Terms, please contact
                     us at{" "}
-                    <a href="mailto:legal@carehomessupportdocs.org">
-                      legal@carehomessupportdocs.org
+                    <a href="mailto:legal@carehomessupportdocs.com">
+                      legal@carehomessupportdocs.com
                     </a>
                     .
                   </p>

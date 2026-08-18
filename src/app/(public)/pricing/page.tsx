@@ -7,10 +7,11 @@ import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildMetadata } from "@/lib/metadata";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Pricing",
-  description: "Transparent, annual membership pricing for CareHomesSupportDocs.org. Choose the tier that fits your facility operations.",
+  title: "Membership Pricing ",
+  description: "Compare CareHomesSupportDocs.com membership plans for licensed California care facilities. View annual pricing, features, and subscription options.",
 });
 
 const FULL_TIERS = [
@@ -85,6 +86,15 @@ const FAQS = [
   }
 ];
 
+const pricingSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Membership Pricing",
+  url: "https://carehomessupportdocs.com/pricing",
+  description:
+    "Compare CareHomesSupportDocs.com membership plans for licensed California care facilities.",
+};
+
 export default async function PricingPage() {
   const user = await getUserFromRequest();
   let currentPlan: string | undefined;
@@ -100,6 +110,8 @@ export default async function PricingPage() {
   }
 
   return (
+     <>
+    <JsonLd data={pricingSchema} />
     <div className="bg-[var(--color-bg)] w-full pb-24">
       {/* Page Header */}
       <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24 relative overflow-hidden">
@@ -172,5 +184,6 @@ export default async function PricingPage() {
         </ResponsiveContainer>
       </section>
     </div>
+    </>
   );
 }

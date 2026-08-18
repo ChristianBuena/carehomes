@@ -104,11 +104,11 @@ async function main() {
   });
 
   const member = await prisma.user.upsert({
-    where: { email: "member@carehomesdocs.org" },
+    where: { email: "member@carehomesdocs.com" },
     update: { organizationId: memberOrg.id },
     create: {
       name: "James Reyes",
-      email: "member@carehomesdocs.org",
+      email: "member@carehomesdocs.com",
       password: memberPassword,
       role: "MEMBER",
       organizationId: memberOrg.id,

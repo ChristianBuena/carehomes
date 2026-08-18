@@ -87,7 +87,7 @@ export default function NotFound() {
                   View Pricing
                 </Link>
                 <Link
-                  href="mailto:support@carehomessupportdocs.org"
+                  href="mailto:support@carehomessupportdocs.com"
                   className="flex items-center gap-2.5 text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors p-2 -ml-2 rounded-lg hover:bg-[var(--color-bg)]"
                 >
                   <Mail className="h-4 w-4 text-[var(--color-muted)]" />

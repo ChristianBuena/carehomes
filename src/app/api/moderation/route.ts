@@ -143,12 +143,12 @@ export async function POST(req: NextRequest) {
         let html = "";
 
         if (action === "approve") {
-          subject = "CareHomesSupportDocs.org — Your Rebuttal Has Been Approved";
+          subject = "CareHomesSupportDocs.com — Your Rebuttal Has Been Approved";
           text = `Hi ${memberName},\n\nGreat news! Your rebuttal "${rebuttalTitle}" for ${facilityName} has been APPROVED and is now published.\n\nView it here: ${facilityLink}\n\n— CareHomesSupportDocs Team`;
           html = `
             <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 8px;">
               <div style="background: #1d3557; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 22px;">CareHomesSupportDocs.org</h1>
+                <h1 style="color: #ffffff; margin: 0; font-size: 22px;">CareHomesSupportDocs.com</h1>
               </div>
               <div style="background: #ffffff; padding: 32px; border-radius: 0 0 8px 8px;">
                 <h2 style="color: #16a34a; margin-top: 0;">Rebuttal Approved!</h2>
@@ -166,12 +166,12 @@ export async function POST(req: NextRequest) {
             </div>
           `;
         } else if (action === "reject") {
-          subject = "CareHomesSupportDocs.org — Your Rebuttal Was Not Approved";
+          subject = "CareHomesSupportDocs.com — Your Rebuttal Was Not Approved";
           text = `Hi ${memberName},\n\nUnfortunately, your rebuttal "${rebuttalTitle}" for ${facilityName} has been REJECTED.${reason ? `\n\nReason: ${reason}` : ""}\n\nIf you have questions, please contact our support team.\n\n— CareHomesSupportDocs Team`;
           html = `
             <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 8px;">
               <div style="background: #1d3557; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 22px;">CareHomesSupportDocs.org</h1>
+                <h1 style="color: #ffffff; margin: 0; font-size: 22px;">CareHomesSupportDocs.com</h1>
               </div>
               <div style="background: #ffffff; padding: 32px; border-radius: 0 0 8px 8px;">
                 <h2 style="color: #dc2626; margin-top: 0;">Rebuttal Not Approved</h2>
@@ -191,12 +191,12 @@ export async function POST(req: NextRequest) {
             </div>
           `;
         } else if (action === "request_fix") {
-          subject = "CareHomesSupportDocs.org — Revision Needed for Your Rebuttal";
+          subject = "CareHomesSupportDocs.com — Revision Needed for Your Rebuttal";
           text = `Hi ${memberName},\n\nYour rebuttal "${rebuttalTitle}" for ${facilityName} requires revision before it can be approved.${notes ? `\n\nModerator Notes: ${notes}` : ""}\n\nPlease update your rebuttal and resubmit: ${dashboardLink}\n\n— CareHomesSupportDocs Team`;
           html = `
             <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 8px;">
               <div style="background: #1d3557; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 22px;">CareHomesSupportDocs.org</h1>
+                <h1 style="color: #ffffff; margin: 0; font-size: 22px;">CareHomesSupportDocs.com</h1>
               </div>
               <div style="background: #ffffff; padding: 32px; border-radius: 0 0 8px 8px;">
                 <h2 style="color: #d97706; margin-top: 0;">⚠️ Revision Needed</h2>

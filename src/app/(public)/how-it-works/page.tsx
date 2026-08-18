@@ -5,6 +5,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { AlertCircle, ArrowRight, UserPlus, FileUp, CheckCircle, Globe } from "lucide-react";
 
 import { buildMetadata } from "@/lib/metadata";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export const metadata: Metadata = buildMetadata({
@@ -58,7 +59,7 @@ const FAQS = [
   },
   {
     question: "Is this legal advice?",
-    answer: "NO. CareHomesSupportDocs.org does not provide legal advice. We provide a publishing platform. Always consult a licensed attorney for legal matters or before submitting legally sensitive statements."
+    answer: "NO. CareHomesSupportDocs.com does not provide legal advice. We provide a publishing platform. Always consult a licensed attorney for legal matters or before submitting legally sensitive statements."
   },
   {
     question: "How long does moderation take?",
@@ -79,7 +80,39 @@ const FAQS = [
 ];
 
 export default function HowItWorksPage() {
+
+  const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+
+  "@id": "https://carehomessupportdocs.com/how-it-works",
+
+  url: "https://carehomessupportdocs.com/how-it-works",
+
+  name: "How It Works",
+
+  description:
+    "Learn how the CareHomesSupportDocs platform works, from membership verification to publishing regulatory rebuttals securely and compliantly.",
+
+  inLanguage: "en-US",
+
+  isPartOf: {
+    "@type": "WebSite",
+    name: "CareHomesSupportDocs",
+    url: "https://carehomessupportdocs.com",
+  },
+
+  publisher: {
+    "@type": "Organization",
+    name: "CareHomesSupportDocs",
+    url: "https://carehomessupportdocs.com",
+  },
+};
+
   return (
+
+    <>
+  <JsonLd data={jsonLd} />
     <div className="bg-[var(--color-bg)] w-full">
       {/* Disclaimer Banner */}
       <div className="bg-[var(--color-warning)] text-[var(--color-surface)] w-full py-3 px-4">
@@ -184,5 +217,7 @@ export default function HowItWorksPage() {
         </ResponsiveContainer>
       </section>
     </div>
+    </>
   );
+  
 }

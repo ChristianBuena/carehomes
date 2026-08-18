@@ -30,10 +30,10 @@ export default function RedactionPolicyPage() {
     "@type": "WebPage",
     name: "Redaction Policy",
     description:
-      "Strict privacy and redaction guidelines for all rebuttals published on CareHomesSupportDocs.org.",
+      "Strict privacy and redaction guidelines for all rebuttals published on CareHomesSupportDocs.com.",
     publisher: {
       "@type": "Organization",
-      name: "CareHomesSupportDocs.org",
+      name: "CareHomesSupportDocs.com",
     },
     dateModified: new Date(lastUpdated).toISOString(),
   };
@@ -87,7 +87,7 @@ export default function RedactionPolicyPage() {
                 <p className="text-[var(--color-text)] text-lg mb-4">
                   Redaction is the process of censoring or obscuring part of a
                   text for legal or security purposes. On
-                  CareHomesSupportDocs.org, redaction ensures that no sensitive
+                  CareHomesSupportDocs.com, redaction ensures that no sensitive
                   personal information is ever published alongside a facility's
                   rebuttal.
                 </p>
@@ -182,7 +182,7 @@ export default function RedactionPolicyPage() {
                   4. Our Moderation Process
                 </h2>
                 <p className="text-[var(--color-text)] text-lg mb-4">
-                  CareHomesSupportDocs.org utilizes a human-in-the-loop
+                  CareHomesSupportDocs.com utilizes a human-in-the-loop
                   moderation system. Before any rebuttal goes live on a facility
                   profile:
                 </p>
@@ -264,8 +264,8 @@ export default function RedactionPolicyPage() {
                   If you are unsure whether specific details should be redacted
                   from your rebuttal, err on the side of caution. For policy
                   clarification, you may reach out to our moderation team at{" "}
-                  <a href="mailto:support@carehomessupportdocs.org">
-                    support@carehomessupportdocs.org
+                  <a href="mailto:support@carehomessupportdocs.com">
+                    support@carehomessupportdocs.com
                   </a>
                   .
                 </p>

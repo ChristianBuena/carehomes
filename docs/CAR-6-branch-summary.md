@@ -2,7 +2,7 @@
 
 ## 1. Branch Overview
 - **Branch purpose:** CAR-6 Public Website
-- **What was built:** The entire suite of public-facing pages and UI components for CareHomesSupportDocs.org. This includes the homepage, facility and provider directories, detail pages, policies, and responsive global layouts.
+- **What was built:** The entire suite of public-facing pages and UI components for CareHomesSupportDocs.com.This includes the homepage, facility and provider directories, detail pages, policies, and responsive global layouts.
 - **Tech stack used:** Next.js 15 (App Router), Tailwind CSS v4, shadcn/ui components, Lucide React icons, React Hook Form, Zustand, and strict TypeScript.
 
 ## 2. Completed Tasks

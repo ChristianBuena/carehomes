@@ -12,14 +12,16 @@ import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = buildMetadata({
-  title: "CareHomesSupportDocs.org — Rebuttal Management for Care Facilities",
+  title: "CareHomesSupportDocs.com — Rebuttal Management for Care Facilities",
+  description:
+    "CareHomesSupportDocs.com is a nonprofit platform that helps licensed California care facility operators securely manage, submit, and publish rebuttals to regulatory citations.",
 });
 
 const ngoSchema = {
   "@context": "https://schema.org",
   "@type": "NGO",
-  name: "CareHomesSupportDocs.org",
-  url: "https://carehomessupportdocs.org",
+  name: "CareHomesSupportDocs.com",
+  url: "https://carehomessupportdocs.com",
   description:
     "An independent nonprofit platform helping licensed California care facility operators manage, submit, and publish rebuttals to regulatory citations with compliance and transparency.",
   knowsAbout: [

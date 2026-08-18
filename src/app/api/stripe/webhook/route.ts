@@ -120,8 +120,8 @@ export async function POST(req: Request) {
 
             await sendEmail({
               to: user.email,
-              subject: "Your CareHomesSupportDocs.org Membership is Active!",
-              text: `Hi ${user.name},\n\nThank you for subscribing! Your ${label} membership (${price}) is now active.\n\nYou can now log in to your dashboard to manage your facilities and rebuttals.\n\nhttps://carehomessupportdocs.org/dashboard\n\n— CareHomesSupportDocs Team`,
+              subject: "Your CareHomesSupportDocs.com Membership is Active!",
+              text: `Hi ${user.name},\n\nThank you for subscribing! Your ${label} membership (${price}) is now active.\n\nYou can now log in to your dashboard to manage your facilities and rebuttals.\n\nhttps://carehomessupportdocs.com/dashboard\n\n— CareHomesSupportDocs Team`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 8px;">
                   <div style="background: #1d3557; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
@@ -223,7 +223,7 @@ export async function POST(req: Request) {
           await sendEmail({
             to: user.email,
             subject,
-            text: `Hi ${user.name},\n\nWe were unable to process your most recent membership payment.\n\nPlease update your billing information to avoid losing access to your facilities and features.\n\nhttps://carehomessupportdocs.org/dashboard\n\n— CareHomesSupportDocs Team`,
+            text: `Hi ${user.name},\n\nWe were unable to process your most recent membership payment.\n\nPlease update your billing information to avoid losing access to your facilities and features.\n\nhttps://carehomessupportdocs.com/dashboard\n\n— CareHomesSupportDocs Team`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;">
                 <h2 style="color: #dc2626;">Payment Failed</h2>

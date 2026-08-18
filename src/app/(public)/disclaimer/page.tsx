@@ -17,7 +17,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 export const metadata: Metadata = buildMetadata({
   title: "Legal Disclaimer",
   description:
-    "Important legal disclaimers regarding the use of CareHomesSupportDocs.org, including our status as an independent nonprofit and our policies on legal advice and content accuracy.",
+    "Important legal disclaimers regarding the use of CareHomesSupportDocs.com, including our status as an independent nonprofit and our policies on legal advice and content accuracy.",
 });
 
 const DISCLAIMERS = [
@@ -26,7 +26,7 @@ const DISCLAIMERS = [
     title: "1. Not a Government Website",
     icon: Building,
     content:
-      "CareHomesSupportDocs.org is an independent, private nonprofit organization. We are not a government agency, nor are we funded by, endorsed by, or affiliated with any local, state, or federal government entity.",
+      "CareHomesSupportDocs.com is an independent, private nonprofit organization. We are not a government agency, nor are we funded by, endorsed by, or affiliated with any local, state, or federal government entity.",
   },
   {
     id: "not-affiliated-ccld",
@@ -40,14 +40,14 @@ const DISCLAIMERS = [
     title: "3. Not Legal Advice",
     icon: Scale,
     content:
-      "Nothing contained on CareHomesSupportDocs.org—including articles, FAQs, guides, and member-submitted rebuttals—constitutes legal advice. The information provided is for general informational purposes only.",
+      "Nothing contained on CareHomesSupportDocs.com—including articles, FAQs, guides, and member-submitted rebuttals—constitutes legal advice. The information provided is for general informational purposes only.",
   },
   {
     id: "no-attorney-client",
     title: "4. No Attorney-Client Relationship",
     icon: Users,
     content:
-      "Using this platform, contacting our support team, or submitting documents for moderation does not create an attorney-client relationship between you and CareHomesSupportDocs.org or any of its employees, directors, or affiliates.",
+      "Using this platform, contacting our support team, or submitting documents for moderation does not create an attorney-client relationship between you and CareHomesSupportDocs.com any of its employees, directors, or affiliates.",
   },
   {
     id: "information-accuracy",
@@ -75,25 +75,42 @@ const DISCLAIMERS = [
     title: "8. External Links",
     icon: ExternalLink,
     content:
-      "This website contains links to third-party websites. CareHomesSupportDocs.org is not responsible for the content, privacy policies, or practices of any external sites. Links are provided solely for the convenience of our users.",
+      "This website contains links to third-party websites. CareHomesSupportDocs.com is not responsible for the content, privacy policies, or practices of any external sites. Links are provided solely for the convenience of our users.",
   },
 ];
 
 export default function DisclaimerPage() {
-  const lastUpdated = "June 15, 2026"; // Hardcoded for now
+  const lastUpdated = "August 15, 2023"; // Hardcoded for now
 
   const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Legal Disclaimer",
-    description:
-      "Important legal disclaimers regarding the use of CareHomesSupportDocs.org.",
-    publisher: {
-      "@type": "Organization",
-      name: "CareHomesSupportDocs.org",
-    },
-    dateModified: new Date(lastUpdated).toISOString(),
-  };
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+
+  "@id": "https://carehomessupportdocs.com/disclaimer",
+  url: "https://carehomessupportdocs.com/disclaimer",
+
+  name: "Legal Disclaimer",
+  description:
+    "Important legal disclaimers regarding the use of CareHomesSupportDocs.com, including our status as an independent nonprofit and our policies on legal advice and content accuracy.",
+
+  inLanguage: "en-US",
+
+  isPartOf: {
+    "@type": "WebSite",
+    "@id": "https://carehomessupportdocs.com/#website",
+    name: "CareHomesSupportDocs",
+    url: "https://carehomessupportdocs.com",
+  },
+
+  publisher: {
+    "@type": "Organization",
+    "@id": "https://carehomessupportdocs.com/#organization",
+    name: "CareHomesSupportDocs",
+    url: "https://carehomessupportdocs.com",
+  },
+
+  dateModified: new Date(lastUpdated).toISOString(),
+};
 
   return (
     <>
@@ -123,7 +140,7 @@ export default function DisclaimerPage() {
                 Read This Disclaimer Before Using This Site
               </h2>
               <p className="text-[var(--color-text)] text-sm md:text-base leading-relaxed font-medium">
-                By accessing, browsing, or utilizing CareHomesSupportDocs.org,
+                By accessing, browsing, or utilizing CareHomesSupportDocs.com,
                 you acknowledge that you have read, understood, and agree to be
                 bound by the terms outlined in this disclaimer. If you do not
                 agree, you must exit this site immediately.

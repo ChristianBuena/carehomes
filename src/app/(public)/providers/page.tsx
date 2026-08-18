@@ -3,7 +3,7 @@ import ProvidersClientPage from "./page.client";
 import { buildMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Provider Directory",
+  title: "Attorney & Legal Provider Directory", 
   description:
     "Find independent attorneys and paralegals specializing in CCLD regulatory compliance, citation defense, and facility operations in California.",
 });

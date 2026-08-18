@@ -10,7 +10,7 @@ import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 export const metadata: Metadata = buildMetadata({
   title: "Takedown Policy",
   description:
-    "Learn how to submit a takedown request for content published on CareHomesSupportDocs.org that violates our privacy or redaction policies.",
+    "Learn how to submit a takedown request for content published on CareHomesSupportDocs.com that violates our privacy or redaction policies.",
 });
 
 const TOC_ITEMS = [
@@ -28,17 +28,18 @@ export default function TakedownPolicyPage() {
   const lastUpdated = "June 15, 2026"; // Hardcoded for now
 
   const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Takedown Policy",
-    description:
-      "Learn how to submit a takedown request for content published on CareHomesSupportDocs.org.",
-    publisher: {
-      "@type": "Organization",
-      name: "CareHomesSupportDocs.org",
-    },
-    dateModified: new Date(lastUpdated).toISOString(),
-  };
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "@id": "https://carehomessupportdocs.com/takedown-policy",
+  url: "https://carehomessupportdocs.com/takedown-policy",
+  name: "Takedown Policy",
+  description:
+    "Privacy and redaction standards for rebuttals published on CareHomesSupportDocs.com.",
+  isPartOf: {
+    "@type": "WebSite",
+    name: "CareHomesSupportDocs.com",
+  },
+}
 
   return (
     <>
@@ -117,7 +118,7 @@ export default function TakedownPolicyPage() {
                 <section id="overview" className="scroll-mt-28 mb-12">
                   <h2 className="text-3xl font-bold mb-4">1. Overview</h2>
                   <p className="text-[var(--color-text)] text-lg mb-4">
-                    CareHomesSupportDocs.org is committed to ensuring that all
+                    CareHomesSupportDocs.com is committed to ensuring that all
                     published rebuttals adhere strictly to our privacy and
                     redaction guidelines. If you believe that content published
                     on our platform violates your privacy, exposes sensitive
@@ -166,7 +167,7 @@ export default function TakedownPolicyPage() {
                     3. Grounds for Takedown
                   </h2>
                   <p className="text-[var(--color-text)] text-lg mb-4">
-                    Content may be removed from CareHomesSupportDocs.org for any
+                    Content may be removed from CareHomesSupportDocs.com for any
                     of the following reasons:
                   </p>
                   <ul className="list-disc pl-6 space-y-2 text-[var(--color-text)] text-lg">
@@ -202,7 +203,7 @@ export default function TakedownPolicyPage() {
                   <p className="text-[var(--color-text)] text-lg mb-4">
                     To submit a takedown request, please email our moderation
                     team directly at{" "}
-                    <strong>takedowns@carehomessupportdocs.org</strong>.
+                    <strong>takedowns@carehomessupportdocs.com</strong>.
                   </p>
                   <p className="text-[var(--color-text)] text-lg mb-4">
                     To expedite the process, your email MUST include:
@@ -288,7 +289,7 @@ export default function TakedownPolicyPage() {
                 <section id="incident-log" className="scroll-mt-28 mb-12">
                   <h2 className="text-3xl font-bold mb-4">8. Incident Log</h2>
                   <p className="text-[var(--color-text)] text-lg">
-                    CareHomesSupportDocs.org maintains a secure, internal
+                    CareHomesSupportDocs.com maintains a secure, internal
                     incident log of all takedown requests, actions taken, and
                     correspondence. This log is kept for legal and compliance
                     auditing purposes and is{" "}

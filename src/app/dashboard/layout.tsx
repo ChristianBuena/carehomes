@@ -17,6 +17,7 @@ import {
   CreditCard,
   Calendar,
   Library,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
@@ -52,6 +53,12 @@ const NAV_LINKS = [
     href: "/dashboard/moderation",
     icon: ClipboardCheck,
     permission: "moderate_rebuttals",
+  },
+  {
+    name: "Incidents & SLA",
+    href: "/dashboard/incidents",
+    icon: ShieldAlert,
+    permission: "manage_incidents",
   },
   {
     name: "Manage Templates",

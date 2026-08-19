@@ -10,6 +10,7 @@ import { DisclaimerBanner } from "@/components/sections/DisclaimerBanner";
 import { RecentFacilitiesSection } from "@/components/sections/RecentFacilitiesSection";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
+export const revalidate = 300;
 
 export const metadata: Metadata = buildMetadata({
   title: "CareHomesSupportDocs.org — Rebuttal Management for Care Facilities",

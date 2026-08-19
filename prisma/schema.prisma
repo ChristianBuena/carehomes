@@ -152,6 +152,9 @@ model Rebuttal {
   @@index([userId])
   @@index([status])
   @@index([facilityId])
+  @@index([facilityId, status])
+  @@index([status, updatedAt])
+  @@index([userId, status])
 }
 
 //
@@ -186,8 +189,14 @@ model Facility {
 
   @@index([slug])
   @@index([name])
+  @@index([county])
+  @@index([city])
+  @@index([capacity])
+  @@index([updatedAt])
+  @@index([facilityNumber])
   @@index([createdById])
   @@index([organizationId])
+  @@index([organizationId, createdAt])
 }
 
 //
@@ -226,6 +235,7 @@ model CitationDeadline {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, dueDate])
 }
 
 //
@@ -253,6 +263,8 @@ model ModerationLog {
 
   @@index([rebuttalId])
   @@index([moderatorId])
+  @@index([rebuttalId, createdAt])
+  @@index([createdAt])
 }
 
 //
@@ -292,6 +304,9 @@ model Template {
 
   @@index([category])
   @@index([isActive])
+  @@index([isActive, category])
+  @@index([downloadCount])
+  @@index([createdAt])
 }
 
 model TemplateDownload {
@@ -308,4 +323,5 @@ model TemplateDownload {
 
   @@index([templateId])
   @@index([userId])
+  @@index([userId, createdAt])
 }

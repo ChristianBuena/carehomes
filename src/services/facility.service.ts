@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
 // ── Filters ──────────────────────────────────────────────────────────────────
@@ -91,7 +92,17 @@ export async function getFacilities(filters?: FacilityFilters) {
   const [facilities, total] = await Promise.all([
     prisma.facility.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        address: true,
+        city: true,
+        county: true,
+        capacity: true,
+        facilityNumber: true,
+        ccldLink: true,
+        updatedAt: true,
         createdBy: { select: { id: true, name: true, email: true } },
         _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
       },
@@ -111,15 +122,56 @@ export async function getFacilities(filters?: FacilityFilters) {
   };
 }
 
-export async function getFacilityBySlug(slug: string) {
+/**
+ * Fetch a facility by slug with React per-request cache memoization.
+ * Deduplicates calls across generateMetadata and Page rendering.
+ */
+export const getFacilityBySlug = cache(async (slug: string) => {
   return prisma.facility.findUnique({
     where: { slug },
     include: {
-      createdBy: true,
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
       _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
     },
   });
-}
+});
+
+/**
+ * Fetch recently updated facilities with React per-request cache memoization.
+ */
+export const getRecentFacilities = cache(async (take: number = 3) => {
+  const facilities = await prisma.facility.findMany({
+    orderBy: { updatedAt: "desc" },
+    take,
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      address: true,
+      city: true,
+      county: true,
+      updatedAt: true,
+      _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
+    },
+  });
+
+  return facilities.map((f) => ({
+    id: f.id,
+    slug: f.slug,
+    name: f.name,
+    city: f.city ?? f.address.split(",")[1]?.trim() ?? f.address,
+    county: f.county ?? "Unknown",
+    status: "active" as const,
+    rebuttalsCount: f._count.rebuttals,
+    lastUpdated: f.updatedAt.toISOString(),
+  }));
+});
 
 /** @deprecated Use getFacilityBySlug for public-facing pages */
 export async function getFacilityById(id: string) {

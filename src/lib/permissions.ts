@@ -29,7 +29,10 @@ export type Permission =
 
   // Template Library
   | "access_library"         // MEMBER + ADMIN + MODERATOR — view and download templates
-  | "manage_templates";      // ADMIN only — create, edit, delete templates
+  | "manage_templates"       // ADMIN only — create, edit, delete templates
+
+  // Takedowns & Incidents
+  | "manage_incidents";      // ADMIN + MODERATOR — review, resolve, and execute emergency takedowns
 
 export const permissions: Record<Role, Permission[]> = {
   ADMIN: [
@@ -49,6 +52,7 @@ export const permissions: Record<Role, Permission[]> = {
     "manage_memberships",
     "access_library",
     "manage_templates",
+    "manage_incidents",
   ],
 
   MODERATOR: [
@@ -59,6 +63,7 @@ export const permissions: Record<Role, Permission[]> = {
     "request_fix_rebuttal",
     "publish_rebuttals",
     "access_library",
+    "manage_incidents",
   ],
 
   MEMBER: [

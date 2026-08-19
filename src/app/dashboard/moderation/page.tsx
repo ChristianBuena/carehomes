@@ -66,13 +66,22 @@ export default async function ModerationPage() {
             </p>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shrink-0 shadow-sm">
               <div className="w-2 h-2 rounded-full bg-[var(--color-warning)] animate-pulse" />
               <span className="text-sm font-medium text-[var(--color-text)]">
                 {pendingRebuttals.length} Pending
               </span>
             </div>
+            <Link
+              href="/dashboard/incidents"
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shrink-0 shadow-sm hover:border-[var(--color-warning)] transition-colors"
+            >
+              <ShieldAlert className="h-4 w-4 text-[var(--color-warning)]" />
+              <span className="text-sm font-medium text-[var(--color-text)]">
+                72h SLA Incidents
+              </span>
+            </Link>
             <Link
               href="/dashboard/moderation/access-review"
               className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shrink-0 shadow-sm hover:border-[var(--color-secondary)] transition-colors"

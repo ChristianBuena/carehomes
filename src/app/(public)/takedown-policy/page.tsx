@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { TableOfContents } from "@/components/ui/table-of-contents";
-import { Clock, Calendar, Mail } from "lucide-react";
+import { Clock, Calendar, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TakedownRequestForm } from "@/components/takedown/TakedownRequestForm";
 
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -17,7 +18,7 @@ const TOC_ITEMS = [
   { id: "overview", label: "1. Overview" },
   { id: "who-can-submit", label: "2. Who Can Submit a Request" },
   { id: "grounds-for-takedown", label: "3. Grounds for Takedown" },
-  { id: "how-to-submit", label: "4. How to Submit a Request" },
+  { id: "how-to-submit", label: "4. Submit a Request" },
   { id: "review-process", label: "5. Our Review Process" },
   { id: "appeals-process", label: "6. Appeals Process" },
   { id: "emergency-takedown", label: "7. Emergency Takedown" },
@@ -69,14 +70,14 @@ export default function TakedownPolicyPage() {
                 <Clock className="h-6 w-6 text-[var(--color-blue-600)] shrink-0 mt-0.5" />
                 <div>
                   <h3 className="font-bold text-[var(--color-primary)] text-lg mb-1">
-                    Response Target
+                    72-Hour Response Target
                   </h3>
                   <p className="text-[var(--color-text)] font-medium">
                     We target a{" "}
                     <strong className="text-[var(--color-blue-600)]">
                       72-hour response
                     </strong>{" "}
-                    for all takedown requests.
+                    for all takedown and privacy requests.
                   </p>
                 </div>
               </div>
@@ -88,16 +89,16 @@ export default function TakedownPolicyPage() {
                   Need immediate action?
                 </h3>
                 <p className="text-[var(--color-muted)] text-sm">
-                  Submit your request directly to our moderation team.
+                  Submit a formal request directly through our compliance system.
                 </p>
               </div>
               <Button
                 asChild
                 className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] shadow-sm shrink-0"
               >
-                <a href="mailto:takedowns@carehomessupportdocs.org">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Submit a Request
+                <a href="#how-to-submit">
+                  <ShieldAlert className="h-4 w-4 mr-2" />
+                  Submit Request Online
                 </a>
               </Button>
             </div>
@@ -195,34 +196,22 @@ export default function TakedownPolicyPage() {
                   </ul>
                 </section>
 
-                <section id="how-to-submit" className="scroll-mt-28 mb-12">
+                <section id="how-to-submit" className="scroll-mt-28 mb-14">
                   <h2 className="text-3xl font-bold mb-4">
-                    4. How to Submit a Request
+                    4. Submit a Formal Takedown Request
                   </h2>
-                  <p className="text-[var(--color-text)] text-lg mb-4">
-                    To submit a takedown request, please email our moderation
-                    team directly at{" "}
+                  <p className="text-[var(--color-text)] text-lg mb-6">
+                    To request the removal of published content that violates our privacy or redaction policies, please complete the form below. Each submission is immediately assigned an immutable reference ticket and queued for <strong>72-hour SLA review</strong>.
+                  </p>
+                  
+                  <div className="not-prose my-6">
+                    <TakedownRequestForm />
+                  </div>
+
+                  <p className="text-[var(--color-muted)] text-sm mt-4">
+                    Alternatively, you may email our team directly at{" "}
                     <strong>takedowns@carehomessupportdocs.org</strong>.
                   </p>
-                  <p className="text-[var(--color-text)] text-lg mb-4">
-                    To expedite the process, your email MUST include:
-                  </p>
-                  <ul className="list-disc pl-6 space-y-2 text-[var(--color-text)] text-lg">
-                    <li>
-                      The exact URL (link) of the page where the content is
-                      published.
-                    </li>
-                    <li>
-                      A specific description of the information you believe
-                      violates our policies (e.g., "Paragraph 3 contains a
-                      resident's initials and room number").
-                    </li>
-                    <li>
-                      Your relationship to the facility or the individual
-                      mentioned in the content.
-                    </li>
-                    <li>Your contact information for follow-up.</li>
-                  </ul>
                 </section>
 
                 <section id="review-process" className="scroll-mt-28 mb-12">

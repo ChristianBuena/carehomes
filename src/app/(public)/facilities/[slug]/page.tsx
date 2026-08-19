@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getFacilityBySlug } from "@/services/facility.service";
+import { getApprovedRebuttalsByFacilityId } from "@/services/rebuttal.service";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
@@ -65,31 +66,44 @@ export default async function FacilityDetailPage({
 
   if (!facility) notFound();
 
-  // Get User and Membership state for dynamic CTA buttons
-  const user = await getUserFromRequest();
+  // Fetch User membership state and approved rebuttals concurrently
+  const [user, dbRebuttals] = await Promise.all([
+    getUserFromRequest(),
+    getApprovedRebuttalsByFacilityId(facility.id),
+  ]);
+
   let hasActiveMembership = false;
   let isClaimedByCurrentUser = false;
   let isClaimedByOther = false;
   let hasReachedLimit = false;
-  
+
   if (user) {
     const dbUser = await prisma.user.findUnique({
       where: { id: user.userId },
-      include: { 
+      select: {
         organization: {
-          include: {
-            membership: true,
-            _count: { select: { facilities: true } }
-          }
-        }
+          select: {
+            membership: {
+              select: {
+                status: true,
+                plan: true,
+              },
+            },
+            _count: { select: { facilities: true } },
+          },
+        },
       },
     });
+
     hasActiveMembership = dbUser?.organization?.membership?.status === "ACTIVE";
     isClaimedByCurrentUser = facility.createdById === user.userId;
     isClaimedByOther = facility.createdById !== null && facility.createdById !== user.userId;
 
     if (hasActiveMembership && dbUser?.organization?.membership) {
-      hasReachedLimit = !canClaimFacility(dbUser.organization.membership.plan, dbUser.organization._count.facilities);
+      hasReachedLimit = !canClaimFacility(
+        dbUser.organization.membership.plan,
+        dbUser.organization._count.facilities
+      );
     }
   } else {
     isClaimedByOther = facility.createdById !== null;
@@ -110,13 +124,6 @@ export default async function FacilityDetailPage({
 
   const city = facility.city ?? facility.address.split(",")[1]?.trim() ?? facility.address;
 
-  // Fetch approved rebuttals for THIS facility only
-  const dbRebuttals = await prisma.rebuttal.findMany({
-    where: { facilityId: facility.id, status: "APPROVED" },
-    include: { user: { select: { name: true } } },
-    orderBy: { updatedAt: "desc" },
-  });
-
   // Map DB shape → ApprovedRebuttalsSection's Rebuttal type (no `as any`)
   const publishedRebuttals: RebuttalCardType[] = dbRebuttals.map((r) => ({
     id: r.id,
@@ -126,7 +133,7 @@ export default async function FacilityDetailPage({
     summary: r.content,
     moderationStatus: "approved" as const,
     publishedAt: r.updatedAt.toISOString(),
-    filesUrl: undefined,
+    filesUrl: r.documentUrl ?? undefined,
   }));
 
   const localBusinessSchema = {

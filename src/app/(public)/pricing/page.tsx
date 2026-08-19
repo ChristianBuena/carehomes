@@ -104,12 +104,12 @@ export default async function PricingPage() {
       {/* Page Header */}
       <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24 relative overflow-hidden">
         {/* Subtle background element */}
-        <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" 
-             style={{
-               backgroundImage: `radial-gradient(circle at 50% 0%, var(--color-surface) 0%, transparent 70%)`
-             }}
+        <div className="absolute inset-0 z-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle at 50% 0%, var(--color-surface) 0%, transparent 70%)`
+          }}
         />
-        
+
         <ResponsiveContainer className="relative z-10 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
             Transparent Pricing
@@ -137,7 +137,7 @@ export default async function PricingPage() {
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--color-primary)] mb-4">Pricing & Billing FAQ</h2>
           </div>
-          
+
           <Accordion type="single" collapsible className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-6 py-2 shadow-sm">
             {FAQS.map((faq, index) => (
               <AccordionItem key={index} value={`item-${index}`} className={index === FAQS.length - 1 ? "border-b-0" : ""}>
@@ -161,7 +161,7 @@ export default async function PricingPage() {
               <p>Prices subject to change before launch. Stripe processes all payments securely. We are a nonprofit — fees fund platform operations only.</p>
             </div>
           </div>
-          
+
           <div className="bg-[var(--color-warning)] p-6 rounded-lg flex gap-4 items-start text-[var(--color-surface)] shadow-sm">
             <AlertCircle className="h-6 w-6 shrink-0 mt-1" />
             <div className="text-sm">

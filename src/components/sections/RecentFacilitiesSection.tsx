@@ -1,33 +1,13 @@
 import Link from "next/link";
 import { MapPin, ArrowRight, FileText, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getRecentFacilities } from "@/services/facility.service";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
+import { cache } from "react";
 
-// Server Component — fetch 3 most recently updated facilities from the DB
-async function getRecentFacilities() {
-  const facilities = await prisma.facility.findMany({
-    orderBy: { updatedAt: "desc" },
-    take: 3,
-    include: {
-      _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
-    },
-  });
-
-  return facilities.map((f) => ({
-    id: f.id,
-    slug: f.slug,
-    name: f.name,
-    city: f.city ?? f.address.split(",")[1]?.trim() ?? f.address,
-    county: f.county ?? "Unknown",
-    status: "active" as const,
-    rebuttalsCount: f._count.rebuttals,
-    lastUpdated: f.updatedAt.toISOString(),
-  }));
-}
-
-async function getTotalFacilityCount() {
+const getTotalFacilityCount = cache(async () => {
   return prisma.facility.count();
-}
+});
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -39,7 +19,7 @@ function formatDate(dateStr: string): string {
 
 export async function RecentFacilitiesSection() {
   const [facilities, totalCount] = await Promise.all([
-    getRecentFacilities(),
+    getRecentFacilities(3),
     getTotalFacilityCount(),
   ]);
 

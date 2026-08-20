@@ -133,6 +133,7 @@ model Rebuttal {
   title       String
   content     String
   documentUrl String?
+  watermarkedUrl String?
   status      RebuttalStatus @default(PENDING)
 
   createdAt DateTime @default(now())

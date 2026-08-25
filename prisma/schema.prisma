@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -35,6 +36,21 @@ enum MembershipStatus {
   INACTIVE
   PAST_DUE
   CANCELED
+}
+
+model MembershipAgreement {
+  id String @id @default(cuid())
+
+  version String @unique
+  title   String
+  content String
+
+  isActive Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
 }
 
 //
@@ -76,6 +92,7 @@ model User {
   // RELATIONS
   rebuttals          Rebuttal[]
   moderatedRebuttals Rebuttal[] @relation("ModeratedRebuttals")
+  consentLogs         ConsentLog[]
 
   createdFacilities Facility[]
   citationDeadlines CitationDeadline[]
@@ -389,4 +406,34 @@ model TakedownRequest {
   @@index([ticketNumber])
   @@index([assignedToId])
   @@index([rebuttalId])
+}
+
+//
+// ELECTRONIC CONSENT / MEMBERSHIP AGREEMENT
+//
+
+model ConsentLog {
+  id String @id @default(cuid())
+
+  // WHO SIGNED
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // AGREEMENT INFORMATION
+  agreementVersion String
+  signedName       String
+  email            String
+
+  // AUDIT INFORMATION
+  ipAddress String?
+  userAgent String?
+
+  // SIGNED DOCUMENT
+  documentUrl String?
+
+  signedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([agreementVersion])
+  @@index([signedAt])
 }

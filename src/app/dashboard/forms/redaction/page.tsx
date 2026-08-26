@@ -21,7 +21,9 @@ export default async function RedactionFormPage() {
   }
 
   const facilities = await prisma.facility.findMany({
-    where: user.role === "MEMBER" ? { createdById: user.userId } : {},
+    where: user.role === "MEMBER"
+      ? { createdById: user.userId, deletedAt: null }
+      : { deletedAt: null },
     select: { id: true, name: true, facilityNumber: true },
     orderBy: { name: "asc" },
   });

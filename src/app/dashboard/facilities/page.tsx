@@ -15,9 +15,9 @@ export default async function MyFacilitiesPage() {
 
   const [facilities, membership] = await Promise.all([
     prisma.facility.findMany({
-      where: { createdById: user.userId },
+      where: { createdById: user.userId, deletedAt: null },
       include: {
-        _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
+        _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },
       },
       orderBy: { name: "asc" },
     }),

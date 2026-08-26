@@ -46,15 +46,15 @@ export default async function DashboardPage({
 
   if (dbUser.role === "MEMBER") {
     [rebuttalCount, facilityCount] = await Promise.all([
-      prisma.rebuttal.count({ where: { userId: user.userId } }),
-      prisma.facility.count({ where: { createdById: user.userId } }),
+      prisma.rebuttal.count({ where: { userId: user.userId, deletedAt: null } }),
+      prisma.facility.count({ where: { createdById: user.userId, deletedAt: null } }),
     ]);
   } else if (dbUser.role === "ADMIN") {
     [totalUsers, totalFacilities, totalRebuttals, pendingModeration] = await Promise.all([
       prisma.user.count(),
-      prisma.facility.count(),
-      prisma.rebuttal.count(),
-      prisma.rebuttal.count({ where: { status: "PENDING" } }),
+      prisma.facility.count({ where: { deletedAt: null } }),
+      prisma.rebuttal.count({ where: { deletedAt: null } }),
+      prisma.rebuttal.count({ where: { status: "PENDING", deletedAt: null } }),
     ]);
   } else if (dbUser.role === "MODERATOR") {
     const startOfMonth = new Date();
@@ -62,11 +62,12 @@ export default async function DashboardPage({
     startOfMonth.setHours(0, 0, 0, 0);
 
     [pendingModeration, reviewedThisMonth] = await Promise.all([
-      prisma.rebuttal.count({ where: { status: "PENDING" } }),
+      prisma.rebuttal.count({ where: { status: "PENDING", deletedAt: null } }),
       prisma.rebuttal.count({
         where: {
           updatedAt: { gte: startOfMonth },
           status: { not: "PENDING" },
+          deletedAt: null,
         },
       }),
     ]);

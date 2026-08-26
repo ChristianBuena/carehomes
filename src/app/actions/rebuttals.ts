@@ -80,8 +80,8 @@ export async function updateRebuttal(rebuttalId: string, formData: FormData) {
   if (!user) throw new Error("Unauthorized");
 
   // Verify ownership and that the rebuttal is in REQUEST_FIX state
-  const existing = await prisma.rebuttal.findUnique({
-    where: { id: rebuttalId },
+  const existing = await prisma.rebuttal.findFirst({
+    where: { id: rebuttalId, deletedAt: null },
   });
 
   if (!existing) throw new Error("Rebuttal not found.");

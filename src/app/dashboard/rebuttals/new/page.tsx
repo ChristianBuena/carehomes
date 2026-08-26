@@ -20,9 +20,9 @@ export default async function NewRebuttalPage() {
     redirect("/dashboard");
   }
 
-  // Fetch only facilities owned by the member
+  // Fetch only active facilities owned by the member
   const facilities = await prisma.facility.findMany({
-    where: { createdById: user.userId },
+    where: { createdById: user.userId, deletedAt: null },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

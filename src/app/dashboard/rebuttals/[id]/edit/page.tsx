@@ -20,8 +20,8 @@ export default async function EditRebuttalPage({ params }: EditRebuttalPageProps
     redirect("/login");
   }
 
-  const rebuttal = await prisma.rebuttal.findUnique({
-    where: { id },
+  const rebuttal = await prisma.rebuttal.findFirst({
+    where: { id, deletedAt: null },
     include: {
       facility: { select: { id: true, name: true } },
     },

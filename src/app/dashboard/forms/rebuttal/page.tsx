@@ -20,9 +20,11 @@ export default async function RebuttalFormPage() {
     redirect("/dashboard");
   }
 
-  // Fetch facilities for the dropdown
+  // Fetch active facilities for the dropdown (excluding soft-deleted)
   const facilities = await prisma.facility.findMany({
-    where: user.role === "MEMBER" ? { createdById: user.userId } : {},
+    where: user.role === "MEMBER"
+      ? { createdById: user.userId, deletedAt: null }
+      : { deletedAt: null },
     select: { id: true, name: true, facilityNumber: true },
     orderBy: { name: "asc" },
   });

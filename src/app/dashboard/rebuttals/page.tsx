@@ -43,7 +43,7 @@ export default async function MyRebuttalsPage({
   if (!user) redirect("/login");
 
   const rebuttals = await prisma.rebuttal.findMany({
-    where: { userId: user.userId },
+    where: { userId: user.userId, deletedAt: null },
     include: {
       facility: {
         select: { id: true, name: true, slug: true, city: true, county: true },

@@ -9,7 +9,7 @@ async function createModerationLog({
   fromStatus,
   toStatus,
   notes,
-}:{
+}: {
   rebuttalId: string;
   moderatorId: string;
   fromStatus: RebuttalStatus;
@@ -34,16 +34,26 @@ export async function approveRebuttal(
   moderatorId: string,
   notes?: string
 ) {
-  try {
-    return await prisma.rebuttal.update({
-      where: { id },
-      data: {
-        status: RebuttalStatus.APPROVED,
-      },
-    });
-  } catch (error) {
-    throw new Error("Rebuttal not found or update failed");
-  }
+  const existing = await prisma.rebuttal.findFirstOrThrow({
+    where: { id, deletedAt: null },
+  });
+
+  const rebuttal = await prisma.rebuttal.update({
+    where: { id },
+    data: {
+      status: RebuttalStatus.APPROVED,
+    },
+  });
+
+  await createModerationLog({
+    rebuttalId: id,
+    moderatorId,
+    fromStatus: existing.status,
+    toStatus: RebuttalStatus.APPROVED,
+    notes,
+  });
+
+  return rebuttal;
 }
 
 // REJECT
@@ -52,11 +62,13 @@ export async function rejectRebuttal(
   moderatorId: string,
   notes?: string
 ) {
-  const existing = await prisma.rebuttal.findUniqueOrThrow({ where : { id } });
+  const existing = await prisma.rebuttal.findFirstOrThrow({
+    where: { id, deletedAt: null },
+  });
 
   const rebuttal = await prisma.rebuttal.update({
     where: { id },
-    data: {status: RebuttalStatus.REJECTED },
+    data: { status: RebuttalStatus.REJECTED },
   });
 
   await createModerationLog({
@@ -76,11 +88,13 @@ export async function requestFixRebuttal(
   moderatorId: string,
   notes?: string
 ) {
-  const existing = await prisma.rebuttal.findUniqueOrThrow({ where : { id } });
+  const existing = await prisma.rebuttal.findFirstOrThrow({
+    where: { id, deletedAt: null },
+  });
 
   const rebuttal = await prisma.rebuttal.update({
     where: { id },
-    data: {status: RebuttalStatus.REQUEST_FIX },
+    data: { status: RebuttalStatus.REQUEST_FIX },
   });
 
   await createModerationLog({
@@ -100,9 +114,55 @@ export async function getModerationLogs(rebuttalId: string) {
     where: { rebuttalId },
     include: {
       moderator: {
-        select: { id : true, name: true, email: true },
+        select: { id: true, name: true, email: true },
       },
     },
     orderBy: { createdAt: "asc" },
   });
+}
+
+/**
+ * Archive moderation logs older than `cutoffDate` (default: 1 year ago).
+ *
+ * Strategy:
+ *  1. SELECT all ModerationLog rows with createdAt < cutoffDate.
+ *  2. INSERT them into ArchivedModerationLog (idempotent via originalId unique constraint).
+ *  3. DELETE the originals from ModerationLog.
+ *
+ * Runs inside a transaction to guarantee atomicity — no log is lost or double-counted.
+ * Returns the count of archived records.
+ */
+export async function archiveOldModerationLogs(cutoffDate?: Date): Promise<number> {
+  const threshold = cutoffDate ?? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+
+  const logsToArchive = await prisma.moderationLog.findMany({
+    where: { createdAt: { lt: threshold } },
+  });
+
+  if (logsToArchive.length === 0) return 0;
+
+  await prisma.$transaction(async (tx) => {
+    // Upsert into archive table (skip already-archived entries via unique originalId)
+    await tx.archivedModerationLog.createMany({
+      data: logsToArchive.map((log) => ({
+        originalId:  log.id,
+        fromStatus:  log.fromStatus,
+        toStatus:    log.toStatus,
+        notes:       log.notes,
+        createdAt:   log.createdAt,
+        moderatorId: log.moderatorId,
+        rebuttalId:  log.rebuttalId,
+      })),
+      skipDuplicates: true,
+    });
+
+    // Remove archived logs from the active table
+    await tx.moderationLog.deleteMany({
+      where: {
+        id: { in: logsToArchive.map((l) => l.id) },
+      },
+    });
+  });
+
+  return logsToArchive.length;
 }

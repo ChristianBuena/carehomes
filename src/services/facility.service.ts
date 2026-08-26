@@ -25,36 +25,40 @@ function buildCapacityFilter(capacity?: FacilityFilters["capacity"]) {
 }
 
 function buildWhereClause(filters?: FacilityFilters) {
-  if (!filters) return undefined;
+  const capacityFilter = buildCapacityFilter(filters?.capacity);
 
-  const capacityFilter = buildCapacityFilter(filters.capacity);
+  const conditions: object[] = [
+    // Always exclude soft-deleted records
+    { deletedAt: null },
+  ];
 
-  const conditions = [
-    // Text search: name, address, city, county, facilityNumber
-    filters.query
-      ? {
-          OR: [
-            { name: { contains: filters.query, mode: "insensitive" as const } },
-            { address: { contains: filters.query, mode: "insensitive" as const } },
-            { city: { contains: filters.query, mode: "insensitive" as const } },
-            { county: { contains: filters.query, mode: "insensitive" as const } },
-            { facilityNumber: { contains: filters.query, mode: "insensitive" as const } },
-          ],
-        }
-      : undefined,
-    // County multi-select
-    filters.counties && filters.counties.length > 0
-      ? { county: { in: filters.counties } }
-      : undefined,
-    // Capacity range
-    capacityFilter ? { capacity: capacityFilter } : undefined,
-    // Has approved rebuttals
-    filters.hasRebuttals
-      ? { rebuttals: { some: { status: "APPROVED" } } }
-      : undefined,
-  ].filter(Boolean) as object[];
+  if (filters?.query) {
+    conditions.push({
+      OR: [
+        { name: { contains: filters.query, mode: "insensitive" as const } },
+        { address: { contains: filters.query, mode: "insensitive" as const } },
+        { city: { contains: filters.query, mode: "insensitive" as const } },
+        { county: { contains: filters.query, mode: "insensitive" as const } },
+        { facilityNumber: { contains: filters.query, mode: "insensitive" as const } },
+      ],
+    });
+  }
 
-  return conditions.length > 0 ? { AND: conditions } : undefined;
+  if (filters?.counties && filters.counties.length > 0) {
+    conditions.push({ county: { in: filters.counties } });
+  }
+
+  if (capacityFilter) {
+    conditions.push({ capacity: capacityFilter });
+  }
+
+  if (filters?.hasRebuttals) {
+    conditions.push({
+      rebuttals: { some: { status: "APPROVED", deletedAt: null } },
+    });
+  }
+
+  return { AND: conditions };
 }
 
 // ── Service Functions ─────────────────────────────────────────────────────────
@@ -104,7 +108,7 @@ export async function getFacilities(filters?: FacilityFilters) {
         ccldLink: true,
         updatedAt: true,
         createdBy: { select: { id: true, name: true, email: true } },
-        _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
+        _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },
       },
       orderBy: { name: "asc" },
       skip: (page - 1) * pageSize,
@@ -124,11 +128,12 @@ export async function getFacilities(filters?: FacilityFilters) {
 
 /**
  * Fetch a facility by slug with React per-request cache memoization.
- * Deduplicates calls across generateMetadata and Page rendering.
+ * Only returns non-deleted facilities. Deduplicates calls across
+ * generateMetadata and Page rendering.
  */
 export const getFacilityBySlug = cache(async (slug: string) => {
-  return prisma.facility.findUnique({
-    where: { slug },
+  return prisma.facility.findFirst({
+    where: { slug, deletedAt: null },
     include: {
       createdBy: {
         select: {
@@ -137,7 +142,7 @@ export const getFacilityBySlug = cache(async (slug: string) => {
           email: true,
         },
       },
-      _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
+      _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },
     },
   });
 });
@@ -147,6 +152,7 @@ export const getFacilityBySlug = cache(async (slug: string) => {
  */
 export const getRecentFacilities = cache(async (take: number = 3) => {
   const facilities = await prisma.facility.findMany({
+    where: { deletedAt: null },
     orderBy: { updatedAt: "desc" },
     take,
     select: {
@@ -157,7 +163,7 @@ export const getRecentFacilities = cache(async (take: number = 3) => {
       city: true,
       county: true,
       updatedAt: true,
-      _count: { select: { rebuttals: { where: { status: "APPROVED" } } } },
+      _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },
     },
   });
 
@@ -175,10 +181,22 @@ export const getRecentFacilities = cache(async (take: number = 3) => {
 
 /** @deprecated Use getFacilityBySlug for public-facing pages */
 export async function getFacilityById(id: string) {
-  return prisma.facility.findUnique({
-    where: { id },
+  return prisma.facility.findFirst({
+    where: { id, deletedAt: null },
     include: {
       createdBy: true,
     },
+  });
+}
+
+/**
+ * Soft-delete a facility by setting `deletedAt` timestamp.
+ * This preserves the record and all related data for audit purposes.
+ * Hard deletes are prohibited — use this instead.
+ */
+export async function softDeleteFacility(id: string) {
+  return prisma.facility.update({
+    where: { id },
+    data: { deletedAt: new Date() },
   });
 }

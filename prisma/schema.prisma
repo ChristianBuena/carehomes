@@ -146,12 +146,15 @@ model Membership {
 //
 
 model Rebuttal {
-  id          String         @id @default(cuid())
-  title       String
-  content     String
-  documentUrl String?
+  id             String         @id @default(cuid())
+  title          String
+  content        String
+  documentUrl    String?
   watermarkedUrl String?
-  status      RebuttalStatus @default(PENDING)
+  status         RebuttalStatus @default(PENDING)
+
+  // SOFT DELETE — set instead of hard-deleting rows
+  deletedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -168,15 +171,25 @@ model Rebuttal {
   moderatedById String?
   moderatedBy   User?   @relation("ModeratedRebuttals", fields: [moderatedById], references: [id])
 
-  moderationLogs ModerationLog[]
+  moderationLogs   ModerationLog[]
   takedownRequests TakedownRequest[]
 
+  // ── Indexes ────────────────────────────────────────────────────────────────
+  // Core lookup
   @@index([userId])
   @@index([status])
   @@index([facilityId])
+  // Soft-delete aware (always filter deletedAt = null in queries)
+  @@index([deletedAt])
+  // High-traffic composite: facility directory listing with status filter
   @@index([facilityId, status])
+  @@index([deletedAt, facilityId, status])
+  // Moderation queue: pending/fix rebuttals sorted by date
   @@index([status, updatedAt])
+  @@index([deletedAt, status, updatedAt])
+  // User dashboard: user's own rebuttals by status
   @@index([userId, status])
+  @@index([deletedAt, userId, status])
 }
 
 //
@@ -195,6 +208,9 @@ model Facility {
   capacity       Int?
   ccldLink       String?
 
+  // SOFT DELETE — set instead of hard-deleting rows
+  deletedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -209,15 +225,26 @@ model Facility {
   // REBUTTALS
   rebuttals Rebuttal[]
 
+  // ── Indexes ────────────────────────────────────────────────────────────────
+  // Core lookup
   @@index([slug])
   @@index([name])
   @@index([county])
   @@index([city])
   @@index([capacity])
-  @@index([updatedAt])
   @@index([facilityNumber])
   @@index([createdById])
   @@index([organizationId])
+  // Soft-delete aware
+  @@index([deletedAt])
+  // High-traffic composite: public directory filtered by active facilities
+  @@index([deletedAt, name])
+  @@index([deletedAt, slug])
+  @@index([deletedAt, county])
+  @@index([deletedAt, city])
+  @@index([deletedAt, updatedAt])
+  // Org quota check: count active facilities per org
+  @@index([deletedAt, organizationId])
   @@index([organizationId, createdAt])
 }
 
@@ -265,7 +292,7 @@ model CitationDeadline {
 //
 
 model ModerationLog {
-  id         String @id @default(cuid())
+  id String @id @default(cuid())
 
   // WHAT CHANGED
   fromStatus RebuttalStatus
@@ -273,7 +300,7 @@ model ModerationLog {
   notes      String?
 
   // WHEN
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   // WHO
   moderatorId String
@@ -287,6 +314,34 @@ model ModerationLog {
   @@index([moderatorId])
   @@index([rebuttalId, createdAt])
   @@index([createdAt])
+}
+
+//
+// ARCHIVED MODERATION LOG
+// Old/resolved ModerationLog entries (> 1 year) are moved here to keep the
+// active ModerationLog table lean and performant.
+//
+
+model ArchivedModerationLog {
+  id String @id @default(cuid())
+
+  // Original fields copied from ModerationLog
+  originalId  String         @unique // the original ModerationLog.id
+  fromStatus  RebuttalStatus
+  toStatus    RebuttalStatus
+  notes       String?
+  createdAt   DateTime       // original creation timestamp
+  archivedAt  DateTime       @default(now())
+
+  // Denormalized references (kept even if parent records soft-deleted)
+  moderatorId String
+  rebuttalId  String
+
+  @@index([rebuttalId])
+  @@index([moderatorId])
+  @@index([createdAt])
+  @@index([archivedAt])
+  @@index([originalId])
 }
 
 //
@@ -332,8 +387,8 @@ model Template {
 }
 
 model TemplateDownload {
-  id         String @id @default(cuid())
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
 
   // WHO downloaded
   userId String

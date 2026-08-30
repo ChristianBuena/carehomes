@@ -1,27 +1,14 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import dynamicImport from "next/dynamic";
 import { getFacilities } from "@/services/facility.service";
 import { FacilitySearch } from "@/components/facilities/FacilitySearch";
 import { FacilityFilters } from "@/components/facilities/FacilityFilters";
+import { FacilityFiltersDrawer } from "@/components/facilities/FacilityFiltersDrawerLazy";
 import { FacilityGrid } from "@/components/facilities/FacilityGrid";
 import { AlertCircle } from "lucide-react";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 import { buildMetadata } from "@/lib/metadata";
 import type { FacilityListItem } from "@/types/facility.types";
-
-const FacilityFiltersDrawer = dynamicImport(
-  () =>
-    import("@/components/facilities/FacilityFiltersDrawer").then(
-      (mod) => mod.FacilityFiltersDrawer
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="lg:hidden h-12 w-28 rounded-xl bg-[var(--color-border)]/40 animate-pulse" />
-    ),
-  }
-);
 
 const PAGE_SIZE = 9;
 

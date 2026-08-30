@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
-import { MembershipPlan } from "@prisma/client";
+import { MembershipPlan } from "@/generated/prisma/enums";
 import { TIER_LIMITS } from "@/config/tiers";
 
 export async function POST(req: NextRequest) {

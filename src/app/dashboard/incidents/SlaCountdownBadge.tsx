@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Clock, AlertTriangle, AlertOctagon, CheckCircle2 } from "lucide-react";
-import { SlaUrgency, calculateSla } from "@/services/takedown.service";
+import { SlaUrgency, calculateSla } from "@/lib/sla";
 import { TakedownStatus } from "@/types/takedown.types";
 
 interface SlaCountdownBadgeProps {

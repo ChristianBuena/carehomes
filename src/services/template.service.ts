@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { TemplateCategory, TemplateFileFormat } from "@prisma/client";
+import type { TemplateCategory, TemplateFileFormat } from "@/generated/prisma/enums";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { RebuttalStatus } from "@prisma/client";
+import { RebuttalStatus } from "@/generated/prisma/enums";
 
 
 // Creation of audit log entry

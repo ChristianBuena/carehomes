@@ -14,7 +14,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TakedownWithSla } from "@/services/takedown.service";
+import type { TakedownWithSla } from "@/services/takedown.service";
 import { SlaCountdownBadge } from "./SlaCountdownBadge";
 import { IncidentActionModal } from "./IncidentActionModal";
 

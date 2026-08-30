@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
+import { calculateSla, SlaUrgency } from "@/lib/sla";
 import { TakedownReason, TakedownStatus } from "@/types/takedown.types";
-import { RebuttalStatus } from "@prisma/client";
+import { RebuttalStatus } from "@/generated/prisma/enums";
+
+export { calculateSla, type SlaUrgency };
 
 const takedownDelegate = (prisma as any).takedownRequest;
 
@@ -17,8 +20,6 @@ export interface CreateTakedownInput {
   rebuttalId?: string;
   facilityId?: string;
 }
-
-export type SlaUrgency = "HEALTHY" | "WARNING" | "CRITICAL" | "OVERDUE" | "RESOLVED";
 
 export interface TakedownWithSla {
   id: string;
@@ -60,42 +61,6 @@ export interface TakedownWithSla {
   remainingHours: number;
   remainingMinutes: number;
   isOverdue: boolean;
-}
-
-// ── Helper: SLA Calculation ──────────────────────────────────────────────────
-
-export function calculateSla(submittedAt: Date, slaDeadline: Date, status: TakedownStatus) {
-  if (status === "RESOLVED" || status === "REJECTED") {
-    return {
-      slaUrgency: "RESOLVED" as SlaUrgency,
-      remainingHours: 0,
-      remainingMinutes: 0,
-      isOverdue: false,
-    };
-  }
-
-  const now = new Date().getTime();
-  const deadline = new Date(slaDeadline).getTime();
-  const diffMs = deadline - now;
-  const remainingHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const remainingMinutes = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)));
-  const isOverdue = diffMs <= 0;
-
-  let slaUrgency: SlaUrgency = "HEALTHY";
-  if (isOverdue) {
-    slaUrgency = "OVERDUE";
-  } else if (remainingHours < 24) {
-    slaUrgency = "CRITICAL";
-  } else if (remainingHours < 48) {
-    slaUrgency = "WARNING";
-  }
-
-  return {
-    slaUrgency,
-    remainingHours,
-    remainingMinutes,
-    isOverdue,
-  };
 }
 
 // ── Helper: Ticket Number Generation ─────────────────────────────────────────

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/lib/roleGuard";
 import { getAllTemplates, createTemplate, checkLibraryAccess } from "@/services/template.service";
 import { getUserFromRequest } from "@/lib/auth";
-import type { TemplateCategory, TemplateFileFormat } from "@prisma/client";
+import type { TemplateCategory, TemplateFileFormat } from "@/generated/prisma/enums";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/templates — Fetch all active templates (gated: active member+)

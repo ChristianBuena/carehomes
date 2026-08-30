@@ -1,4 +1,4 @@
-import { MembershipPlan } from "@prisma/client";
+import { MembershipPlan } from "@/generated/prisma/enums";
 
 /**
  * Canonical tier facility limits — single source of truth for the entire platform.

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Users, Building2, FileText, ClipboardCheck, Settings, CreditCard, PlusCircle } from "lucide-react";
 import { hasPermission, canClaimFacility } from "@/lib/permissions";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -46,15 +48,15 @@ export default async function DashboardPage({
 
   if (dbUser.role === "MEMBER") {
     [rebuttalCount, facilityCount] = await Promise.all([
-      prisma.rebuttal.count({ where: { userId: user.userId } }),
-      prisma.facility.count({ where: { createdById: user.userId } }),
+      prisma.rebuttal.count({ where: { userId: user.userId, deletedAt: null } }),
+      prisma.facility.count({ where: { createdById: user.userId, deletedAt: null } }),
     ]);
   } else if (dbUser.role === "ADMIN") {
     [totalUsers, totalFacilities, totalRebuttals, pendingModeration] = await Promise.all([
       prisma.user.count(),
-      prisma.facility.count(),
-      prisma.rebuttal.count(),
-      prisma.rebuttal.count({ where: { status: "PENDING" } }),
+      prisma.facility.count({ where: { deletedAt: null } }),
+      prisma.rebuttal.count({ where: { deletedAt: null } }),
+      prisma.rebuttal.count({ where: { status: "PENDING", deletedAt: null } }),
     ]);
   } else if (dbUser.role === "MODERATOR") {
     const startOfMonth = new Date();
@@ -62,17 +64,24 @@ export default async function DashboardPage({
     startOfMonth.setHours(0, 0, 0, 0);
 
     [pendingModeration, reviewedThisMonth] = await Promise.all([
-      prisma.rebuttal.count({ where: { status: "PENDING" } }),
+      prisma.rebuttal.count({ where: { status: "PENDING", deletedAt: null } }),
       prisma.rebuttal.count({
         where: {
           updatedAt: { gte: startOfMonth },
           status: { not: "PENDING" },
+          deletedAt: null,
         },
       }),
     ]);
   }
 
   const canClaim = membership && hasActiveMembership ? canClaimFacility(membership.plan, facilityCount) : false;
+
+  // Onboarding checklist conditions (accounts < 30 days old and not yet finished all milestones)
+  const accountAgeDays = (Date.now() - new Date(dbUser.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+  const isNewAccount = accountAgeDays <= 30;
+  const hasCompletedOnboarding = hasActiveMembership && facilityCount > 0 && rebuttalCount > 0;
+  const showOnboardingChecklist = dbUser.role === "MEMBER" && isNewAccount && !hasCompletedOnboarding;
 
   return (
     <div className="bg-[var(--color-bg)] min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -109,6 +118,15 @@ export default async function DashboardPage({
         ========================================= */}
         {dbUser.role === "MEMBER" && (
           <>
+            {showOnboardingChecklist && (
+              <OnboardingChecklist
+                hasActiveMembership={hasActiveMembership}
+                facilityCount={facilityCount}
+                rebuttalCount={rebuttalCount}
+                userName={dbUser.name || "Operator"}
+              />
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="p-6 bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm">
                 <h2 className="text-xl font-semibold mb-4 text-[var(--color-primary)]">Membership Status</h2>

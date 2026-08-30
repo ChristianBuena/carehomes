@@ -51,9 +51,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Quota scoped to org (not individual user)
+    // Quota scoped to org (not individual user); soft-deleted facilities do not count
     const currentCount = await prisma.facility.count({
-      where: { organizationId: user.orgId },
+      where: { organizationId: user.orgId, deletedAt: null },
     });
 
     if (!canClaimFacility(membership.plan, currentCount)) {

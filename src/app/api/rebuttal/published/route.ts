@@ -6,6 +6,7 @@ export async function GET() {
     const publishedRebuttals = await prisma.rebuttal.findMany({
       where: {
         status: "APPROVED", // ✅ this is your "published" state
+        deletedAt: null,    // exclude soft-deleted rebuttals
       },
       include: {
         user: {

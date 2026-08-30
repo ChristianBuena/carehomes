@@ -23,9 +23,9 @@ export default async function ModerationPage() {
     redirect("/dashboard");
   }
 
-  // Fetch pending rebuttals
+  // Fetch pending rebuttals (excluding soft-deleted)
   const pendingRebuttals = await prisma.rebuttal.findMany({
-    where: { status: "PENDING" },
+    where: { status: "PENDING", deletedAt: null },
     include: {
       user: { select: { name: true, email: true } },
       facility: { select: { name: true, slug: true, facilityNumber: true } },

@@ -39,9 +39,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 4. Facility ownership — must own the facility ──────────────────────
-    const facility = await prisma.facility.findUnique({
-      where: { id: facilityId },
+    // ── 4. Facility ownership — must own the facility (non-deleted) ────────
+    const facility = await prisma.facility.findFirst({
+      where: { id: facilityId, deletedAt: null },
     });
 
     if (!facility) {

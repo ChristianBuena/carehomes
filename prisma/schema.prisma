@@ -99,6 +99,8 @@ model User {
 
   moderationLogs ModerationLog[]
 
+  memberFiles MemberFile[]
+
   uploadedTemplates Template[]         @relation("UploadedTemplates")
   templateDownloads TemplateDownload[] @relation("TemplateDownloads")
 
@@ -491,4 +493,47 @@ model ConsentLog {
   @@index([userId])
   @@index([agreementVersion])
   @@index([signedAt])
+}
+
+//
+// MEMBER FILE STORAGE
+// Stores metadata for files uploaded by members to their private cloud storage.
+//
+
+enum FileType {
+  PDF
+  DOCX
+  JPG
+  PNG
+  OTHER
+}
+
+model MemberFile {
+  id          String   @id @default(cuid())
+  filename    String   // original filename
+  fileKey     String   @unique // UploadThing file key (used to generate access URL)
+  fileUrl     String   // UploadThing URL
+  fileSize    Int      // size in bytes
+  fileType    FileType @default(OTHER)
+  mimeType    String   // e.g. "application/pdf"
+
+  // CATEGORIZATION
+  label       String?  // optional user-defined label
+  isQsfDoc    Boolean  @default(false) // true if this is a QSF governance document
+
+  // SOFT DELETE
+  deletedAt   DateTime?
+
+  uploadedAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // OWNER
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, uploadedAt])
+  @@index([userId, isQsfDoc])
+  @@index([deletedAt])
+  @@index([fileKey])
 }

@@ -5,8 +5,8 @@ import { prisma } from "@/lib/prisma";
 
 const f = createUploadthing();
 
-// File size limit: 25MB
-const MAX_FILE_SIZE = "25MB";
+// File size limit: 16MB
+const MAX_FILE_SIZE = "16MB";
 
 export const ourFileRouter = {
     memberFileUploader: f({
@@ -49,7 +49,7 @@ export const ourFileRouter = {
                 },
             });
 
-            console.log(`✅ File uploaded: ${file.name} for user ${metadata.userId}`);
+            console.log(`File uploaded: ${file.name} for user ${metadata.userId}`);
         }),
 } satisfies FileRouter;
 

@@ -93,7 +93,7 @@ export default function FilesPage() {
 
       {/* Legal Disclaimer */}
       <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-sm text-amber-800">
-        ⚠️ <strong>Storage Notice:</strong> Files are stored securely and are only accessible by you and authorized platform administrators. Maximum file size: 25MB. Supported formats: PDF, Word (.docx), JPG, PNG.
+        <strong>Storage Notice:</strong> Files are stored securely and are only accessible by you and authorized platform administrators. Maximum file size: 25MB. Supported formats: PDF, Word (.docx), JPG, PNG.
       </div>
 
       {/* Upload Section */}
@@ -101,7 +101,7 @@ export default function FilesPage() {
         <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">
           Upload Files
         </h2>
-        <UploadButton<OurFileRouter>
+        <UploadButton<OurFileRouter, "memberFileUploader">
           endpoint="memberFileUploader"
           onClientUploadComplete={() => {
             fetchFiles();
@@ -127,8 +127,8 @@ export default function FilesPage() {
         <button
           onClick={() => setFilter("all")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filter === "all"
-              ? "bg-[var(--color-primary)] text-white"
-              : "border border-[var(--color-border)] text-gray-600 hover:bg-gray-50"
+            ? "bg-[var(--color-primary)] text-white"
+            : "border border-[var(--color-border)] text-gray-600 hover:bg-gray-50"
             }`}
         >
           All Files ({files.length})
@@ -136,8 +136,8 @@ export default function FilesPage() {
         <button
           onClick={() => setFilter("qsf")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filter === "qsf"
-              ? "bg-[var(--color-primary)] text-white"
-              : "border border-[var(--color-border)] text-gray-600 hover:bg-gray-50"
+            ? "bg-[var(--color-primary)] text-white"
+            : "border border-[var(--color-border)] text-gray-600 hover:bg-gray-50"
             }`}
         >
           QSF Documents ({files.filter((f) => f.isQsfDoc).length})

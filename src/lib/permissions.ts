@@ -32,7 +32,10 @@ export type Permission =
   | "manage_templates"       // ADMIN only — create, edit, delete templates
 
   // Takedowns & Incidents
-  | "manage_incidents";      // ADMIN + MODERATOR — review, resolve, and execute emergency takedowns
+  | "manage_incidents"       // ADMIN + MODERATOR — review, resolve, and execute emergency takedowns
+
+  // Attorney File Sharing
+  | "manage_file_shares";    // MEMBER + ADMIN — create, list, and revoke own share links
 
 export const permissions: Record<Role, Permission[]> = {
   ADMIN: [
@@ -53,6 +56,7 @@ export const permissions: Record<Role, Permission[]> = {
     "access_library",
     "manage_templates",
     "manage_incidents",
+    "manage_file_shares",
   ],
 
   MODERATOR: [
@@ -73,6 +77,7 @@ export const permissions: Record<Role, Permission[]> = {
     "view_own_rebuttals",
     "edit_own_rebuttal",
     "access_library",
+    "manage_file_shares",
   ],
 };
 

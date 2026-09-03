@@ -100,6 +100,7 @@ model User {
   moderationLogs ModerationLog[]
 
   memberFiles MemberFile[]
+  shareLinks  FileShareLink[]
 
   uploadedTemplates Template[]         @relation("UploadedTemplates")
   templateDownloads TemplateDownload[] @relation("TemplateDownloads")
@@ -531,9 +532,85 @@ model MemberFile {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  sharedInLinks FileShareLinkFile[]
+
   @@index([userId])
   @@index([userId, uploadedAt])
   @@index([userId, isQsfDoc])
   @@index([deletedAt])
   @@index([fileKey])
+}
+
+//
+// ATTORNEY FILE SHARING
+// Time-limited, revocable share links members generate for their files.
+//
+
+enum ShareLinkExpiry {
+  DAYS_7
+  DAYS_30
+  NEVER
+}
+
+model FileShareLink {
+  id    String @id @default(cuid())
+
+  // Cryptographically random token used in the share URL
+  token String @unique
+
+  // SCOPE — shareAll=true serves entire storage; false = selectedFiles only
+  shareAll Boolean @default(false)
+
+  // EXPIRY OPTIONS
+  expiry    ShareLinkExpiry @default(NEVER)
+  expiresAt DateTime?       // null when expiry = NEVER
+
+  // REVOCATION — set by member; immediately blocks access
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  // OWNER
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  selectedFiles FileShareLinkFile[]
+  accessLogs    FileShareAccessLog[]
+
+  @@index([token])
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+// Join table — only populated when shareAll = false
+model FileShareLinkFile {
+  id          String        @id @default(cuid())
+
+  shareLinkId String
+  shareLink   FileShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+
+  fileId String
+  file   MemberFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([shareLinkId, fileId])
+  @@index([shareLinkId])
+  @@index([fileId])
+}
+
+// Audit trail — one row per access of a share link
+model FileShareAccessLog {
+  id String @id @default(cuid())
+
+  shareLinkId String
+  shareLink   FileShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+
+  accessedAt DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+
+  @@index([shareLinkId])
+  @@index([shareLinkId, accessedAt])
+  @@index([accessedAt])
 }

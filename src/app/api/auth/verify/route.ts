@@ -69,7 +69,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Generate JWT
+    // 6. Check membership agreement
+    const activeAgreement = await prisma.membershipAgreement.findFirst({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    let requiresAgreement = false;
+
+    if (activeAgreement && user.role === "MEMBER") {
+      const latestConsent = await prisma.consentLog.findFirst({
+        where: {
+          userId: user.id,
+        },
+        orderBy: {
+          signedAt: "desc",
+        },
+      });
+
+      requiresAgreement =
+        !latestConsent ||
+        latestConsent.agreementVersion !== activeAgreement.version;
+    }
+
+    // 7. Generate JWT
     const token = await signToken({
       userId: user.id,
       email: user.email,
@@ -77,12 +104,14 @@ export async function POST(req: NextRequest) {
       orgId: user.organizationId,
     });
 
-    // 7. Create response + set cookie
+    // 8. Create response
     const res = NextResponse.json({
       success: true,
       message: "OTP verified successfully",
+      requiresAgreement,
     });
 
+    // 9. Set authentication cookie
     res.cookies.set("auth-token", token, {
       httpOnly: true,
       path: "/",

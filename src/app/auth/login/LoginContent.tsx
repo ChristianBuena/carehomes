@@ -32,9 +32,11 @@ export default function LoginContent() {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
+
     if (mfaRequired && timer > 0) {
       interval = setInterval(() => setTimer((t) => t - 1), 1000);
     }
+
     return () => clearInterval(interval);
   }, [mfaRequired, timer]);
 
@@ -46,7 +48,10 @@ export default function LoginContent() {
   }, [otp, mfaRequired]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +62,9 @@ export default function LoginContent() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(formData),
       });
 
@@ -85,6 +92,7 @@ export default function LoginContent() {
 
   const handleVerifyOtp = useCallback(async () => {
     if (loading || isVerifying.current) return;
+
     isVerifying.current = true;
     setError("");
     setLoading(true);
@@ -92,8 +100,13 @@ export default function LoginContent() {
     try {
       const res = await fetch("/api/auth/verify", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailForOtp, otp }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: emailForOtp,
+          otp,
+        }),
       });
 
       const data = await res.json();
@@ -105,16 +118,17 @@ export default function LoginContent() {
         return;
       }
 
-      localStorage.setItem("token", data.token);
-
-      await fetch("/api/auth/me", {
-        headers: { Authorization: `Bearer ${data.token}` },
-      });
-
       setOtp("");
       isVerifying.current = false;
-      router.push("/dashboard");
-    } catch {
+
+      // Redirect members who have not signed the current agreement
+      if (data.requiresAgreement) {
+        router.push("/dashboard/agreement");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      console.error("OTP verification error:", err);
       setError("Verification failed");
       isVerifying.current = false;
       setLoading(false);
@@ -123,14 +137,19 @@ export default function LoginContent() {
 
   const handleResendOtp = async () => {
     if (timer > 0) return;
+
     setError("");
     setLoading(true);
 
     try {
       const res = await fetch("/api/mfa/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailForOtp }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: emailForOtp,
+        }),
       });
 
       if (!res.ok) {
@@ -141,7 +160,8 @@ export default function LoginContent() {
 
       setTimer(60);
       setSuccess("A new OTP has been sent to your email.");
-    } catch {
+    } catch (err) {
+      console.error("Resend OTP error:", err);
       setError("Failed to resend OTP");
     } finally {
       setLoading(false);
@@ -151,20 +171,26 @@ export default function LoginContent() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-bg)] py-12 px-4 sm:px-6 lg:px-8">
       {/* Text Logo */}
-      <Link href="/" className="mb-8 flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md">
+      <Link
+        href="/"
+        className="mb-8 flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md"
+      >
         <span className="text-2xl font-extrabold tracking-tight text-[var(--color-primary)]">
           CareHomesSupportDocs
         </span>
       </Link>
 
       <div className="w-full max-w-md bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] p-8">
-        <h2 className="text-2xl font-bold text-center text-[var(--color-text)] mb-8">Welcome Back</h2>
+        <h2 className="text-2xl font-bold text-center text-[var(--color-text)] mb-8">
+          Welcome Back
+        </h2>
 
         {error && (
           <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 text-[var(--color-danger)] px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
+
         {success && (
           <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 text-[var(--color-success)] px-4 py-3 rounded mb-4">
             {success}
@@ -177,6 +203,7 @@ export default function LoginContent() {
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1.5">
                 Email
               </label>
+
               <input
                 name="email"
                 type="email"
@@ -187,11 +214,12 @@ export default function LoginContent() {
                 className="w-full min-h-[44px] px-4 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-shadow"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1.5">
                 Password
               </label>
+
               <input
                 name="password"
                 type="password"
@@ -203,7 +231,7 @@ export default function LoginContent() {
               />
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={loading}
               className="w-full min-h-[44px] mt-2 flex items-center justify-center bg-[var(--color-secondary)] text-white py-2 px-4 rounded-lg hover:bg-[var(--color-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-secondary)] font-medium transition disabled:opacity-70 disabled:cursor-not-allowed"
@@ -220,11 +248,15 @@ export default function LoginContent() {
           </form>
         ) : (
           <div className="space-y-5">
-            <h3 className="text-lg font-semibold text-center text-[var(--color-text)]">Verify OTP</h3>
+            <h3 className="text-lg font-semibold text-center text-[var(--color-text)]">
+              Verify OTP
+            </h3>
+
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1.5 text-center">
                 Enter the 6-digit code sent to your email
               </label>
+
               <input
                 type="text"
                 placeholder="123456"
@@ -236,6 +268,7 @@ export default function LoginContent() {
                 maxLength={6}
               />
             </div>
+
             <button
               type="button"
               onClick={handleVerifyOtp}
@@ -251,7 +284,7 @@ export default function LoginContent() {
                 "Verify OTP"
               )}
             </button>
-            
+
             <div className="text-center mt-4">
               <button
                 type="button"
@@ -259,7 +292,9 @@ export default function LoginContent() {
                 disabled={timer > 0 || loading}
                 className="text-sm font-medium text-[var(--color-secondary)] hover:underline disabled:text-[var(--color-muted)] disabled:no-underline"
               >
-                {timer > 0 ? `Resend OTP in ${timer}s` : "Resend OTP"}
+                {timer > 0
+                  ? `Resend OTP in ${timer}s`
+                  : "Resend OTP"}
               </button>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { getUserFromRequest } from "@/lib/auth";
@@ -14,6 +15,28 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
+
+    // Check latest signed agreement
+    const consent = await prisma.consentLog.findFirst({
+      where: {
+      userId: user.userId,
+  },
+      orderBy: {
+      signedAt: "desc",
+  },
+});
+
+if (!consent) {
+  return NextResponse.json(
+    {
+      error: "Membership agreement must be signed before checkout",
+      requiresAgreement: true,
+    },
+    {
+      status: 403,
+    }
+  );
+}
 
     let priceId: string | undefined;
 

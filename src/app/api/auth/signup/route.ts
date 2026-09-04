@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'User created successfully',
         userId: user.id,
+        requiresAgreement: true, // Indicate that the user needs to agree to terms
       },
       { status: 201 }
     );

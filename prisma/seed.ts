@@ -35,6 +35,53 @@ function daysAgo(days: number): Date {
 async function main() {
   console.log("🌱 Starting seed...");
 
+    // ── 0. Membership Agreement ──────────────────────────────
+
+  const agreement = await prisma.membershipAgreement.upsert({
+    where: {
+      version: "1.0",
+    },
+    update: {
+      title: "CareHomesSupportDocs Membership Agreement",
+      content: `
+CareHomesSupportDocs Membership Agreement
+
+By signing this agreement, I acknowledge that:
+
+1. I am authorized to create and use this account.
+2. The information I provide to CareHomesSupportDocs is accurate to the best of my knowledge.
+3. I agree to use the platform only for lawful and legitimate business purposes.
+4. I understand that my membership is subject to the applicable membership plan and platform terms.
+5. I understand that my electronic signature constitutes my acceptance of this agreement.
+6. I understand that my signed agreement may be retained as an electronic record.
+
+Agreement Version: 1.0
+      `.trim(),
+      isActive: true,
+    },
+    create: {
+      version: "1.0",
+      title: "CareHomesSupportDocs Membership Agreement",
+      content: `
+CareHomesSupportDocs Membership Agreement
+
+By signing this agreement, I acknowledge that:
+
+1. I am authorized to create and use this account.
+2. The information I provide to CareHomesSupportDocs is accurate to the best of my knowledge.
+3. I agree to use the platform only for lawful and legitimate business purposes.
+4. I understand that my membership is subject to the applicable membership plan and platform terms.
+5. I understand that my electronic signature constitutes my acceptance of this agreement.
+6. I understand that my signed agreement may be retained as an electronic record.
+
+Agreement Version: 1.0
+      `.trim(),
+      isActive: true,
+    },
+  });
+
+  console.log(`✅ Membership Agreement: ${agreement.version}`);
+
   // ── 1. Users ──────────────────────────────────────────────────────────────
 
   const adminPassword = await bcrypt.hash("Admin@123456", 12);
@@ -104,11 +151,11 @@ async function main() {
   });
 
   const member = await prisma.user.upsert({
-    where: { email: "member@carehomesdocs.org" },
+    where: { email: "member@carehomesdocs.com" },
     update: { organizationId: memberOrg.id },
     create: {
       name: "James Reyes",
-      email: "member@carehomesdocs.org",
+      email: "member@carehomesdocs.com",
       password: memberPassword,
       role: "MEMBER",
       organizationId: memberOrg.id,

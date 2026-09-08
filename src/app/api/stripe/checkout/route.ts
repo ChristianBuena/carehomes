@@ -16,27 +16,48 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check latest signed agreement
+        // Check that the user has signed the currently active agreement
+    const activeAgreement = await prisma.membershipAgreement.findFirst({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!activeAgreement) {
+      return NextResponse.json(
+        {
+          error: "No active membership agreement is available",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
     const consent = await prisma.consentLog.findFirst({
       where: {
-      userId: user.userId,
-  },
+        userId: user.userId,
+        agreementVersion: activeAgreement.version,
+      },
       orderBy: {
-      signedAt: "desc",
-  },
-});
+        signedAt: "desc",
+      },
+    });
 
-if (!consent) {
-  return NextResponse.json(
-    {
-      error: "Membership agreement must be signed before checkout",
-      requiresAgreement: true,
-    },
-    {
-      status: 403,
+    if (!consent) {
+      return NextResponse.json(
+        {
+          error: "Please sign the current membership agreement before checkout",
+          requiresAgreement: true,
+        },
+        {
+          status: 403,
+        }
+      );
     }
-  );
-}
 
     let priceId: string | undefined;
 

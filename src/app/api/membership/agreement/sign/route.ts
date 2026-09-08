@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       ipAddress,
     });
 
-    const publicId = `agreement-${user.userId}-${agreement.version}-${Date.now()}`;
+    const publicId = `agreement-${user.userId}-${agreement.version}-${Date.now()}.pdf`;
 
     // Upload the PDF to Cloudinary as a raw document.
     const uploadResult = await new Promise<{

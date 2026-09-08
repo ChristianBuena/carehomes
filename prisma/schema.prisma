@@ -6,9 +6,208 @@ datasource db {
   provider = "postgresql"
 }
 
-//
-// ENUMS
-//
+model MembershipAgreement {
+  id        String   @id @default(cuid())
+  version   String   @unique
+  title     String
+  content   String
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model Organization {
+  id         String      @id @default(cuid())
+  name       String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  facilities Facility[]
+  membership Membership?
+  users      User[]
+
+  @@index([id])
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  name               String
+  email              String             @unique
+  password           String
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  role               Role               @default(MEMBER)
+  organizationId     String?
+  lastReviewedAt     DateTime?
+  citationDeadlines  CitationDeadline[]
+  consentLogs        ConsentLog[]
+  createdFacilities  Facility[]
+  moderationLogs     ModerationLog[]
+  moderatedRebuttals Rebuttal[]         @relation("ModeratedRebuttals")
+  rebuttals          Rebuttal[]
+  uploadedTemplates  Template[]         @relation("UploadedTemplates")
+  templateDownloads  TemplateDownload[] @relation("TemplateDownloads")
+  organization       Organization?      @relation(fields: [organizationId], references: [id])
+
+  @@index([email])
+  @@index([organizationId])
+}
+
+model Membership {
+  id                   String           @id @default(cuid())
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  startDate            DateTime?
+  endDate              DateTime?
+  nextBillingDate      DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  maxFacilities        Int              @default(0)
+  plan                 MembershipPlan   @default(NONE)
+  status               MembershipStatus @default(INACTIVE)
+  organizationId       String           @unique
+  organization         Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([plan])
+  @@index([status])
+}
+
+model Rebuttal {
+  id             String          @id @default(cuid())
+  title          String
+  content        String
+  status         RebuttalStatus  @default(PENDING)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  userId         String
+  moderatedById  String?
+  facilityId     String?
+  documentUrl    String?
+  moderationLogs ModerationLog[]
+  facility       Facility?       @relation(fields: [facilityId], references: [id])
+  moderatedBy    User?           @relation("ModeratedRebuttals", fields: [moderatedById], references: [id])
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([facilityId])
+}
+
+model Facility {
+  id             String        @id @default(cuid())
+  name           String
+  address        String
+  description    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  createdById    String?
+  slug           String        @unique
+  facilityNumber String?
+  city           String?
+  county         String?
+  capacity       Int?
+  ccldLink       String?
+  organizationId String?
+  createdBy      User?         @relation(fields: [createdById], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  rebuttals      Rebuttal[]
+
+  @@index([slug])
+  @@index([name])
+  @@index([createdById])
+  @@index([organizationId])
+}
+
+model MfaOtp {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+
+  @@index([email])
+}
+
+model CitationDeadline {
+  id         String   @id @default(cuid())
+  citationId String
+  dueDate    DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ModerationLog {
+  id          String         @id @default(cuid())
+  fromStatus  RebuttalStatus
+  toStatus    RebuttalStatus
+  notes       String?
+  createdAt   DateTime       @default(now())
+  moderatorId String
+  rebuttalId  String
+  moderator   User           @relation(fields: [moderatorId], references: [id])
+  rebuttal    Rebuttal       @relation(fields: [rebuttalId], references: [id], onDelete: Cascade)
+
+  @@index([rebuttalId])
+  @@index([moderatorId])
+}
+
+model Template {
+  id            String             @id @default(cuid())
+  title         String
+  description   String
+  category      TemplateCategory
+  fileFormat    TemplateFileFormat
+  fileUrl       String
+  notionUrl     String?
+  isActive      Boolean            @default(true)
+  downloadCount Int                @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  uploadedById  String?
+  uploadedBy    User?              @relation("UploadedTemplates", fields: [uploadedById], references: [id])
+  downloads     TemplateDownload[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model TemplateDownload {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  userId     String
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user       User     @relation("TemplateDownloads", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([userId])
+}
+
+model ConsentLog {
+  id               String   @id @default(cuid())
+  userId           String
+  agreementVersion String
+  signedName       String
+  email            String
+  ipAddress        String?
+  userAgent        String?
+  documentUrl      String?
+  signedAt         DateTime @default(now())
+  documentPublicId String?
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([agreementVersion])
+  @@index([signedAt])
+}
 
 enum Role {
   MEMBER
@@ -37,244 +236,6 @@ enum MembershipStatus {
   CANCELED
 }
 
-model MembershipAgreement {
-  id String @id @default(cuid())
-
-  version String @unique
-  title   String
-  content String
-
-  isActive Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive])
-}
-
-//
-// ORGANIZATION — multi-seat owner of one membership and N facilities
-//
-
-model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users      User[]
-  membership Membership?
-  facilities Facility[]
-
-  @@index([id])
-}
-
-//
-// USER
-//
-
-model User {
-  id       String @id @default(cuid())
-  name     String
-  email    String @unique
-  password String
-  role     Role   @default(MEMBER)
-
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  lastReviewedAt DateTime?
-
-  // ORGANIZATION (multi-seat)
-  organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-
-  // RELATIONS
-  rebuttals          Rebuttal[]
-  moderatedRebuttals Rebuttal[] @relation("ModeratedRebuttals")
-  consentLogs         ConsentLog[]
-
-  createdFacilities Facility[]
-  citationDeadlines CitationDeadline[]
-
-  moderationLogs ModerationLog[]
-
-  uploadedTemplates Template[]         @relation("UploadedTemplates")
-  templateDownloads TemplateDownload[] @relation("TemplateDownloads")
-
-  @@index([email])
-  @@index([organizationId])
-}
-
-//
-// MEMBERSHIP (STRIPE + TIERS)
-// Now owned by Organization, not User.
-//
-
-model Membership {
-  id String @id @default(cuid())
-
-  // Membership belongs to the Organization
-  organizationId String @unique
-
-  plan   MembershipPlan   @default(NONE)
-  status MembershipStatus @default(INACTIVE)
-
-  maxFacilities Int @default(0)
-
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-
-  startDate       DateTime?
-  endDate         DateTime?
-  nextBillingDate DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@index([plan])
-  @@index([status])
-}
-
-//
-// REBUTTAL SYSTEM
-//
-
-model Rebuttal {
-  id          String         @id @default(cuid())
-  title       String
-  content     String
-  documentUrl String?
-  status      RebuttalStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // OWNER
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // FACILITY LINK
-  facilityId String?
-  facility   Facility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
-
-  // MODERATION
-  moderatedById String?
-  moderatedBy   User?   @relation("ModeratedRebuttals", fields: [moderatedById], references: [id])
-
-  moderationLogs ModerationLog[]
-
-  @@index([userId])
-  @@index([status])
-  @@index([facilityId])
-}
-
-//
-// FACILITY SYSTEM
-//
-
-model Facility {
-  id             String  @id @default(cuid())
-  slug           String  @unique
-  name           String
-  address        String
-  description    String?
-  facilityNumber String?
-  city           String?
-  county         String?
-  capacity       Int?
-  ccldLink       String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // AUDIT TRAIL — who physically claimed this facility (never changes)
-  createdById String?
-  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
-
-  // QUOTA SCOPE — which org owns this facility (used for limit checks)
-  organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-
-  // REBUTTALS
-  rebuttals Rebuttal[]
-
-  @@index([slug])
-  @@index([name])
-  @@index([createdById])
-  @@index([organizationId])
-}
-
-//
-// MFA SYSTEM
-//
-
-model MfaOtp {
-  id        String   @id @default(cuid())
-  email     String
-  code      String
-  expiresAt DateTime
-
-  attempts Int     @default(0)
-  used     Boolean @default(false)
-
-  createdAt DateTime @default(now())
-
-  @@index([email])
-}
-
-//
-// CITATION DEADLINE SYSTEM
-//
-
-model CitationDeadline {
-  id         String   @id @default(cuid())
-  citationId String
-  dueDate    DateTime
-  notes      String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // OWNER
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-//
-// MODERATION AUDIT TRAIL
-//
-
-model ModerationLog {
-  id         String @id @default(cuid())
-
-  // WHAT CHANGED
-  fromStatus RebuttalStatus
-  toStatus   RebuttalStatus
-  notes      String?
-
-  // WHEN
-  createdAt  DateTime @default(now())
-
-  // WHO
-  moderatorId String
-  moderator   User   @relation(fields: [moderatorId], references: [id])
-
-  // WHICH rebuttal
-  rebuttalId String
-  rebuttal   Rebuttal @relation(fields: [rebuttalId], references: [id], onDelete: Cascade)
-
-  @@index([rebuttalId])
-  @@index([moderatorId])
-}
-
-//
-// TEMPLATE LIBRARY
-//
-
 enum TemplateCategory {
   REBUTTAL
   CHECKLIST
@@ -284,75 +245,4 @@ enum TemplateCategory {
 enum TemplateFileFormat {
   PDF
   DOCX
-}
-
-model Template {
-  id          String             @id @default(cuid())
-  title       String
-  description String
-  category    TemplateCategory
-  fileFormat  TemplateFileFormat
-  fileUrl     String             // path or URL to the file
-  notionUrl   String?            // optional link to Notion knowledge base page
-  isActive    Boolean            @default(true)
-  downloadCount Int              @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // UPLOADER (admin)
-  uploadedById String?
-  uploadedBy   User?   @relation("UploadedTemplates", fields: [uploadedById], references: [id], onDelete: SetNull)
-
-  downloads TemplateDownload[]
-
-  @@index([category])
-  @@index([isActive])
-}
-
-model TemplateDownload {
-  id         String @id @default(cuid())
-  createdAt  DateTime @default(now())
-
-  // WHO downloaded
-  userId String
-  user   User   @relation("TemplateDownloads", fields: [userId], references: [id], onDelete: Cascade)
-
-  // WHICH template
-  templateId String
-  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  @@index([templateId])
-  @@index([userId])
-}
-
-//
-// ELECTRONIC CONSENT / MEMBERSHIP AGREEMENT
-//
-
-model ConsentLog {
-  id String @id @default(cuid())
-
-  // WHO SIGNED
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // AGREEMENT INFORMATION
-  agreementVersion String
-  signedName       String
-  email            String
-
-  // AUDIT INFORMATION
-  ipAddress String?
-  userAgent String?
-
-  // SIGNED DOCUMENT
-  documentUrl String?
-  documentPublicId String?
-
-  signedAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([agreementVersion])
-  @@index([signedAt])
 }

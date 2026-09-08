@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
 
     if (!cloudName || !apiKey || !apiSecret) {
       console.error("Cloudinary configuration is missing.");
+
       return NextResponse.json(
         { error: "Document storage is not configured" },
         { status: 500 }
@@ -106,20 +107,27 @@ export async function POST(request: NextRequest) {
       uploadStream.end(Buffer.from(pdfBytes));
     });
 
+    // TEMPORARY DEBUG LOG:
+    // Check whether Cloudinary returns the expected document URL and public ID.
+    console.log("CLOUDINARY UPLOAD RESULT:", {
+      secure_url: uploadResult.secure_url,
+      public_id: uploadResult.public_id,
+    });
+
     // Store the signed agreement and its Cloudinary reference.
     const consent = await prisma.consentLog.create({
-  data: {
-    userId: user.userId,
-    agreementVersion: agreement.version,
-    signedName: signedName.trim(),
-    email: user.email,
-    ipAddress,
-    userAgent,
-    documentUrl: uploadResult.secure_url,
-    documentPublicId: uploadResult.public_id,
-    signedAt,
-  },
-});
+      data: {
+        userId: user.userId,
+        agreementVersion: agreement.version,
+        signedName: signedName.trim(),
+        email: user.email,
+        ipAddress,
+        userAgent,
+        documentUrl: uploadResult.secure_url,
+        documentPublicId: uploadResult.public_id,
+        signedAt,
+      },
+    });
 
     return NextResponse.json({
       success: true,

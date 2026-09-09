@@ -65,6 +65,58 @@ export async function POST(req: Request) {
           return NextResponse.json({ received: true });
         }
 
+        // Verify the organization has signed the currently active membership agreement
+        const activeAgreement = await prisma.membershipAgreement.findFirst({
+          where: {
+            isActive: true,
+        },
+          orderBy: {
+            createdAt: "desc",
+          },
+      });
+
+        if (!activeAgreement) {
+          console.error("No active membership agreement found");
+          return NextResponse.json({ received: true });
+        }
+
+        const member = await prisma.user.findFirst({
+          where: {
+            organizationId: orgId,
+            role: "MEMBER",
+          },
+          orderBy: {
+          createdAt: "asc",
+          },
+        });
+
+          if (!member) {
+            console.error("No member found for organization:", orgId);
+            return NextResponse.json({ received: true });
+          }
+
+          const consent = await prisma.consentLog.findFirst({
+            where: {
+              userId: member.id,
+              agreementVersion: activeAgreement.version,
+            },
+            orderBy: {
+            signedAt: "desc",
+            },
+          });
+
+          if (!consent) {
+         console.error(
+         `Membership activation blocked: no consent for agreement ${activeAgreement.version}`,
+         {
+         organizationId: orgId,
+        userId: member.id,
+        }
+         );
+
+         return NextResponse.json({ received: true });
+        }
+
         let tier: "TIER_A" | "TIER_B" | "TIER_C" = "TIER_A";
 
         if (priceId === process.env.STRIPE_PRICE_B) {

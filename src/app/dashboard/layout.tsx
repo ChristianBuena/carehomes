@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -94,6 +94,34 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
+
+    useEffect(() => {
+    if (loading || !user) return;
+
+    // The agreement page itself must remain accessible
+    if (pathname === "/dashboard/agreement") return;
+
+    // Only members need to complete the membership agreement
+    if (user.role !== "MEMBER") return;
+
+    const checkAgreement = async () => {
+      try {
+        const response = await fetch("/api/membership/agreement");
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        if (data.requiresSignature) {
+          router.replace("/dashboard/agreement");
+        }
+      } catch (error) {
+        console.error("Agreement check failed:", error);
+      }
+    };
+
+    checkAgreement();
+  }, [user, loading, pathname, router]);
 
   const currentLink = NAV_LINKS.find((link) => link.href === pathname);
   const pageTitle = currentLink ? currentLink.name : "Dashboard";

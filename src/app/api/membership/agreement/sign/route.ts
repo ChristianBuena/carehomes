@@ -107,13 +107,6 @@ export async function POST(request: NextRequest) {
       uploadStream.end(Buffer.from(pdfBytes));
     });
 
-    // TEMPORARY DEBUG LOG:
-    // Check whether Cloudinary returns the expected document URL and public ID.
-    console.log("CLOUDINARY UPLOAD RESULT:", {
-      secure_url: uploadResult.secure_url,
-      public_id: uploadResult.public_id,
-    });
-
     // Store the signed agreement and its Cloudinary reference.
     const consent = await prisma.consentLog.create({
       data: {

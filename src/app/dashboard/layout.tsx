@@ -18,6 +18,7 @@ import {
   Calendar,
   Library,
   ShieldAlert,
+  HardDrive,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
@@ -41,6 +42,12 @@ const NAV_LINKS = [
     href: "/dashboard/deadlines",
     icon: Calendar,
     permission: "view_own_facilities",
+  },
+  {
+    name: "My Files",
+    href: "/dashboard/files",
+    icon: HardDrive,
+    permission: null,
   },
   {
     name: "Member Library",

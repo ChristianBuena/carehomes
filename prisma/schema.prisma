@@ -131,6 +131,7 @@ model Membership {
   startDate       DateTime?
   endDate         DateTime?
   nextBillingDate DateTime?
+  canceledAt      DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

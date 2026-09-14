@@ -431,6 +431,8 @@ model ConsentLog {
 
   // SIGNED DOCUMENT
   documentUrl String?
+  documentPublicId String?
+
 
   signedAt DateTime @default(now())
 

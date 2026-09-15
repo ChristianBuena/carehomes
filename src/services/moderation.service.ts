@@ -34,16 +34,26 @@ export async function approveRebuttal(
   moderatorId: string,
   notes?: string
 ) {
-  try {
-    return await prisma.rebuttal.update({
-      where: { id },
-      data: {
-        status: RebuttalStatus.APPROVED,
-      },
-    });
-  } catch (error) {
-    throw new Error("Rebuttal not found or update failed");
-  }
+  const existing = await prisma.rebuttal.findUniqueOrThrow({
+    where: { id },
+  });
+
+  const rebuttal = await prisma.rebuttal.update({
+    where: { id },
+    data: {
+      status: RebuttalStatus.APPROVED,
+    },
+  });
+
+  await createModerationLog({
+    rebuttalId: id,
+    moderatorId,
+    fromStatus: existing.status,
+    toStatus: RebuttalStatus.APPROVED,
+    notes,
+  });
+
+  return rebuttal;
 }
 
 // REJECT

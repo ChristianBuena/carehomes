@@ -9,7 +9,7 @@ import { hasPermission, type Permission } from "./permissions";
 export async function requirePermission(permission: Permission) {
   const user = await getUserFromRequest();
 
-  // ❌ Not logged in
+  //  Not logged in
   if (!user) {
     return {
       error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
@@ -17,7 +17,7 @@ export async function requirePermission(permission: Permission) {
     };
   }
 
-  // ❌ Missing permission
+  //  Missing permission
   if (!hasPermission(user.role, permission)) {
     return {
       error: NextResponse.json(
@@ -28,7 +28,7 @@ export async function requirePermission(permission: Permission) {
     };
   }
 
-  // ✅ Authorized
+  //  Authorized
   return { error: null, user };
 }
 
@@ -39,7 +39,7 @@ export async function requirePermission(permission: Permission) {
 export async function requireRole(allowedRoles: string[]) {
   const user = await getUserFromRequest();
 
-  // ❌ Not logged in
+  //  Not logged in
   if (!user) {
     return {
       error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
@@ -47,7 +47,7 @@ export async function requireRole(allowedRoles: string[]) {
     };
   }
 
-  // ❌ Wrong role
+  //  Wrong role
   if (!allowedRoles.includes(user.role)) {
     return {
       error: NextResponse.json(
@@ -58,6 +58,6 @@ export async function requireRole(allowedRoles: string[]) {
     };
   }
 
-  // ✅ Authorized
+  //  Authorized
   return { error: null, user };
 }

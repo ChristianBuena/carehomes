@@ -10,8 +10,7 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-
-    const range = searchParams.get("range") || "30d";
+  const range = searchParams.get("range") || "30d";
 
   const allowedRanges = ["7d", "30d", "90d"];
 
@@ -90,14 +89,22 @@ export async function GET(req: Request) {
     }
   > = {};
 
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    const date = currentDate.toISOString().slice(0, 10);
+
+    membershipGrowth[date] = {
+      date,
+    };
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
   for (const membership of memberships) {
     const date = membership.createdAt.toISOString().slice(0, 10);
 
-    if (!membershipGrowth[date]) {
-      membershipGrowth[date] = {
-        date,
-      };
-    }
+    if (!membershipGrowth[date]) continue;
 
     const currentCount = membershipGrowth[date][membership.plan];
 
@@ -106,7 +113,7 @@ export async function GET(req: Request) {
   }
 
   // Churn
-  const churn = await prisma.membership.findMany({
+  const churnRecords = await prisma.membership.findMany({
     where: {
       canceledAt: {
         gte: startDate,
@@ -120,6 +127,37 @@ export async function GET(req: Request) {
       canceledAt: "asc",
     },
   });
+
+  const churn: Record<
+    string,
+    {
+      date: string;
+      count: number;
+    }
+  > = {};
+
+  const churnDate = new Date(startDate);
+
+  while (churnDate <= endDate) {
+    const date = churnDate.toISOString().slice(0, 10);
+
+    churn[date] = {
+      date,
+      count: 0,
+    };
+
+    churnDate.setDate(churnDate.getDate() + 1);
+  }
+
+  for (const membership of churnRecords) {
+    if (!membership.canceledAt) continue;
+
+    const date = membership.canceledAt.toISOString().slice(0, 10);
+
+    if (churn[date]) {
+      churn[date].count++;
+    }
+  }
 
   // Submission success rate
   const submissions = await prisma.rebuttal.findMany({
@@ -188,6 +226,7 @@ export async function GET(req: Request) {
       },
     },
     select: {
+      rebuttalId: true,
       createdAt: true,
       toStatus: true,
       rebuttal: {
@@ -201,11 +240,27 @@ export async function GET(req: Request) {
     },
   });
 
+  const firstDecisionByRebuttal = new Map<string, Date>();
+
+  for (const log of moderationLogs) {
+    if (!firstDecisionByRebuttal.has(log.rebuttalId)) {
+      firstDecisionByRebuttal.set(log.rebuttalId, log.createdAt);
+    }
+  }
+
   const turnaroundTimes: number[] = [];
 
   for (const log of moderationLogs) {
+    const firstDecisionAt = firstDecisionByRebuttal.get(log.rebuttalId);
+
+    if (!firstDecisionAt) continue;
+
+    if (log.createdAt.getTime() !== firstDecisionAt.getTime()) {
+      continue;
+    }
+
     const submittedAt = log.rebuttal.createdAt.getTime();
-    const decidedAt = log.createdAt.getTime();
+    const decidedAt = firstDecisionAt.getTime();
 
     const differenceInDays =
       (decidedAt - submittedAt) / (1000 * 60 * 60 * 24);
@@ -231,7 +286,17 @@ export async function GET(req: Request) {
   };
 
   // Template downloads
-    const templateDownloads = await prisma.templateDownload.findMany({
+  const templates = await prisma.template.findMany({
+    select: {
+      id: true,
+      title: true,
+    },
+    orderBy: {
+      title: "asc",
+    },
+  });
+
+  const templateDownloads = await prisma.templateDownload.findMany({
     where: {
       createdAt: {
         gte: startDate,
@@ -240,37 +305,24 @@ export async function GET(req: Request) {
     },
     select: {
       templateId: true,
-      template: {
-        select: {
-          title: true,
-        },
-      },
     },
     orderBy: {
       createdAt: "asc",
     },
   });
 
-  const templateDownloadMetrics: Record<
-    string,
-    {
-      templateId: string;
-      title: string;
-      count: number;
-    }
-  > = {};
+  const downloadCounts: Record<string, number> = {};
 
   for (const download of templateDownloads) {
-    if (!templateDownloadMetrics[download.templateId]) {
-      templateDownloadMetrics[download.templateId] = {
-        templateId: download.templateId,
-        title: download.template.title,
-        count: 0,
-      };
-    }
-
-    templateDownloadMetrics[download.templateId].count++;
+    downloadCounts[download.templateId] =
+      (downloadCounts[download.templateId] || 0) + 1;
   }
+
+  const templateDownloadMetrics = templates.map((template) => ({
+    templateId: template.id,
+    title: template.title,
+    count: downloadCounts[template.id] || 0,
+  }));
 
   return NextResponse.json({
     message: "Analytics API works",
@@ -278,13 +330,12 @@ export async function GET(req: Request) {
     startDate,
     endDate,
     membershipGrowth: Object.values(membershipGrowth),
-    churn,
+    churn: Object.values(churn),
     submissions,
     submissionSuccess,
     moderationLogs,
     moderationTurnaround,
     templateDownloads,
-    templateDownloadMetrics: Object.values(templateDownloadMetrics),
+    templateDownloadMetrics,
   });
 }
-

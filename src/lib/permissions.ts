@@ -4,6 +4,7 @@ export type Permission =
   // User management
   | "manage_users"
   | "view_all_users"
+  | "view_analytics"       // ADMIN only — view platform-wide analytics
 
   // Facility management
   | "manage_facilities"      // ADMIN only — create, edit, delete any facility
@@ -38,6 +39,7 @@ export const permissions: Record<Role, Permission[]> = {
   ADMIN: [
     "manage_users",
     "view_all_users",
+    "view_analytics",
     "manage_facilities",
     "claim_facility",
     "view_own_facilities",
@@ -87,7 +89,7 @@ export function hasPermission(role: string, permission: Permission): boolean {
 /**
  * Membership tier facility limits — must stay in sync with config/tiers.ts TIER_LIMITS.
  * (Duplicated here because config/tiers.ts imports from @prisma/client which is
- *  incompatible with the Next.js Edge runtime used by middleware.)
+ * incompatible with the Next.js Edge runtime used by middleware.)
  *
  * Tier A  → 1 facility
  * Tier B  → 3 facilities

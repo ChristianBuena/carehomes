@@ -18,12 +18,19 @@ import {
   Calendar,
   Library,
   ShieldAlert,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
 
 const NAV_LINKS = [
   { name: "Dashboard", href: "/dashboard", icon: Home, permission: null },
+  {
+    name: "Analytics",
+    href: "/dashboard/analytics",
+    icon: BarChart3,
+    permission: "view_analytics",
+  },
   {
     name: "My Facilities",
     href: "/dashboard/facilities",

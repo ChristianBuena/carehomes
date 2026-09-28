@@ -7,7 +7,7 @@ export function GlobalFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[var(--color-primary)] text-white/80 border-t border-[var(--color-border)]" aria-labelledby="footer-heading">
+    <footer className="bg-[var(--color-header-bg)] text-white/80 border-t border-white/10 dark:border-[var(--color-border)] transition-colors duration-200" aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>

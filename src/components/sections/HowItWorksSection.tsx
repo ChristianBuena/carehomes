@@ -71,7 +71,7 @@ export default function HowItWorksSection() {
                     <Icon className="h-6 w-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
                   </div>
 
-                  <div className="bg-[var(--color-accent)] text-[var(--color-blue-50)] text-xs font-bold px-2.5 py-0.5 rounded-full mb-3 shadow-sm">
+                  <div className="bg-[var(--color-accent)] text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-3 shadow-sm">
                     Step {step.id}
                   </div>
 

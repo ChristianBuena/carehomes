@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { FileText, Image, FileIcon, Download, Clock, ShieldCheck, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // ── Metadata ─────────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -116,19 +117,22 @@ export default async function SharePage({
   return (
     <div className="min-h-screen bg-[var(--color-bg)] flex flex-col">
       {/* Slim header */}
-      <header className="bg-[var(--color-primary)] text-white py-4 px-6 flex items-center justify-between shadow-md">
+      <header className="bg-[var(--color-header-bg)] text-white py-4 px-6 flex items-center justify-between shadow-md border-b border-white/10 dark:border-[var(--color-border)]">
         <Link href="/" className="text-lg font-bold tracking-tight hover:opacity-80 transition">
           CareHomesSupportDocs
         </Link>
-        <span className="text-xs text-white/60 hidden sm:block">
-          Secure file sharing for care facility operators
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-white/60 hidden sm:block">
+            Secure file sharing for care facility operators
+          </span>
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10">
         {/* Invalid link */}
         {isInvalid ? (
-          <div className="bg-white border border-[var(--color-border)] rounded-2xl p-10 text-center shadow-sm">
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-10 text-center shadow-sm">
             <AlertTriangle
               className="w-14 h-14 text-amber-500 mx-auto mb-4"
               aria-hidden="true"
@@ -148,7 +152,7 @@ export default async function SharePage({
         ) : (
           <>
             {/* Header card */}
-            <div className="bg-white border border-[var(--color-border)] rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 mb-6 shadow-sm">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                   <p className="text-sm text-[var(--color-muted)] mb-1">Files shared by</p>
@@ -167,7 +171,7 @@ export default async function SharePage({
             </div>
 
             {/* Legal disclaimer */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6 text-sm text-amber-800 flex gap-2">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-6 text-sm text-amber-700 dark:text-amber-300 flex gap-2">
               <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
               <span>
                 <strong>Read-only access.</strong> These files are for review purposes only. You
@@ -186,12 +190,12 @@ export default async function SharePage({
                 {files.map((file, i) => (
                   <div
                     key={i}
-                    className="bg-white border border-[var(--color-border)] rounded-xl p-4 flex items-center justify-between gap-4 hover:border-[var(--color-secondary)] transition-colors"
+                    className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex items-center justify-between gap-4 hover:border-[var(--color-secondary)] transition-colors"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <FileTypeIcon type={file.fileType} />
                       <div className="min-w-0">
-                        <p className="font-medium text-gray-800 truncate">{file.filename}</p>
+                        <p className="font-medium text-[var(--color-text)] truncate">{file.filename}</p>
                         <p className="text-xs text-[var(--color-muted)] mt-0.5">
                           {file.fileType} · {formatBytes(file.fileSize)}
                         </p>

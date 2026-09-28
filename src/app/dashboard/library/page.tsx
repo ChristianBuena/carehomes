@@ -240,7 +240,7 @@ export default function MemberLibraryPage() {
       </div>
 
       {/* Interactive Forms Callout */}
-      <div className="bg-white border border-[var(--color-border)] rounded-xl p-5 shadow-sm space-y-4">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-[var(--color-primary)]" />
           <h3 className="font-bold text-[var(--color-text)]">Interactive Fillable Forms</h3>

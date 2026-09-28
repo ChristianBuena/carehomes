@@ -100,12 +100,12 @@ export default function DisclaimerPage() {
       <JsonLd data={jsonLd} />
       <div className="bg-[var(--color-bg)] min-h-screen pb-24">
         {/* Page Header */}
-        <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-16 md:py-20 border-b border-[var(--color-border)]">
+        <header className="bg-[var(--color-primary)] text-white py-16 md:py-20 border-b border-[var(--color-border)]">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
               Legal Disclaimer
             </h1>
-            <p className="text-[var(--color-surface)]/80 font-medium">
+            <p className="text-white/80 font-medium">
               Last Updated: {lastUpdated}
             </p>
           </div>

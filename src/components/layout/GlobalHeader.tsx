@@ -3,10 +3,11 @@ import { Shield } from "lucide-react";
 import { NavBar } from "./NavBar";
 import { MobileMenu } from "./MobileMenu";
 import { HeaderAuthActions } from "./HeaderAuthActions";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export function GlobalHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--color-border)] bg-[var(--color-primary)]/95 backdrop-blur-md text-[var(--color-surface)]">
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 dark:border-[var(--color-border)] bg-[var(--color-header-bg)]/95 backdrop-blur-md text-white transition-colors duration-200">
       {/* Skip to content */}
       <a
         href="#main-content"
@@ -37,7 +38,7 @@ export function GlobalHeader() {
             </span>
           </Link>
 
-          <span className="text-xs font-semibold bg-[var(--color-blue-100)]/20 text-[var(--color-blue-50)] px-3 py-1.5 rounded-full hidden md:inline-flex items-center shadow-sm border border-[var(--color-blue-100)]/10 whitespace-nowrap">
+          <span className="text-xs font-semibold bg-white/10 text-white/80 px-3 py-1.5 rounded-full hidden md:inline-flex items-center shadow-sm border border-white/10 whitespace-nowrap">
             Nonprofit Platform
           </span>
         </div>
@@ -48,12 +49,14 @@ export function GlobalHeader() {
         </div>
 
         {/* Desktop Actions */}
-        <div className="shrink-0">
+        <div className="shrink-0 flex items-center gap-3">
+          <ThemeToggle />
           <HeaderAuthActions />
         </div>
 
         {/* Mobile Menu */}
-        <div className="lg:hidden flex items-center">
+        <div className="lg:hidden flex items-center gap-2">
+          <ThemeToggle />
           <MobileMenu />
         </div>
       </div>

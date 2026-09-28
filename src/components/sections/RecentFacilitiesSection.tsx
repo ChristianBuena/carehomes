@@ -118,7 +118,7 @@ export async function RecentFacilitiesSection() {
         <div className="mt-10 text-center">
           <Link
             href="/facilities"
-            className="inline-flex items-center justify-center gap-2 bg-[var(--color-primary)] text-[var(--color-surface)] font-semibold px-6 min-h-[44px] rounded-full hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white font-semibold px-6 min-h-[44px] rounded-full hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm"
           >
             Browse all {totalCount} facilities
             <ArrowRight className="h-4 w-4" aria-hidden="true" />

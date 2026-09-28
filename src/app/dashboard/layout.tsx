@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const NAV_LINKS = [
   { name: "Dashboard", href: "/dashboard", icon: Home, permission: null },
@@ -155,17 +156,20 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-[var(--color-bg)] flex md:flex-row flex-col">
       {/* Mobile Topbar */}
-      <div className="md:hidden flex items-center justify-between h-16 bg-[var(--color-primary)] px-4 z-20 shadow-md shrink-0">
+      <div className="md:hidden flex items-center justify-between h-16 bg-[var(--color-header-bg)] px-4 z-20 shadow-md shrink-0 border-b border-white/10 dark:border-[var(--color-border)]">
         <Link href="/" className="text-xl font-bold text-white tracking-tight">
           CareHomesSupportDocs
         </Link>
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="text-white p-2"
-          aria-label="Toggle Menu"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="text-white p-2"
+            aria-label="Toggle Menu"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Overlay (Mobile) */}
@@ -180,7 +184,7 @@ export default function DashboardLayout({
       <aside
         className={`
           fixed md:sticky top-0 left-0 h-full md:h-screen w-[260px] 
-          bg-[var(--color-primary)] text-white z-40
+          bg-[var(--color-header-bg)] text-white z-40 border-r border-white/10 dark:border-[var(--color-border)]
           transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0 flex flex-col
@@ -274,6 +278,7 @@ export default function DashboardLayout({
             {pageTitle}
           </h1>
           <div className="flex items-center gap-4">
+            <ThemeToggle className="text-[var(--color-text)] hover:bg-[var(--color-bg)]" />
             {!loading && user ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-[var(--color-text)]">

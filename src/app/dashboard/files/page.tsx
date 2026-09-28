@@ -73,7 +73,7 @@ function ShareDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-lg font-bold text-[var(--color-primary)]">
@@ -155,7 +155,7 @@ function ShareResultModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="text-center mb-6">
           <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
             <LinkIcon className="w-7 h-7 text-green-600" />
@@ -406,7 +406,7 @@ export default function FilesPage() {
       </div>
 
       {/* Upload Section */}
-      <div className="bg-white border border-[var(--color-border)] rounded-lg p-6 mb-8">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-6 mb-8">
         <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">Upload Files</h2>
         <UploadButton<OurFileRouter, "memberFileUploader">
           endpoint="memberFileUploader"
@@ -420,7 +420,7 @@ export default function FilesPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 px-4 py-3 rounded mb-4 text-sm">
           {error}
         </div>
       )}
@@ -431,7 +431,7 @@ export default function FilesPage() {
           onClick={() => setFilter("all")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filter === "all"
             ? "bg-[var(--color-primary)] text-white"
-            : "border border-[var(--color-border)] text-gray-600 hover:bg-gray-50"
+            : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)]"
           }`}
         >
           All Files ({files.length})
@@ -440,7 +440,7 @@ export default function FilesPage() {
           onClick={() => setFilter("qsf")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filter === "qsf"
             ? "bg-[var(--color-primary)] text-white"
-            : "border border-[var(--color-border)] text-gray-600 hover:bg-gray-50"
+            : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)]"
           }`}
         >
           QSF Documents ({files.filter((f) => f.isQsfDoc).length})
@@ -461,9 +461,9 @@ export default function FilesPage() {
           {filteredFiles.map((file) => (
             <div
               key={file.id}
-              className={`bg-white border rounded-lg p-4 flex items-center gap-4 transition-colors ${
+              className={`bg-[var(--color-surface)] border rounded-lg p-4 flex items-center gap-4 transition-colors ${
                 selectMode && selectedIds.has(file.id)
-                  ? "border-[var(--color-primary)] bg-blue-50/40"
+                  ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10"
                   : "border-[var(--color-border)]"
               }`}
             >
@@ -547,12 +547,12 @@ export default function FilesPage() {
             {shareLinks.map((link) => (
               <div
                 key={link.id}
-                className="bg-white border border-[var(--color-border)] rounded-lg p-4"
+                className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4"
               >
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="flex-1 min-w-0 space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-gray-800">
+                      <span className="text-sm font-medium text-[var(--color-text)]">
                         {link.shareAll ? "All files (dynamic)" : `${link.fileCount} file${link.fileCount !== 1 ? "s" : ""}`}
                       </span>
                       <span className="text-xs bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-muted)] px-2 py-0.5 rounded-full font-mono">

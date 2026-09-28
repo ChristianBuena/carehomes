@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Settings as SettingsIcon, User, Mail, Shield, Key } from "lucide-react";
+import { Settings as SettingsIcon, User, Mail, Shield, Key, SunMoon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export const metadata = {
   title: "Settings — Dashboard",
@@ -74,6 +75,28 @@ export default async function SettingsPage() {
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
                   {user.role}
                 </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Appearance Section */}
+        <section className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]/50">
+            <h3 className="font-semibold text-[var(--color-text)] flex items-center gap-2">
+              <SunMoon className="h-4 w-4 text-[var(--color-muted)]" /> Appearance
+            </h3>
+          </div>
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-medium text-[var(--color-text)]">Theme Preference</h4>
+                <p className="text-sm text-[var(--color-muted)] mt-1">
+                  Choose between light, dark, or sync with your system preferences.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <ThemeToggle variant="segmented" />
               </div>
             </div>
           </div>

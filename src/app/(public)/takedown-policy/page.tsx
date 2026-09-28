@@ -46,12 +46,12 @@ export default function TakedownPolicyPage() {
       <JsonLd data={jsonLd} />
       <div className="bg-[var(--color-bg)] min-h-screen pb-24">
         {/* Page Header */}
-        <header className="bg-[var(--color-primary)] text-[var(--color-surface)] py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)]">
+        <header className="bg-[var(--color-primary)] text-white py-12 md:py-16 lg:py-24 border-b border-[var(--color-border)]">
           <ResponsiveContainer>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
               Takedown Policy
             </h1>
-            <div className="flex flex-col sm:flex-row gap-4 sm:items-center text-[var(--color-surface)]/80">
+            <div className="flex flex-col sm:flex-row gap-4 sm:items-center text-white/80">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span className="text-sm font-medium">
@@ -94,7 +94,7 @@ export default function TakedownPolicyPage() {
               </div>
               <Button
                 asChild
-                className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] shadow-sm shrink-0"
+                className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-white shadow-sm shrink-0"
               >
                 <a href="#how-to-submit">
                   <ShieldAlert className="h-4 w-4 mr-2" />

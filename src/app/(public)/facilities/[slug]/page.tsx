@@ -167,7 +167,7 @@ export default async function FacilityDetailPage({
       </div>
 
       {/* ── Facility Header ────────────────────────────────────────────── */}
-      <header className="bg-[var(--color-primary)] text-[var(--color-surface)]">
+      <header className="bg-[var(--color-primary)] text-white">
         <ResponsiveContainer className="py-12 md:py-16 lg:py-24">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             {/* Left: name + metadata */}
@@ -193,9 +193,9 @@ export default async function FacilityDetailPage({
                 {/* // TODO: [nice-to-have] Increase padding and text size for metadata pills */}
                 <div
                   role="listitem"
-                  className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm"
+                  className="inline-flex items-center gap-2 bg-white/10 text-white/80 px-3 py-1.5 rounded-lg text-sm"
                 >
-                  <MapPin className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
+                  <MapPin className="h-4 w-4 text-white/60" aria-hidden="true" />
                   <span>
                     {city}, CA
                   </span>
@@ -203,18 +203,18 @@ export default async function FacilityDetailPage({
                 {facility.capacity != null && (
                   <div
                     role="listitem"
-                    className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm"
+                    className="inline-flex items-center gap-2 bg-white/10 text-white/80 px-3 py-1.5 rounded-lg text-sm"
                   >
-                    <Users className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
+                    <Users className="h-4 w-4 text-white/60" aria-hidden="true" />
                     <span>Capacity: {facility.capacity}</span>
                   </div>
                 )}
                 {facility.facilityNumber && (
                   <div
                     role="listitem"
-                    className="inline-flex items-center gap-2 bg-[var(--color-surface)]/10 text-[var(--color-surface)]/80 px-3 py-1.5 rounded-lg text-sm font-mono"
+                    className="inline-flex items-center gap-2 bg-white/10 text-white/80 px-3 py-1.5 rounded-lg text-sm font-mono"
                   >
-                    <Hash className="h-4 w-4 text-[var(--color-surface)]/60" aria-hidden="true" />
+                    <Hash className="h-4 w-4 text-white/60" aria-hidden="true" />
                     <span>{facility.facilityNumber}</span>
                   </div>
                 )}
@@ -226,7 +226,7 @@ export default async function FacilityDetailPage({
               {canSubmit && (
                 <Button
                   asChild
-                  className="h-12 px-6 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-surface)] font-semibold shadow-md group"
+                  className="h-12 px-6 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-white font-semibold shadow-md group"
                 >
                   <Link href="/dashboard/rebuttals/new">
                     Submit Rebuttal

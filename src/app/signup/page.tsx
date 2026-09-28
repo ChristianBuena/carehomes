@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Eye, EyeOff, Check, X } from 'lucide-react';
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -79,6 +80,10 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-bg)] py-12 px-4 sm:px-6 lg:px-8">
+      {/* Theme toggle — fixed top-right */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle className="text-[var(--color-text)] hover:bg-[var(--color-bg-subtle)]" />
+      </div>
       {/* Text Logo */}
       <Link href="/" className="mb-8 flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] rounded-md">
         <span className="text-2xl font-extrabold tracking-tight text-[var(--color-primary)]">

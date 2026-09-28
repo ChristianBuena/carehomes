@@ -23,10 +23,10 @@ function getUrgencyStyle(days: number): {
   badge: string;
   label: string;
 } {
-  if (days < 0) return { bg: "bg-gray-50 border-gray-200", text: "text-gray-500", badge: "bg-gray-100 text-gray-600", label: "Overdue" };
-  if (days < 7) return { bg: "bg-red-50 border-red-200", text: "text-red-700", badge: "bg-red-100 text-red-700", label: `${days}d left` };
-  if (days <= 30) return { bg: "bg-amber-50 border-amber-200", text: "text-amber-700", badge: "bg-amber-100 text-amber-700", label: `${days}d left` };
-  return { bg: "bg-green-50 border-green-200", text: "text-green-700", badge: "bg-green-100 text-green-700", label: `${days}d left` };
+  if (days < 0) return { bg: "bg-[var(--color-surface)] border-[var(--color-border)]", text: "text-[var(--color-muted)]", badge: "bg-[var(--color-bg)] text-[var(--color-muted)]", label: "Overdue" };
+  if (days < 7) return { bg: "bg-red-500/10 border-red-500/30", text: "text-red-600 dark:text-red-400", badge: "bg-red-500/20 text-red-700 dark:text-red-300", label: `${days}d left` };
+  if (days <= 30) return { bg: "bg-amber-500/10 border-amber-500/30", text: "text-amber-600 dark:text-amber-400", badge: "bg-amber-500/20 text-amber-700 dark:text-amber-300", label: `${days}d left` };
+  return { bg: "bg-green-500/10 border-green-500/30", text: "text-green-600 dark:text-green-400", badge: "bg-green-500/20 text-green-700 dark:text-green-300", label: `${days}d left` };
 }
 
 const emptyForm = { citationId: "", dueDate: "", notes: "" };
@@ -128,18 +128,18 @@ export default function DeadlinesPage() {
       </p>
 
       {/* Legal Disclaimer */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-8 text-sm text-amber-800">
+      <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-8 text-sm text-amber-700 dark:text-amber-300">
         ⚠️ <strong>Disclaimer:</strong> Reminders are informational only and do not constitute legal advice. Always consult a licensed attorney for compliance guidance.
       </div>
 
       {/* Add / Edit Form */}
-      <div className="bg-white border border-[var(--color-border)] rounded-lg p-6 mb-8">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-6 mb-8">
         <h2 className="text-lg font-semibold text-[var(--color-primary)] mb-4">
           {editingId ? "Edit Deadline" : "Add New Deadline"}
         </h2>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 px-4 py-3 rounded mb-4 text-sm">
             {error}
           </div>
         )}
@@ -231,7 +231,7 @@ export default function DeadlinesPage() {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="font-semibold text-gray-800">
+                      <span className="font-semibold text-[var(--color-text)]">
                         {deadline.citationId}
                       </span>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${urgency.badge}`}>
@@ -246,7 +246,7 @@ export default function DeadlinesPage() {
                       })}
                     </p>
                     {deadline.notes && (
-                      <p className="text-sm text-gray-600 mt-1">{deadline.notes}</p>
+                      <p className="text-sm text-[var(--color-text-secondary)] mt-1">{deadline.notes}</p>
                     )}
                   </div>
                   <div className="flex gap-2 shrink-0">

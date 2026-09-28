@@ -67,7 +67,7 @@ export function AboutSection() {
             <div className="flex items-start gap-4 bg-[var(--color-secondary)]/8 border border-[var(--color-secondary)]/20 rounded-2xl p-6">
               <div className="shrink-0 h-12 w-12 rounded-xl bg-[var(--color-secondary)] flex items-center justify-center shadow-sm">
                 <Shield
-                  className="h-6 w-6 text-[var(--color-surface)]"
+                  className="h-6 w-6 text-white"
                   aria-hidden="true"
                 />
               </div>

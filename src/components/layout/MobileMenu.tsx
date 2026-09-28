@@ -11,6 +11,7 @@ import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "./NavLink";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,7 +64,7 @@ export function MobileMenu() {
         aria-label="Open mobile navigation"
         aria-expanded={isOpen}
         aria-controls="mobile-navigation-menu"
-        className="text-[var(--color-surface)] hover:bg-[var(--color-surface)]/10 min-h-[44px] min-w-[44px]"
+        className="text-white hover:bg-white/10 min-h-[44px] min-w-[44px]"
       >
         <Menu className="h-6 w-6" aria-hidden="true" />
       </Button>
@@ -112,6 +113,10 @@ export function MobileMenu() {
                     {link.label}
                   </NavLink>
                 ))}
+
+                <div className="pt-2">
+                  <ThemeToggle variant="inline" />
+                </div>
 
                 <hr
                   className="my-4 border-[var(--color-border)]"
@@ -164,7 +169,7 @@ export function MobileMenu() {
 
                       <Button
                         asChild
-                        className="w-full min-h-[44px] bg-[var(--color-secondary)] text-[var(--color-surface)] hover:bg-[var(--color-secondary-hover)]"
+                        className="w-full min-h-[44px] bg-[var(--color-secondary)] text-white hover:bg-[var(--color-secondary-hover)]"
                         onClick={() => setIsOpen(false)}
                       >
                         <Link href="/pricing">Join Now</Link>

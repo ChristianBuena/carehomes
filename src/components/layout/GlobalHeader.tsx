@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import Image from "next/image";
 import { NavBar } from "./NavBar";
 import { MobileMenu } from "./MobileMenu";
 import { HeaderAuthActions } from "./HeaderAuthActions";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LogoShield } from "@/components/ui/LogoShield";
 
 export function GlobalHeader() {
   return (
@@ -25,10 +26,7 @@ export function GlobalHeader() {
             className="flex items-center gap-2.5"
             aria-label="CareHomesSupportDocs.org Home"
           >
-            <Shield
-              className="h-7 w-7 text-[var(--color-blue-100)]"
-              aria-hidden="true"
-            />
+            <LogoShield size={36} priority />
             <span className="text-lg font-bold tracking-tight text-white hidden sm:block whitespace-nowrap">
               CareHomesSupportDocs
               <span className="text-[var(--color-blue-100)]">.org</span>

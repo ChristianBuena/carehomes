@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { Shield, ExternalLink } from "lucide-react";
+import Image from "next/image";
+import { ExternalLink } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
+import { LogoShield } from "@/components/ui/LogoShield";
 
 export function GlobalFooter() {
   const currentYear = new Date().getFullYear();
@@ -16,8 +18,8 @@ export function GlobalFooter() {
           
           {/* Col 1: Logo + nonprofit tagline + disclaimer blurb */}
           <div className="space-y-6 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2" aria-label="CareHomesSupportDocs.org Home">
-              <Shield className="h-7 w-7 text-[var(--color-accent)]" aria-hidden="true" />
+            <Link href="/" className="flex items-center gap-2.5" aria-label="CareHomesSupportDocs.org Home">
+              <LogoShield size={34} />
               <span className="text-xl font-bold tracking-tight text-white">
                 CareHomesSupportDocs
               </span>

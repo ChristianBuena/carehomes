@@ -19,7 +19,7 @@ export default function RootLayout({
       <body className="antialiased min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] transition-colors duration-200">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

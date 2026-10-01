@@ -2,16 +2,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Blue Theme Color System ──────────────────────────────────────────── */
+/* ─── Brand Color System — Dark-first, coral/red accent ─────────────────── */
 
 :root {
   /* Core palette */
-  --color-primary: #1B3A6B;
+  --color-primary: #1B3A6B;           /* Deep Navy — authority, headings */
   --color-primary-hover: #152E56;
-  --color-secondary: #2563EB;
+  --color-secondary: #2563EB;         /* Blue — primary CTA buttons, links */
   --color-secondary-hover: #1D4ED8;
-  --color-accent: #3B82F6;
-  --color-accent-hover: #2563EB;
+  --color-accent: #DC3535;            /* Coral/red — emphasis text, section labels */
+  --color-accent-hover: #C02828;      /* Slightly darker for hover (WCAG AA on white) */
 
   /* Backgrounds */
   --color-bg: #F0F4FF;
@@ -63,32 +63,32 @@
   --destructive-foreground: #FFFFFF;
   --border: var(--color-border);
   --input: var(--color-border);
-  --ring: var(--color-accent);
+  --ring: var(--color-secondary);
 }
 
 .dark {
   /* Core palette */
-  --color-primary: #3B82F6;
-  --color-primary-hover: #60A5FA;
-  --color-secondary: #0D9488;
-  --color-secondary-hover: #14B8A6;
-  --color-accent: #60A5FA;
-  --color-accent-hover: #93C5FD;
+  --color-primary: #3B82F6;           /* Bright blue — CTAs, links, interactive */
+  --color-primary-hover: #2563EB;
+  --color-secondary: #3B82F6;         /* Blue — dashboard active states, badges */
+  --color-secondary-hover: #2563EB;
+  --color-accent: #F05252;            /* Coral/red — emphasis text, section labels */
+  --color-accent-hover: #EF4444;
 
   /* Backgrounds */
-  --color-bg: #0B1120;
-  --color-bg-subtle: #111D35;
-  --color-surface: #152238;
-  --color-surface-raised: #1C2D4A;
+  --color-bg: #0B1120;                /* Very dark navy — main page bg */
+  --color-bg-subtle: #0F1A2E;
+  --color-surface: #111D35;           /* Card / panel surface */
+  --color-surface-raised: #162040;
 
   /* Text */
-  --color-text: #F1F5F9;
+  --color-text: #F1F5F9;              /* Near-white body text */
   --color-text-secondary: #94A3B8;
   --color-muted: #64748B;
 
   /* Borders */
   --color-border: #1E2E4A;
-  --color-border-subtle: #18253D;
+  --color-border-subtle: #172038;
 
   /* Status */
   --color-success: #22C55E;
@@ -96,14 +96,14 @@
   --color-warning: #F59E0B;
 
   /* Blue scale */
-  --color-blue-50: #172554;
-  --color-blue-100: #1E3A8A;
+  --color-blue-50: #EFF6FF;
+  --color-blue-100: #BFDBFE;          /* Light blue — visible on dark bg for logo .org */
   --color-blue-600: #3B82F6;
   --color-blue-700: #60A5FA;
   --color-blue-900: #93C5FD;
   --color-navy: #0B1120;
 
-  /* Header & Navigation */
+  /* Header & Navigation — same as bg for seamless/transparent look */
   --color-header-bg: #0B1120;
 
   /* Tailwind / shadcn compat aliases */
@@ -125,7 +125,7 @@
   --destructive-foreground: #FFFFFF;
   --border: var(--color-border);
   --input: var(--color-border);
-  --ring: var(--color-accent);
+  --ring: var(--color-primary);
 }
 
 @layer base {

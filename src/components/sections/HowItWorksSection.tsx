@@ -36,11 +36,18 @@ export default function HowItWorksSection() {
     <section className="py-24 bg-[var(--color-surface)]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--color-primary)]">
-            How It Works
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-px w-6 bg-[var(--color-accent)] shrink-0" aria-hidden="true" />
+            <span className="text-xs font-bold text-[var(--color-accent)] uppercase tracking-[0.18em]">
+              How It Works
+            </span>
+            <div className="h-px w-6 bg-[var(--color-accent)] shrink-0" aria-hidden="true" />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--color-text)]">
+            A Simple, Compliant Process
           </h2>
           <p className="mt-4 text-lg text-[var(--color-muted)]">
-            A simple, compliant process to ensure your voice is heard.
+            Ensuring your voice is heard — compliantly and transparently.
           </p>
         </div>
 

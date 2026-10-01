@@ -61,19 +61,25 @@ export function ProviderFilters({ providers }: ProviderFiltersProps) {
         </div>
 
         {/* Provider Type Segmented Control */}
-        <div className="flex items-center p-1 bg-[var(--color-bg)] rounded-lg border border-[var(--color-border)] w-full lg:w-auto">
-          {(["all", "attorney", "paralegal"] as const).map((t) => (
+        <div className="flex flex-wrap items-center p-1 bg-[var(--color-bg)] rounded-lg border border-[var(--color-border)] w-full lg:w-auto gap-1">
+          {[
+            { id: "all", label: "All" },
+            { id: "legal", label: "Legal Assistance" },
+            { id: "vendor", label: "Commercial Vendors" },
+            { id: "attorney", label: "Attorneys" },
+            { id: "paralegal", label: "Paralegals" },
+          ].map((t) => (
             <button
-              key={t}
-              onClick={() => updateFilter("type", t)}
+              key={t.id}
+              onClick={() => updateFilter("type", t.id)}
               className={cn(
-                "flex-1 lg:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-colors capitalize",
-                type === t
+                "flex-1 lg:flex-none px-3 py-1.5 text-xs md:text-sm font-medium rounded-md transition-colors whitespace-nowrap",
+                type === t.id
                   ? "bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]/50"
                   : "text-[var(--color-muted)] hover:text-[var(--color-text)]",
               )}
             >
-              {t === "all" ? "All Types" : t}
+              {t.label}
             </button>
           ))}
         </div>

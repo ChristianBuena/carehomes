@@ -20,7 +20,11 @@ export default function ProvidersClientPage() {
         provider.specialty.toLowerCase().includes(search.toLowerCase()) ||
         provider.location.toLowerCase().includes(search.toLowerCase());
 
-      const matchesType = type === "all" || provider.type === type;
+      const matchesType =
+        type === "all" ||
+        (type === "legal"
+          ? provider.type === "attorney" || provider.type === "paralegal"
+          : provider.type === type);
       const matchesCounty = county === "all" || provider.county === county;
 
       return matchesSearch && matchesType && matchesCounty;

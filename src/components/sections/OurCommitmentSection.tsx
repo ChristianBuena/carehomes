@@ -30,7 +30,7 @@ export function OurCommitmentSection() {
               />
 
               <blockquote className="relative z-10 text-2xl md:text-3xl font-bold text-white leading-snug tracking-tight">
-                “When care providers have clear information and dependable support, residents and families benefit too.”
+                When care providers have clear information and dependable support, residents and families benefit too.
               </blockquote>
             </div>
           </div>

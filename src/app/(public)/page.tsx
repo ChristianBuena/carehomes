@@ -12,6 +12,7 @@ import { SponsorsDirectoriesSection } from "@/components/sections/SponsorsDirect
 import { WhyWeExistSection } from "@/components/sections/WhyWeExistSection";
 import { CoreObjectivesSection } from "@/components/sections/CoreObjectivesSection";
 import { OurCommitmentSection } from "@/components/sections/OurCommitmentSection";
+import { VolunteerSection } from "@/components/sections/VolunteerSection";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 export const revalidate = 300;
@@ -44,6 +45,7 @@ export default function HomePage() {
         <WhyWeExistSection />
         <CoreObjectivesSection />
         <OurCommitmentSection />
+        <VolunteerSection />
         <StatsSection />
         <ValuePropositionSection />
         <HowItWorksSection />

@@ -18,10 +18,10 @@ export function OurCommitmentSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column — Glowing Quote Card (5 cols) */}
           <div className="lg:col-span-5">
-            <div className="relative p-8 md:p-12 rounded-3xl bg-gradient-to-br from-[#131d36] to-[#0d1627] border border-[#2a3c63] shadow-2xl shadow-blue-950/40 overflow-hidden">
+            <div className="relative p-8 md:p-12 rounded-3xl bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-raised)] dark:from-[#131d36] dark:to-[#0d1627] border border-[var(--color-border)] dark:border-[#2a3c63] shadow-xl dark:shadow-2xl dark:shadow-blue-950/40 overflow-hidden">
               {/* Subtle ambient light inside card */}
               <div
-                className="absolute top-0 left-0 w-32 h-32 bg-[var(--color-primary)]/15 rounded-full blur-2xl pointer-events-none"
+                className="absolute top-0 left-0 w-32 h-32 bg-[var(--color-primary)]/10 dark:bg-[var(--color-primary)]/15 rounded-full blur-2xl pointer-events-none"
                 aria-hidden="true"
               />
               <div
@@ -29,7 +29,7 @@ export function OurCommitmentSection() {
                 aria-hidden="true"
               />
 
-              <blockquote className="relative z-10 text-2xl md:text-3xl font-bold text-white leading-snug tracking-tight">
+              <blockquote className="relative z-10 text-2xl md:text-3xl font-bold text-[var(--color-text)] dark:text-white leading-snug tracking-tight">
                 When care providers have clear information and dependable support, residents and families benefit too.
               </blockquote>
             </div>

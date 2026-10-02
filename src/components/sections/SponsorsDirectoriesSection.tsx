@@ -6,7 +6,7 @@ export function SponsorsDirectoriesSection() {
   return (
     <section
       aria-labelledby="sponsors-directories-heading"
-      className="py-16 md:py-24 bg-[var(--color-bg)] border-t border-white/5 transition-colors duration-200"
+      className="py-16 md:py-24 bg-[var(--color-bg)] border-t border-[var(--color-border)] transition-colors duration-200"
     >
       <ResponsiveContainer>
         {/* Section Heading */}

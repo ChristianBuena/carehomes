@@ -114,14 +114,14 @@ export function VolunteerSection() {
 
           {/* Right Column — Volunteer Form Card (7 cols) */}
           <div className="lg:col-span-7">
-            <div className="p-6 md:p-10 rounded-3xl bg-[#0f172a]/90 dark:bg-[#0f172a] border border-white/10 dark:border-slate-800 shadow-2xl backdrop-blur-sm">
+            <div className="p-6 md:p-10 rounded-3xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl transition-colors duration-200">
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Row 1: Full name + Email */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label
                       htmlFor="vol-name"
-                      className="block text-xs font-semibold text-slate-300 tracking-wide"
+                      className="block text-xs font-semibold text-[var(--color-text)] tracking-wide"
                     >
                       Full name
                     </label>
@@ -134,13 +134,13 @@ export function VolunteerSection() {
                       onChange={(e) =>
                         setFormData({ ...formData, fullName: e.target.value })
                       }
-                      className="h-11 bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 rounded-xl focus:border-[var(--color-primary)]"
+                      className="h-11 bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-muted)] rounded-xl focus:border-[var(--color-primary)]"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label
                       htmlFor="vol-email"
-                      className="block text-xs font-semibold text-slate-300 tracking-wide"
+                      className="block text-xs font-semibold text-[var(--color-text)] tracking-wide"
                     >
                       Email address
                     </label>
@@ -153,7 +153,7 @@ export function VolunteerSection() {
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
-                      className="h-11 bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 rounded-xl focus:border-[var(--color-primary)]"
+                      className="h-11 bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-muted)] rounded-xl focus:border-[var(--color-primary)]"
                     />
                   </div>
                 </div>
@@ -163,7 +163,7 @@ export function VolunteerSection() {
                   <div className="space-y-1.5">
                     <label
                       htmlFor="vol-phone"
-                      className="block text-xs font-semibold text-slate-300 tracking-wide"
+                      className="block text-xs font-semibold text-[var(--color-text)] tracking-wide"
                     >
                       Phone (optional)
                     </label>
@@ -175,13 +175,13 @@ export function VolunteerSection() {
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
-                      className="h-11 bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 rounded-xl focus:border-[var(--color-primary)]"
+                      className="h-11 bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-muted)] rounded-xl focus:border-[var(--color-primary)]"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label
                       htmlFor="vol-city"
-                      className="block text-xs font-semibold text-slate-300 tracking-wide"
+                      className="block text-xs font-semibold text-[var(--color-text)] tracking-wide"
                     >
                       City / state
                     </label>
@@ -193,7 +193,7 @@ export function VolunteerSection() {
                       onChange={(e) =>
                         setFormData({ ...formData, cityState: e.target.value })
                       }
-                      className="h-11 bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 rounded-xl focus:border-[var(--color-primary)]"
+                      className="h-11 bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-muted)] rounded-xl focus:border-[var(--color-primary)]"
                     />
                   </div>
                 </div>
@@ -202,7 +202,7 @@ export function VolunteerSection() {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="vol-role"
-                    className="block text-xs font-semibold text-slate-300 tracking-wide"
+                    className="block text-xs font-semibold text-[var(--color-text)] tracking-wide"
                   >
                     Preferred volunteer role
                   </label>
@@ -213,17 +213,17 @@ export function VolunteerSection() {
                     onChange={(e) =>
                       setFormData({ ...formData, role: e.target.value })
                     }
-                    className="w-full h-11 px-3 bg-slate-900/80 border border-slate-700 text-white rounded-xl focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                    className="w-full h-11 px-3 bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text)] rounded-xl focus:outline-none focus:border-[var(--color-primary)] text-sm"
                   >
-                    <option value="" disabled className="bg-slate-900 text-slate-400">
+                    <option value="" disabled className="text-[var(--color-muted)]">
                       Select a role
                     </option>
                     {VOLUNTEER_ROLES.map((r) => (
-                      <option key={r.title} value={r.title} className="bg-slate-900 text-white">
+                      <option key={r.title} value={r.title} className="bg-[var(--color-surface)] text-[var(--color-text)]">
                         {r.title}
                       </option>
                     ))}
-                    <option value="General support" className="bg-slate-900 text-white">
+                    <option value="General support" className="bg-[var(--color-surface)] text-[var(--color-text)]">
                       General support / Other
                     </option>
                   </select>
@@ -234,7 +234,7 @@ export function VolunteerSection() {
                   <div className="space-y-1.5">
                     <label
                       htmlFor="vol-avail"
-                      className="block text-xs font-semibold text-slate-300 tracking-wide"
+                      className="block text-xs font-semibold text-[var(--color-text)] tracking-wide"
                     >
                       Typical availability
                     </label>
@@ -244,18 +244,18 @@ export function VolunteerSection() {
                       onChange={(e) =>
                         setFormData({ ...formData, availability: e.target.value })
                       }
-                      className="w-full h-11 px-3 bg-slate-900/80 border border-slate-700 text-white rounded-xl focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                      className="w-full h-11 px-3 bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text)] rounded-xl focus:outline-none focus:border-[var(--color-primary)] text-sm"
                     >
-                      <option value="1–2 hours per month" className="bg-slate-900">
+                      <option value="1–2 hours per month" className="bg-[var(--color-surface)] text-[var(--color-text)]">
                         1–2 hours per month
                       </option>
-                      <option value="3–5 hours per month" className="bg-slate-900">
+                      <option value="3–5 hours per month" className="bg-[var(--color-surface)] text-[var(--color-text)]">
                         3–5 hours per month
                       </option>
-                      <option value="5–10 hours per month" className="bg-slate-900">
+                      <option value="5–10 hours per month" className="bg-[var(--color-surface)] text-[var(--color-text)]">
                         5–10 hours per month
                       </option>
-                      <option value="Flexible / As needed" className="bg-slate-900">
+                      <option value="Flexible / As needed" className="bg-[var(--color-surface)] text-[var(--color-text)]">
                         Flexible / As needed
                       </option>
                     </select>
@@ -263,7 +263,7 @@ export function VolunteerSection() {
                   <div className="space-y-1.5">
                     <label
                       htmlFor="vol-bg"
-                      className="block text-xs font-semibold text-slate-300 tracking-wide"
+                      className="block text-xs font-semibold text-[var(--color-text)] tracking-wide"
                     >
                       Relevant background
                     </label>
@@ -275,7 +275,7 @@ export function VolunteerSection() {
                       onChange={(e) =>
                         setFormData({ ...formData, background: e.target.value })
                       }
-                      className="h-11 bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 rounded-xl focus:border-[var(--color-primary)]"
+                      className="h-11 bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-muted)] rounded-xl focus:border-[var(--color-primary)]"
                     />
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export function VolunteerSection() {
                 <div className="space-y-1.5">
                   <label
                     htmlFor="vol-contrib"
-                    className="block text-xs font-semibold text-slate-300 tracking-wide"
+                    className="block text-xs font-semibold text-[var(--color-text)] tracking-wide"
                   >
                     How would you like to contribute?
                   </label>
@@ -296,12 +296,12 @@ export function VolunteerSection() {
                     onChange={(e) =>
                       setFormData({ ...formData, message: e.target.value })
                     }
-                    className="bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 rounded-xl focus:border-[var(--color-primary)] resize-none"
+                    className="bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-muted)] rounded-xl focus:border-[var(--color-primary)] resize-none"
                   />
                 </div>
 
                 {/* Privacy / disclaimer note */}
-                <p className="text-xs text-slate-400 leading-relaxed pt-1">
+                <p className="text-xs text-[var(--color-muted)] leading-relaxed pt-1">
                   Selecting “Send volunteer interest” opens your email app with this information addressed to Care Home Support Docs. Your information is not stored on this website.
                 </p>
 

@@ -13,6 +13,8 @@ import { WhyWeExistSection } from "@/components/sections/WhyWeExistSection";
 import { CoreObjectivesSection } from "@/components/sections/CoreObjectivesSection";
 import { OurCommitmentSection } from "@/components/sections/OurCommitmentSection";
 import { VolunteerSection } from "@/components/sections/VolunteerSection";
+import { NewsAndProgressSection } from "@/components/sections/NewsAndProgressSection";
+import { PlannedAiSupportSection } from "@/components/sections/PlannedAiSupportSection";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 export const revalidate = 300;
@@ -45,7 +47,9 @@ export default function HomePage() {
         <WhyWeExistSection />
         <CoreObjectivesSection />
         <OurCommitmentSection />
+        <NewsAndProgressSection />
         <VolunteerSection />
+        <PlannedAiSupportSection />
         <StatsSection />
         <ValuePropositionSection />
         <HowItWorksSection />

@@ -51,7 +51,7 @@ export function WhyWeExistSection() {
                 variant="outline"
                 className="rounded-full px-6 py-2.5 border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface)] font-medium transition-all"
               >
-                <Link href="/library">Explore the Resource Library</Link>
+                <Link href="/dashboard/library">Explore the Resource Library</Link>
               </Button>
             </div>
           </div>

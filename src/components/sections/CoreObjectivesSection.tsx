@@ -16,7 +16,7 @@ const OBJECTIVES: Objective[] = [
     description:
       "Organize templates, educational materials, citation-response examples, and documentation practices in one accessible place.",
     linkText: "Open the Resource Library",
-    linkHref: "/library",
+    linkHref: "/dashboard/library",
   },
   {
     num: "02",

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PricingCard } from "@/components/ui/PricingCard";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { AlertCircle, ShieldAlert } from "lucide-react";
+import { AlertCircle, ShieldAlert, Info } from "lucide-react";
 
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -15,47 +16,62 @@ export const metadata: Metadata = buildMetadata({
 
 const FULL_TIERS = [
   {
-    tier: "Tier A",
+    tier: "$300 Tier",
     planId: "TIER_A",
     price: 300,
-    facilities: "1 Facility",
+    facilities: "Core membership / essential access",
     features: [
+      "Member account included",
+      "Core library content",
+      "Defined core set of downloads & forms",
+      "Basic directory or profile features, if offered",
+      "Standard support / assistance",
+      "Core access to events, training & resources",
       "Moderated rebuttal uploads",
-      "Standard template access",
       "Email support",
       "Public profile listing",
-      "Citation tracking dashboard"
+      "Citation tracking dashboard",
     ],
     ctaLabel: "Subscribe Now",
     ctaHref: "#",
   },
   {
-    tier: "Tier B",
+    tier: "$400 Tier",
     planId: "TIER_B",
     price: 400,
-    facilities: "Up to 3 Facilities",
+    facilities: "Enhanced membership / expanded access",
     features: [
-      "Everything in Tier A",
+      "Member account included",
+      "Core + expanded library content",
+      "Expanded set of downloads & forms",
+      "Enhanced directory or profile features, if offered",
+      "Enhanced support / assistance",
+      "Expanded access to events, training & resources",
+      "Mid-tier special features included",
       "Deadline reminders",
       "Priority moderation (48hr)",
       "Multi-facility dashboard",
-      "Dedicated account specialist"
     ],
     highlighted: true,
     ctaLabel: "Subscribe Now",
     ctaHref: "#",
   },
   {
-    tier: "Tier C",
+    tier: "$500 Tier",
     planId: "TIER_C",
     price: 500,
-    facilities: "Up to 10 Facilities",
+    facilities: "Top-tier membership / fullest approved access",
     features: [
-      "Everything in Tier B",
+      "Member account included",
+      "Full approved content library",
+      "Full approved set of downloads & forms",
+      "Priority/expanded directory or profile features",
+      "Highest approved level of support",
+      "Full/priority access to events, training & resources",
+      "Top-tier special features expressly listed",
       "Multi-seat access for staff",
       "Quarterly operations review",
-      "API access for citation sync",
-      "White-glove onboarding"
+      "White-glove onboarding",
     ],
     ctaLabel: "Subscribe Now",
     ctaHref: "#",
@@ -127,6 +143,23 @@ export default async function PricingPage() {
             {FULL_TIERS.map((tier) => (
               <PricingCard key={tier.tier} {...tier} currentPlan={currentPlan} />
             ))}
+          </div>
+
+          {/* Critical Drafting Rule Callout */}
+          <div className="mt-10 max-w-6xl mx-auto bg-[var(--color-danger)]/5 border border-[var(--color-danger)]/20 rounded-xl p-5 sm:p-6 flex gap-4 items-start">
+            <Info className="h-5 w-5 shrink-0 text-[var(--color-danger)] mt-0.5" />
+            <div className="text-sm text-[var(--color-text)] space-y-2">
+              <p className="font-bold text-[var(--color-danger)]">Critical drafting rule</p>
+              <p className="text-[var(--color-muted)] leading-relaxed">
+                Do not assume that the higher tier automatically includes every lower-tier feature unless the SOW explicitly says so. The final SOW should state whether benefits are cumulative and should identify exclusions, usage limits, and any benefits delivered by third parties.
+              </p>
+              <Link
+                href="/sow-guide"
+                className="inline-block text-[var(--color-primary)] font-semibold hover:underline text-sm pt-1"
+              >
+                View the full SOW Review &amp; Membership Guide →
+              </Link>
+            </div>
           </div>
         </ResponsiveContainer>
       </section>

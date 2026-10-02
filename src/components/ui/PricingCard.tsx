@@ -125,11 +125,11 @@ export function PricingCard({
         </p>
       </div>
 
-      <ul className="flex-1 space-y-4 mb-8">
+      <ul className="flex-1 space-y-3 mb-8">
         {features.map((feature, idx) => (
-          <li key={idx} className="flex items-start gap-3 text-base">
+          <li key={idx} className="flex items-start gap-2.5 text-sm">
             <Check
-              className={`h-5 w-5 shrink-0 ${highlighted ? "text-[var(--color-accent)]" : "text-[var(--color-secondary)]"}`}
+              className={`h-4 w-4 shrink-0 mt-0.5 ${highlighted ? "text-[var(--color-accent)]" : "text-[var(--color-secondary)]"}`}
             />
             <span className={highlighted ? "text-white/90" : "text-[var(--color-text)]"}>
               {feature}

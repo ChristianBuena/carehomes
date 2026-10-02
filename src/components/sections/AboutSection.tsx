@@ -62,6 +62,15 @@ export function AboutSection() {
                 — Our Mission
               </footer>
             </blockquote>
+
+            <div className="mt-6">
+              <Link
+                href="/about/logo"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] hover:underline"
+              >
+                Learn the meaning behind our shield logo →
+              </Link>
+            </div>
           </div>
 
           {/* Right — Badges + Policy Links */}

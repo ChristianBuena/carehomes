@@ -95,23 +95,24 @@ export default function HeroSection() {
           </div>
 
           {/* ── Right: Brand shield logo ────────────────── */}
-          <div
-            className="flex justify-center lg:justify-end"
-            aria-hidden="true"
-          >
-            <div className="relative flex items-center justify-center">
+          <div className="flex justify-center lg:justify-end">
+            <Link
+              href="/about/logo"
+              className="group relative flex items-center justify-center cursor-pointer"
+              aria-label="Learn the meaning behind our logo"
+            >
               {/* Ambient glow behind shield */}
-              <div className="absolute w-72 h-72 rounded-full bg-[var(--color-primary)]/10 blur-3xl" />
+              <div className="absolute w-72 h-72 rounded-full bg-[var(--color-primary)]/10 blur-3xl group-hover:bg-[var(--color-primary)]/20 transition-all duration-300" />
               <div className="absolute w-48 h-48 rounded-full bg-[var(--color-accent)]/5 blur-2xl" />
               {/* The actual brand logo */}
               <LogoShield
                 width={280}
                 height={280}
-                className="relative drop-shadow-2xl"
+                className="relative drop-shadow-2xl group-hover:scale-105 transition-transform duration-300"
                 priority
                 alt="Care Home Support Docs shield logo — document, security, family, and care icons"
               />
-            </div>
+            </Link>
           </div>
 
         </div>

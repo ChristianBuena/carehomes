@@ -65,6 +65,7 @@ export const siteConfig: SiteConfig = {
     { label: "Facilities", href: "/facilities" },
     { label: "Providers", href: "/providers" },
     { label: "Pricing", href: "/pricing" },
+    { label: "Contact", href: "/contact" },
   ],
   footerNav: [
     {
@@ -72,6 +73,7 @@ export const siteConfig: SiteConfig = {
       links: [
         { label: "Facility Directory", href: "/facilities" },
         { label: "Provider Directory", href: "/providers" },
+        { label: "Independent Providers", href: "/independent-providers" },
       ],
     },
     {
@@ -79,6 +81,8 @@ export const siteConfig: SiteConfig = {
       links: [
         { label: "How It Works", href: "/how-it-works" },
         { label: "Pricing", href: "/pricing" },
+        { label: "SOW & Membership Guide", href: "/sow-guide" },
+        { label: "About Our Logo", href: "/about/logo" },
         {
           label: "Knowledge Base",
           href: process.env.NEXT_PUBLIC_NOTION_KB_URL || "https://notion.so",

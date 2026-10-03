@@ -81,7 +81,7 @@ export const siteConfig: SiteConfig = {
       links: [
         { label: "How It Works", href: "/how-it-works" },
         { label: "Pricing", href: "/pricing" },
-        { label: "SOW & Membership Guide", href: "/sow-guide" },
+        { label: "Membership Guide", href: "/membership-guide" },
         { label: "About Our Logo", href: "/about/logo" },
         {
           label: "Knowledge Base",

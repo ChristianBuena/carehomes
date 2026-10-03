@@ -145,21 +145,27 @@ export default async function PricingPage() {
             ))}
           </div>
 
-          {/* Critical Drafting Rule Callout */}
-          <div className="mt-10 max-w-6xl mx-auto bg-[var(--color-danger)]/5 border border-[var(--color-danger)]/20 rounded-xl p-5 sm:p-6 flex gap-4 items-start">
-            <Info className="h-5 w-5 shrink-0 text-[var(--color-danger)] mt-0.5" />
-            <div className="text-sm text-[var(--color-text)] space-y-2">
-              <p className="font-bold text-[var(--color-danger)]">Critical drafting rule</p>
-              <p className="text-[var(--color-muted)] leading-relaxed">
-                Do not assume that the higher tier automatically includes every lower-tier feature unless the SOW explicitly says so. The final SOW should state whether benefits are cumulative and should identify exclusions, usage limits, and any benefits delivered by third parties.
-              </p>
-              <Link
-                href="/sow-guide"
-                className="inline-block text-[var(--color-primary)] font-semibold hover:underline text-sm pt-1"
-              >
-                View the full SOW Review &amp; Membership Guide →
-              </Link>
+          {/* Comprehensive Membership Guide Callout */}
+          <div className="mt-10 max-w-6xl mx-auto bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/20 rounded-2xl p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between shadow-sm">
+            <div className="flex gap-3.5 items-start">
+              <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                <Info className="h-5 w-5" />
+              </div>
+              <div className="text-sm space-y-1">
+                <p className="font-bold text-[var(--color-primary)] text-base">
+                  Need a detailed breakdown of all tier features?
+                </p>
+                <p className="text-[var(--color-muted)] leading-relaxed max-w-3xl">
+                  Explore our comprehensive Membership Guide to learn how facility claims, Title 22 citation rebuttals, tamper-evident watermarked PDFs, and attorney sharing work across each plan.
+                </p>
+              </div>
             </div>
+            <Link
+              href="/membership-guide"
+              className="inline-flex items-center justify-center shrink-0 px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-xs sm:text-sm hover:bg-[var(--color-primary)]/90 transition shadow-sm"
+            >
+              View Membership Guide →
+            </Link>
           </div>
         </ResponsiveContainer>
       </section>

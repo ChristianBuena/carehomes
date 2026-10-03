@@ -1,7 +1,7 @@
 export type Provider = {
   id: string;
   name: string;
-  type: "attorney" | "paralegal";
+  type: "attorney" | "paralegal" | "vendor";
   specialty: string;
   location: string;
   county: string;
@@ -91,5 +91,46 @@ export const providers: Provider[] = [
     county: "Kern",
     website: "https://martinezsupport.example.com",
     bio: "Assisting facility owners in organizing evidence, structuring formal appeals documentation, and establishing compliant record-keeping systems that satisfy CCLD evaluator requirements.",
+  },
+  {
+    id: "prov-9",
+    name: "Golden State CareHome Supplies",
+    type: "vendor",
+    specialty: "ADA Fixtures, Sanitization & Medical Equipment",
+    location: "Sacramento, CA",
+    county: "Sacramento",
+    contactEmail: "orders@goldenstatecare.example.com",
+    website: "https://goldenstatecare.example.com",
+    bio: "Certified commercial supply partner providing bulk PPE, incontinence care products, grab bars, and commercial sanitation solutions tailored specifically for California ARF and RCFE facilities.",
+  },
+  {
+    id: "prov-10",
+    name: "CarePoint EHR Software Systems",
+    type: "vendor",
+    specialty: "CCLD-Compliant Record-Keeping & MAR Software",
+    location: "San Jose, CA",
+    county: "Santa Clara",
+    website: "https://carepointehr.example.com",
+    bio: "Cloud-based digital care documentation software with automated Medication Administration Records (MAR), incident reporting logs, and audit-ready reports that protect facilities during inspections.",
+  },
+  {
+    id: "prov-11",
+    name: "Pacific Coast Facility Insurance Brokers",
+    type: "vendor",
+    specialty: "General Liability & Citation Defense Indemnity",
+    location: "Los Angeles, CA",
+    county: "Los Angeles",
+    contactEmail: "quotes@pacificcoastins.example.com",
+    bio: "Independent commercial insurance broker providing tailored coverage policies for California adult and senior residential care homes, including regulatory defense coverage extensions.",
+  },
+  {
+    id: "prov-12",
+    name: "Apex Life Safety & Fire Systems",
+    type: "vendor",
+    specialty: "Title 22 Fire Safety & Monitoring Certifications",
+    location: "San Diego, CA",
+    county: "San Diego",
+    website: "https://apexlifesafety.example.com",
+    bio: "Full-service fire sprinkler testing, smoke alarm systems, emergency lighting maintenance, and annual state-mandated fire clearances for residential care operators.",
   },
 ];

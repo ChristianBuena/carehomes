@@ -19,12 +19,15 @@ export function AboutSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* Left — Text */}
           <div>
-            <p className="text-sm font-semibold text-[var(--color-secondary)] uppercase tracking-widest mb-3">
-              About Us
-            </p>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-px w-6 bg-[var(--color-accent)] shrink-0" aria-hidden="true" />
+              <p className="text-xs font-bold text-[var(--color-accent)] uppercase tracking-[0.18em]">
+                About Us
+              </p>
+            </div>
             <h2
               id="about-heading"
-              className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--color-primary)] tracking-tight mb-6 t"
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--color-text)] tracking-tight mb-6"
             >
               CareHomes
             </h2>
@@ -50,8 +53,8 @@ export function AboutSection() {
             </div>
 
             {/* Mission callout */}
-            <blockquote className="mt-8 border-l-4 border-[var(--color-secondary)] pl-5 py-1">
-              <p className="text-lg font-semibold text-[var(--color-primary)] italic leading-snug">
+            <blockquote className="mt-8 border-l-4 border-[var(--color-primary)] pl-5 py-1">
+              <p className="text-lg font-semibold text-[var(--color-text)] italic leading-snug">
                 "Giving care facilities a fair, transparent voice in the public
                 regulatory record."
               </p>

@@ -5,6 +5,7 @@ import {
   MapPin,
   Scale,
   Briefcase,
+  Building2,
   ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 export function ProviderCard({ provider }: { provider: Provider }) {
   const isAttorney = provider.type === "attorney";
+  const isVendor = provider.type === "vendor";
 
   const contactHref = provider.contactEmail
     ? `mailto:${provider.contactEmail}`
@@ -38,20 +40,24 @@ export function ProviderCard({ provider }: { provider: Provider }) {
             </div>
           </div>
           <Badge
-            variant={isAttorney ? "default" : "secondary"}
+            variant="secondary"
             className={cn(
-              "shrink-0",
+              "shrink-0 text-white shadow-sm",
               isAttorney
-                ? "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90"
+                ? "bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90"
+                : isVendor
+                ? "bg-amber-600 hover:bg-amber-700"
                 : "bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-white",
             )}
           >
             {isAttorney ? (
               <Scale className="w-3.5 h-3.5 mr-1.5" />
+            ) : isVendor ? (
+              <Building2 className="w-3.5 h-3.5 mr-1.5" />
             ) : (
               <Briefcase className="w-3.5 h-3.5 mr-1.5" />
             )}
-            <span className="capitalize">{provider.type}</span>
+            <span className="capitalize">{isVendor ? "Commercial Vendor" : provider.type}</span>
           </Badge>
         </header>
 

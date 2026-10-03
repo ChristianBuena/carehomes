@@ -1,0 +1,8 @@
+{
+  // Disable built-in CSS validation — Tailwind CSS v4 uses @custom-variant and
+  // other at-rules that the VS Code CSS language server doesn't recognize.
+  // PostCSS and the Tailwind compiler handle validation at build time.
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false
+}

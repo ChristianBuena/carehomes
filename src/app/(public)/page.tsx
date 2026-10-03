@@ -8,6 +8,13 @@ import { StatsSection } from "@/components/sections/StatsSection";
 import { AboutSection } from "@/components/sections/AboutSection";
 import { DisclaimerBanner } from "@/components/sections/DisclaimerBanner";
 import { RecentFacilitiesSection } from "@/components/sections/RecentFacilitiesSection";
+import { SponsorsDirectoriesSection } from "@/components/sections/SponsorsDirectoriesSection";
+import { WhyWeExistSection } from "@/components/sections/WhyWeExistSection";
+import { CoreObjectivesSection } from "@/components/sections/CoreObjectivesSection";
+import { OurCommitmentSection } from "@/components/sections/OurCommitmentSection";
+import { VolunteerSection } from "@/components/sections/VolunteerSection";
+import { NewsAndProgressSection } from "@/components/sections/NewsAndProgressSection";
+import { PlannedAiSupportSection } from "@/components/sections/PlannedAiSupportSection";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd } from "@/components/seo/JsonLd";
 export const revalidate = 300;
@@ -36,6 +43,13 @@ export default function HomePage() {
       <JsonLd data={ngoSchema} />
       <main id="main-content">
         <HeroSection />
+        <SponsorsDirectoriesSection />
+        <WhyWeExistSection />
+        <CoreObjectivesSection />
+        <OurCommitmentSection />
+        <NewsAndProgressSection />
+        <VolunteerSection />
+        <PlannedAiSupportSection />
         <StatsSection />
         <ValuePropositionSection />
         <HowItWorksSection />

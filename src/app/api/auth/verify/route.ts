@@ -1,50 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { signToken } from "@/lib/jwt";
+import {
+  signToken,
+  verifyMfaPendingToken,
+  MFA_PENDING_COOKIE,
+} from "@/lib/jwt";
+import { verifyMfaOtp } from "@/services/mfa.service";
 
+/**
+ * POST /api/auth/verify — step 2 of login (OTP check). Single source of truth;
+ * /api/mfa/verify re-exports this handler.
+ *
+ * Security:
+ * - Requires the `mfa-pending` cookie from a successful password check.
+ *   The email is taken from that signed cookie, not the request body.
+ * - Wrong guesses are counted; the OTP is invalidated after 5 failures.
+ */
 export async function POST(req: NextRequest) {
   try {
-    const { email, otp } = await req.json();
+    const pending = req.cookies.get(MFA_PENDING_COOKIE)?.value;
+    const email = pending ? await verifyMfaPendingToken(pending) : null;
 
-    // 1. Validate input
-    if (!email || !otp) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Email and OTP required" },
+        { error: "Your login session expired. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
+    const body = (await req.json()) as { otp?: unknown; code?: unknown };
+    const otp = body.otp ?? body.code;
+
+    if (typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
+      return NextResponse.json(
+        { error: "Enter the 6-digit code" },
         { status: 400 }
       );
     }
 
-    // 2. Find OTP record
-    const record = await prisma.mfaOtp.findFirst({
-      where: {
-        email,
-        code: otp,
-        used: false,
-      },
-    });
+    const valid = await verifyMfaOtp(email, otp);
 
-    if (!record) {
+    if (!valid) {
       return NextResponse.json(
-        { error: "Invalid OTP" },
+        { error: "Invalid or expired OTP" },
         { status: 401 }
       );
     }
 
-    // 3. Check expiry
-    if (record.expiresAt < new Date()) {
-      return NextResponse.json(
-        { error: "OTP expired" },
-        { status: 401 }
-      );
-    }
-
-    // 4. Mark OTP as used
-    await prisma.mfaOtp.update({
-      where: { id: record.id },
-      data: { used: true },
-    });
-
-    // 5. Get user
     const user = await prisma.user.findUnique({
       where: { email },
       select: {
@@ -56,10 +58,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     if (!user.organizationId) {
@@ -69,7 +68,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Generate JWT
     const token = await signToken({
       userId: user.id,
       email: user.email,
@@ -77,7 +75,6 @@ export async function POST(req: NextRequest) {
       orgId: user.organizationId,
     });
 
-    // 7. Create response + set cookie
     const res = NextResponse.json({
       success: true,
       message: "OTP verified successfully",
@@ -87,8 +84,15 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       path: "/",
       sameSite: "lax",
-      secure: false, // set true in production (HTTPS)
+      secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    // MFA step complete — clear the pending cookie
+    res.cookies.set(MFA_PENDING_COOKIE, "", {
+      httpOnly: true,
+      path: "/api",
+      maxAge: 0,
     });
 
     return res;

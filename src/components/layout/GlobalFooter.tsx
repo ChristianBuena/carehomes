@@ -86,6 +86,11 @@ export function GlobalFooter() {
                     {siteConfig.contactEmail}
                   </a>
                 </li>
+                <li>
+                  <Link href="/contact" className="text-sm leading-6 hover:text-white transition-colors">
+                    Contact Us Page
+                  </Link>
+                </li>
               </ul>
 
               {/* Knowledge Base link */}

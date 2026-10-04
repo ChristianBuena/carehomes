@@ -52,7 +52,10 @@ export async function POST(req: Request) {
         },
       ],
 
+      // Webhook activates the membership using orgId — must be present.
+      client_reference_id: user.orgId,
       metadata: {
+        orgId: user.orgId,
         userId: user.userId,
         priceId,
       },

@@ -1,3 +1,4 @@
+import { randomInt, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
 
@@ -75,10 +76,27 @@ function getOtpEmailTemplate(otp: string): string {
 }
 
 /**
- * Generate 6-digit OTP
+ * Generate 6-digit OTP using a cryptographically secure RNG
  */
 export function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
+}
+
+export const OTP_MAX_ATTEMPTS = 5;
+export const OTP_RESEND_COOLDOWN_SECONDS = 60;
+
+/**
+ * Seconds remaining before a new OTP may be sent to this email (0 = allowed).
+ */
+export async function getOtpResendCooldown(email: string): Promise<number> {
+  const latest = await prisma.mfaOtp.findFirst({
+    where: { email },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
+  });
+  if (!latest) return 0;
+  const elapsed = (Date.now() - latest.createdAt.getTime()) / 1000;
+  return Math.max(0, Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - elapsed));
 }
 
 /**
@@ -133,7 +151,11 @@ export async function createMfaOtp(email: string) {
 }
 
 /**
- * Verify OTP code
+ * Verify OTP code.
+ * - Looks up the latest active OTP for the email (NOT by code), so every
+ *   wrong guess is counted against it.
+ * - After OTP_MAX_ATTEMPTS wrong guesses the OTP is invalidated.
+ * - Comparison is constant-time.
  */
 export async function verifyMfaOtp(
   email: string,
@@ -142,24 +164,37 @@ export async function verifyMfaOtp(
   const record = await prisma.mfaOtp.findFirst({
     where: {
       email,
-      code,
       used: false,
       expiresAt: { gt: new Date() },
     },
+    orderBy: { createdAt: "desc" },
   });
 
   if (!record) return false;
 
-  // Check max attempts
-  if (record.attempts >= 5) return false;
+  if (record.attempts >= OTP_MAX_ATTEMPTS) {
+    await prisma.mfaOtp.update({
+      where: { id: record.id },
+      data: { used: true },
+    });
+    return false;
+  }
 
-  // Increment attempts
-  await prisma.mfaOtp.update({
-    where: { id: record.id },
-    data: { attempts: record.attempts + 1 },
-  });
+  const expected = Buffer.from(record.code);
+  const given = Buffer.from(String(code));
+  const matches =
+    expected.length === given.length && timingSafeEqual(expected, given);
 
-  // Mark as used
+  if (!matches) {
+    const attempts = record.attempts + 1;
+    await prisma.mfaOtp.update({
+      where: { id: record.id },
+      data: { attempts, used: attempts >= OTP_MAX_ATTEMPTS },
+    });
+    return false;
+  }
+
+  // Single-use: mark consumed
   await prisma.mfaOtp.update({
     where: { id: record.id },
     data: { used: true },

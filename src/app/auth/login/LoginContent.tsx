@@ -19,6 +19,7 @@ export default function LoginContent() {
   const [timer, setTimer] = useState(60);
 
   const isVerifying = useRef(false);
+  const lastAttemptedOtp = useRef<string>("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -38,54 +39,11 @@ export default function LoginContent() {
     return () => clearInterval(interval);
   }, [mfaRequired, timer]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (otp.length === 6 && !isVerifying.current && mfaRequired) {
-      handleVerifyOtp();
-    }
-  }, [otp, mfaRequired]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Login failed");
-        return;
-      }
-
-      if (data.mfaRequired) {
-        setMfaRequired(true);
-        setEmailForOtp(data.email);
-        return;
-      }
-
-      router.push("/dashboard");
-    } catch (err) {
-      console.error("Login submission error:", err);
-      setError("An error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = useCallback(async () => {
-    if (loading || isVerifying.current) return;
+  const handleVerifyOtp = useCallback(async (codeToVerify?: string) => {
+    const code = codeToVerify || otp;
+    if (!code || code.length < 6 || loading || isVerifying.current) return;
     isVerifying.current = true;
+    lastAttemptedOtp.current = code;
     setError("");
     setLoading(true);
 
@@ -93,13 +51,13 @@ export default function LoginContent() {
       const res = await fetch("/api/auth/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailForOtp, otp }),
+        body: JSON.stringify({ email: emailForOtp, otp: code }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (!res.ok) {
-        setError(data.error || "Invalid OTP");
+      if (!res.ok || !data) {
+        setError(data?.error || "Invalid OTP");
         isVerifying.current = false;
         setLoading(false);
         return;
@@ -121,6 +79,54 @@ export default function LoginContent() {
     }
   }, [otp, emailForOtp, loading, router]);
 
+  // Auto-verify when a full 6-digit OTP is entered, but avoid infinite loops on failed attempts
+  useEffect(() => {
+    if (otp.length < 6) {
+      lastAttemptedOtp.current = "";
+    } else if (otp.length === 6 && !loading && !isVerifying.current && mfaRequired && otp !== lastAttemptedOtp.current) {
+      lastAttemptedOtp.current = otp;
+      handleVerifyOtp(otp);
+    }
+  }, [otp, loading, mfaRequired, handleVerifyOtp]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data) {
+        setError(data?.error || "Login failed");
+        return;
+      }
+
+      if (data.mfaRequired) {
+        setMfaRequired(true);
+        setEmailForOtp(data.email);
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Login submission error:", err);
+      setError("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResendOtp = async () => {
     if (timer > 0) return;
     setError("");
@@ -134,8 +140,8 @@ export default function LoginContent() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to resend OTP");
+        const data = await res.json().catch(() => null);
+        setError(data?.error || "Failed to resend OTP");
         return;
       }
 
@@ -229,7 +235,10 @@ export default function LoginContent() {
                 type="text"
                 placeholder="123456"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                onChange={(e) => {
+                  setOtp(e.target.value);
+                  if (error) setError("");
+                }}
                 required
                 disabled={loading}
                 className="w-full min-h-[44px] px-4 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-shadow text-center tracking-widest text-lg"
@@ -238,7 +247,7 @@ export default function LoginContent() {
             </div>
             <button
               type="button"
-              onClick={handleVerifyOtp}
+              onClick={() => handleVerifyOtp()}
               disabled={loading || otp.length < 6}
               className="w-full min-h-[44px] flex items-center justify-center bg-[var(--color-secondary)] text-white py-2 px-4 rounded-lg hover:bg-[var(--color-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-secondary)] font-medium transition disabled:opacity-70 disabled:cursor-not-allowed"
             >

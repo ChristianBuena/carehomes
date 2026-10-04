@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
@@ -18,6 +18,7 @@ function LoginContent() {
   const [otp, setOtp] = useState("");
   const [emailForOtp, setEmailForOtp] = useState("");
   const [timer, setTimer] = useState(60);
+  const lastAttemptedOtp = useRef<string>("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -37,10 +38,48 @@ function LoginContent() {
     return () => clearInterval(interval);
   }, [mfaRequired, timer]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleVerifyOtp = async (codeToVerify?: string) => {
+    const code = codeToVerify || otp;
+    if (!code || code.length < 6) return;
+    lastAttemptedOtp.current = code;
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailForOtp, otp: code }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data) {
+        setError(data?.error || "Invalid OTP");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+
+      await fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${data.token}` },
+      });
+
+      router.push("/dashboard");
+    } catch {
+      setError("Verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-verify when a full 6-digit OTP is entered, but avoid infinite loops on failed attempts
   useEffect(() => {
-    if (otp.length === 6 && !loading && mfaRequired) {
-      handleVerifyOtp();
+    if (otp.length < 6) {
+      lastAttemptedOtp.current = "";
+    } else if (otp.length === 6 && !loading && mfaRequired && otp !== lastAttemptedOtp.current) {
+      lastAttemptedOtp.current = otp;
+      handleVerifyOtp(otp);
     }
   }, [otp, loading, mfaRequired]);
 
@@ -60,10 +99,10 @@ function LoginContent() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (!res.ok) {
-        setError(data.error || "Login failed");
+      if (!res.ok || !data) {
+        setError(data?.error || "Login failed");
         return;
       }
 
@@ -82,38 +121,6 @@ function LoginContent() {
     }
   };
 
-  const handleVerifyOtp = async () => {
-    setError("");
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailForOtp, otp }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Invalid OTP");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-
-      await fetch("/api/auth/me", {
-        headers: { Authorization: `Bearer ${data.token}` },
-      });
-
-      router.push("/dashboard");
-    } catch {
-      setError("Verification failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResendOtp = async () => {
     if (timer > 0) return;
     setError("");
@@ -127,8 +134,8 @@ function LoginContent() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to resend OTP");
+        const data = await res.json().catch(() => null);
+        setError(data?.error || "Failed to resend OTP");
         return;
       }
 
@@ -226,7 +233,10 @@ function LoginContent() {
                 type="text"
                 placeholder="123456"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                onChange={(e) => {
+                  setOtp(e.target.value);
+                  if (error) setError("");
+                }}
                 required
                 className="w-full min-h-[44px] px-4 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-shadow text-center tracking-widest text-lg"
                 maxLength={6}
@@ -234,7 +244,7 @@ function LoginContent() {
             </div>
             <button
               type="button"
-              onClick={handleVerifyOtp}
+              onClick={() => handleVerifyOtp()}
               disabled={loading || otp.length < 6}
               className="w-full min-h-[44px] flex items-center justify-center bg-[var(--color-secondary)] text-white py-2 px-4 rounded-lg hover:bg-[var(--color-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-secondary)] font-medium transition disabled:opacity-70 disabled:cursor-not-allowed"
             >

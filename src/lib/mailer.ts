@@ -30,7 +30,7 @@ export const sendEmail = async ({
       html,
     });
 
-    console.log("📧 Email sent successfully to:", to);
+    console.log("Email sent successfully to:", to);
   } catch (error) {
     console.error("❌ Nodemailer Error:", error);
     throw error;

@@ -134,7 +134,7 @@ export async function createMfaOtp(email: string) {
       html: getOtpEmailTemplate(otp),
     });
 
-    console.log("📧 OTP email sent successfully to:", email);
+    console.log("OTP email sent successfully to:", email);
   } catch (error) {
     console.error("❌ Failed to send OTP email:", error);
 

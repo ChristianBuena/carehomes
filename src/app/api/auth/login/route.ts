@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔐 Password OK → send OTP (respect resend cooldown to prevent email bombing)
+
     const cooldown = await getOtpResendCooldown(user.email);
     if (cooldown === 0) {
       await createMfaOtp(user.email);

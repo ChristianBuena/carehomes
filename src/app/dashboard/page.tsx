@@ -49,7 +49,7 @@ export default async function DashboardPage({
   if (dbUser.role === "MEMBER") {
     [rebuttalCount, facilityCount] = await Promise.all([
       prisma.rebuttal.count({ where: { userId: user.userId, deletedAt: null } }),
-      prisma.facility.count({ where: { createdById: user.userId, deletedAt: null } }),
+      prisma.facility.count({ where: { organizationId: user.orgId, deletedAt: null } }),
     ]);
   } else if (dbUser.role === "ADMIN") {
     [totalUsers, totalFacilities, totalRebuttals, pendingModeration] = await Promise.all([

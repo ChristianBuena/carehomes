@@ -4,11 +4,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
 import Stripe from "stripe";
+import { TIER_FACILITY_LIMITS } from "@/lib/permissions";
 
-const tierConfig: Record<string, { maxFacilities: number; label: string; price: string }> = {
-  TIER_A: { maxFacilities: 1, label: "Tier A", price: "$300/year" },
-  TIER_B: { maxFacilities: 3, label: "Tier B", price: "$400/year" },
-  TIER_C: { maxFacilities: 10, label: "Tier C", price: "$500/year" },
+// Display copy only — facility limits come from TIER_FACILITY_LIMITS (the single source of truth).
+const tierConfig: Record<string, { label: string; price: string }> = {
+  TIER_A: { label: "Tier A", price: "$300/year" },
+  TIER_B: { label: "Tier B", price: "$400/year" },
+  TIER_C: { label: "Tier C", price: "$500/year" },
 };
 
 // Helper to get the first user of a membership's organization for email notifications
@@ -26,6 +28,19 @@ async function getMembershipUser(stripeSubscriptionId: string) {
     },
   });
   return membership?.organization?.users[0];
+}
+
+/**
+ * Idempotency: atomically claim a Stripe event.id (INSERT ... ON CONFLICT DO
+ * NOTHING). Returns true the first time an event is seen and false for a
+ * redelivery of the same event.
+ */
+async function claimStripeEvent(event: Stripe.Event): Promise<boolean> {
+  const { count } = await prisma.processedStripeEvent.createMany({
+    data: [{ id: event.id, type: event.type }],
+    skipDuplicates: true,
+  });
+  return count === 1;
 }
 
 export async function POST(req: Request) {
@@ -50,6 +65,14 @@ export async function POST(req: Request) {
     console.error("Webhook signature verification failed:", err.message);
     return new NextResponse("Webhook Error", { status: 400 });
   }
+
+  // Stripe redelivers events. The DB writes below are idempotent
+  // (upsert/updateMany) and safely re-run on every delivery, but notification
+  // emails must go out once per EVENT, not once per delivery.
+  const firstDelivery = await claimStripeEvent(event);
+  const notify = async (...args: Parameters<typeof sendEmail>) => {
+    if (firstDelivery) await sendEmail(...args);
+  };
 
   try {
     switch (event.type) {
@@ -87,7 +110,7 @@ export async function POST(req: Request) {
           update: {
             plan: tier,
             status: "ACTIVE",
-            maxFacilities: tierConfig[tier].maxFacilities,
+            maxFacilities: TIER_FACILITY_LIMITS[tier],
             stripeCustomerId: session.customer as string,
             stripeSubscriptionId: session.subscription as string,
             endDate,
@@ -97,7 +120,7 @@ export async function POST(req: Request) {
             organizationId: orgId,
             plan: tier,
             status: "ACTIVE",
-            maxFacilities: tierConfig[tier].maxFacilities,
+            maxFacilities: TIER_FACILITY_LIMITS[tier],
             stripeCustomerId: session.customer as string,
             stripeSubscriptionId: session.subscription as string,
             startDate: new Date(),
@@ -118,7 +141,7 @@ export async function POST(req: Request) {
           if (user) {
             const { label, price } = tierConfig[tier];
 
-            await sendEmail({
+            await notify({
               to: user.email,
               subject: "Your CareHomesSupportDocs.org Membership is Active!",
               text: `Hi ${user.name},\n\nThank you for subscribing! Your ${label} membership (${price}) is now active.\n\nYou can now log in to your dashboard to manage your facilities and rebuttals.\n\nhttps://carehomessupportdocs.org/dashboard\n\n— CareHomesSupportDocs Team`,
@@ -178,7 +201,7 @@ export async function POST(req: Request) {
         if (invoice.billing_reason === "subscription_cycle") {
           const user = await getMembershipUser(subscriptionId);
           if (user) {
-            await sendEmail({
+            await notify({
               to: user.email,
               subject: "Your Membership Has Renewed",
               text: `Hi ${user.name},\n\nYour membership has successfully renewed. Your next billing date is ${endDate.toLocaleDateString()}.\n\nThank you for using CareHomesSupportDocs!`,
@@ -220,7 +243,7 @@ export async function POST(req: Request) {
             ? "Final Warning: Membership Payment Failed"
             : "Action Required: Membership Payment Failed";
 
-          await sendEmail({
+          await notify({
             to: user.email,
             subject,
             text: `Hi ${user.name},\n\nWe were unable to process your most recent membership payment.\n\nPlease update your billing information to avoid losing access to your facilities and features.\n\nhttps://carehomessupportdocs.org/dashboard\n\n— CareHomesSupportDocs Team`,
@@ -253,7 +276,7 @@ export async function POST(req: Request) {
           const amount = new Intl.NumberFormat("en-US", { style: "currency", currency: invoice.currency }).format((invoice.amount_due || 0) / 100);
           const nextDate = new Date(invoice.next_payment_attempt ? invoice.next_payment_attempt * 1000 : (invoice.period_end * 1000));
 
-          await sendEmail({
+          await notify({
             to: user.email,
             subject: "Upcoming Membership Renewal",
             text: `Hi ${user.name},\n\nThis is a quick reminder that your membership will automatically renew on ${nextDate.toLocaleDateString()} for ${amount}.\n\nNo action is required if you wish to keep your membership active.\n\n— CareHomesSupportDocs Team`,
@@ -285,7 +308,7 @@ export async function POST(req: Request) {
           data: {
             status: "CANCELED",
             plan: "NONE",
-            maxFacilities: 0,
+            maxFacilities: TIER_FACILITY_LIMITS.NONE,
           },
         });
 
@@ -293,7 +316,7 @@ export async function POST(req: Request) {
 
         const user = await getMembershipUser(sub.id);
         if (user) {
-          await sendEmail({
+          await notify({
             to: user.email,
             subject: "Your Membership Has Been Canceled",
             text: `Hi ${user.name},\n\nYour CareHomesSupportDocs membership has been canceled.\n\nYou will no longer have premium access to your claimed facilities. You can always reactivate your membership from the dashboard.\n\n— CareHomesSupportDocs Team`,
@@ -320,6 +343,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("Webhook processing error:", error);
+    // Processing failed, so Stripe will retry: release the claim so the retry
+    // is handled as a first delivery (and still sends its notification).
+    if (firstDelivery) {
+      await prisma.processedStripeEvent
+        .deleteMany({ where: { id: event.id } })
+        .catch((releaseError: unknown) => {
+          console.error("Failed to release Stripe event claim:", releaseError);
+        });
+    }
     return new NextResponse("Webhook failed", { status: 500 });
   }
 }

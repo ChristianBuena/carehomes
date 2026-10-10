@@ -15,7 +15,12 @@ export type AuthTokenPayload = {
   userId: string;
   email: string;
   role: "MEMBER" | "ADMIN" | "MODERATOR";
-  /** ID of the Organization this user belongs to (set at signup, present in every JWT). */
+  /**
+   * ID of the Organization this user belonged to WHEN THE TOKEN WAS ISSUED.
+   * Never use the raw token value for an ownership check — it can be up to
+   * 7 days stale. Use resolveSessionUser() / getUserFromRequest() from
+   * "@/lib/auth", which replace it with the current value from the database.
+   */
   orgId: string;
 };
 

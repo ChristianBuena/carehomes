@@ -1,5 +1,7 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
+import { canClaimFacility } from "@/lib/permissions";
 
 // ── Filters ──────────────────────────────────────────────────────────────────
 
@@ -27,7 +29,7 @@ function buildCapacityFilter(capacity?: FacilityFilters["capacity"]) {
 function buildWhereClause(filters?: FacilityFilters) {
   const capacityFilter = buildCapacityFilter(filters?.capacity);
 
-  const conditions: object[] = [
+  const conditions: Prisma.FacilityWhereInput[] = [
     // Always exclude soft-deleted records
     { deletedAt: null },
   ];
@@ -61,22 +63,74 @@ function buildWhereClause(filters?: FacilityFilters) {
   return { AND: conditions };
 }
 
+// ── Org quota (atomic) ────────────────────────────────────────────────────────
+
+export type OrgQuotaResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; reason: "NO_ACTIVE_MEMBERSHIP" | "LIMIT_REACHED" };
+
+/**
+ * Run `write` only if the organization has an ACTIVE membership and is below
+ * its tier's facility limit — with the check and the write made atomic.
+ *
+ * The Organization row is locked with SELECT ... FOR UPDATE for the duration
+ * of the transaction, so concurrent claims for the same org (from any seat, via
+ * either the API route or the claimFacility action) run one at a time: the
+ * second waits for the first to commit and then counts the facility it wrote.
+ * A plain transaction at the default READ COMMITTED isolation would NOT do
+ * this — both would still read the same count before either write is visible.
+ *
+ * Soft-deleted facilities do not count toward the quota.
+ */
+export async function withOrgFacilityQuota<T>(
+  orgId: string,
+  write: (tx: Prisma.TransactionClient) => Promise<T>
+): Promise<OrgQuotaResult<T>> {
+  return prisma.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<{ id: string }[]>`
+      SELECT "id" FROM "Organization" WHERE "id" = ${orgId} FOR UPDATE
+    `;
+    if (locked.length === 0) {
+      return { ok: false, reason: "NO_ACTIVE_MEMBERSHIP" };
+    }
+
+    const membership = await tx.membership.findUnique({
+      where: { organizationId: orgId },
+    });
+    if (!membership || membership.status !== "ACTIVE") {
+      return { ok: false, reason: "NO_ACTIVE_MEMBERSHIP" };
+    }
+
+    const currentCount = await tx.facility.count({
+      where: { organizationId: orgId, deletedAt: null },
+    });
+    if (!canClaimFacility(membership.plan, currentCount)) {
+      return { ok: false, reason: "LIMIT_REACHED" };
+    }
+
+    return { ok: true, value: await write(tx) };
+  });
+}
+
 // ── Service Functions ─────────────────────────────────────────────────────────
 
-export async function createFacility(data: {
-  name: string;
-  address: string;
-  description?: string;
-  createdById?: string;
-  organizationId?: string;
-}) {
+export async function createFacility(
+  data: {
+    name: string;
+    address: string;
+    description?: string;
+    createdById?: string;
+    organizationId?: string;
+  },
+  db: Prisma.TransactionClient = prisma
+) {
   const baseSlug = data.name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
   const slug = `${baseSlug}-${Date.now()}`;
 
-  return prisma.facility.create({
+  return db.facility.create({
     data: {
       slug,
       name: data.name,
@@ -184,7 +238,9 @@ export async function getFacilityById(id: string) {
   return prisma.facility.findFirst({
     where: { id, deletedAt: null },
     include: {
-      createdBy: true,
+      // Never `createdBy: true` — this feeds the PUBLIC GET /api/facility/[id]
+      // response, and the full User row includes the password hash and email.
+      createdBy: { select: { id: true, name: true } },
     },
   });
 }

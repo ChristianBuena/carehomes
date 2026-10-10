@@ -22,9 +22,11 @@ interface ReviewUser {
   role: string;
   createdAt: string;
   lastReviewedAt: string | null;
-  membership: {
-    plan: string;
-    status: string;
+  organization: {
+    membership: {
+      plan: string;
+      status: string;
+    } | null;
   } | null;
 }
 
@@ -170,20 +172,20 @@ export default function AccessReviewPage() {
                     >
                       {user.role}
                     </Badge>
-                    {user.membership && (
+                    {user.organization?.membership && (
                       <Badge
                         variant={
-                          user.membership.status === "ACTIVE"
+                          user.organization.membership.status === "ACTIVE"
                             ? "default"
                             : "secondary"
                         }
                         className={
-                          user.membership.status === "ACTIVE"
+                          user.organization.membership.status === "ACTIVE"
                             ? "bg-[var(--color-success)] text-white text-xs"
                             : "text-xs"
                         }
                       >
-                        {user.membership.plan} — {user.membership.status}
+                        {user.organization.membership.plan} — {user.organization.membership.status}
                       </Badge>
                     )}
                   </div>

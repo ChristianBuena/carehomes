@@ -16,13 +16,13 @@ export default async function NewRebuttalPage() {
     redirect("/login");
   }
 
-  if (!hasPermission(user.role, "submit_rebuttal") || user.role === "ADMIN") {
+  if (!hasPermission(user.role, "submit_rebuttal")) {
     redirect("/dashboard");
   }
 
-  // Fetch only active facilities owned by the member
+  // Fetch only active facilities owned by the member's organization
   const facilities = await prisma.facility.findMany({
-    where: { createdById: user.userId, deletedAt: null },
+    where: { organizationId: user.orgId, deletedAt: null },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

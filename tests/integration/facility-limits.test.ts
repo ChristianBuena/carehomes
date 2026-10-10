@@ -318,13 +318,12 @@ describe("Unique slug behavior", () => {
   });
 });
 
-describe("Race condition: two concurrent claims when org is one slot below its limit", () => {
-  it("CONFIRMED BUG (timing-dependent): across repeated trials, concurrent requests from " +
-     "the same TIER_A (limit 1) org sometimes BOTH succeed, leaving the org over its limit — " +
-     "the check-then-write in /api/facility POST (count, then create) is not atomic/transactional. " +
-     "Reported honestly: this does not reproduce on every single trial (scheduling-dependent), " +
-     "so this test runs many trials and reports how often the limit was exceeded.", async () => {
-    const TRIALS = 15;
+describe("Race condition: concurrent claims when org is one slot below its limit (FIXED)", () => {
+  it("FIXED (was CONFIRMED BUG, 13/15 trials over limit): across 20 trials, two concurrent requests from " +
+     "the same TIER_A (limit 1) org NEVER both succeed — the limit check and the insert in " +
+     "/api/facility POST now run under a SELECT ... FOR UPDATE lock on the Organization row, so " +
+     "exactly one request gets 201 and the other gets 403 'Facility limit reached'.", async () => {
+    const TRIALS = 20;
     let overrunCount = 0;
     const outcomes: { statuses: number[]; finalCount: number }[] = [];
 
@@ -355,25 +354,94 @@ describe("Race condition: two concurrent claims when org is one slot below its l
       const statuses = [resA.status, resB.status].sort();
       outcomes.push({ statuses, finalCount });
       if (finalCount > 1) overrunCount += 1;
+
+      const loser = resA.status === 403 ? resA : resB;
+      expect((await loser.json()).error).toMatch(/limit reached/i);
     }
 
-    // This is the honest result, not a guess: print it so it shows up in CI logs.
+    // Print the result so it shows up in CI logs.
     console.log(
       `[race-condition] org limit exceeded in ${overrunCount}/${TRIALS} trials. ` +
         `Sample outcomes: ${JSON.stringify(outcomes.slice(0, 5))}`
     );
 
-    // Every trial must end at EITHER 1 (correctly enforced) or 2 (both writes landed).
-    // It must never silently corrupt into something else (e.g. 0, which would mean
-    // a write was lost rather than over-admitted).
+    // Every trial must end at exactly 1 facility: never 2 (over-admitted) and
+    // never 0 (both rejected / a write lost), with one 201 and one 403.
     for (const o of outcomes) {
-      expect([1, 2]).toContain(o.finalCount);
+      expect(o.finalCount).toBe(1);
+      expect(o.statuses).toEqual([201, 403]);
+    }
+    expect(overrunCount).toBe(0);
+  }, 60000);
+
+  it("8 concurrent requests against a TIER_B org (limit 3) with 1 facility already claimed: " +
+     "exactly 2 succeed, 6 are rejected, final count is exactly 3 — across 15 trials", async () => {
+    const TRIALS = 15;
+    const CONCURRENCY = 8;
+    let overrunCount = 0;
+    const finalCounts: number[] = [];
+
+    for (let i = 0; i < TRIALS; i++) {
+      const org = await createOrg();
+      await createMembership({ organizationId: org.id, plan: "TIER_B", status: "ACTIVE" });
+      const users = await Promise.all(
+        Array.from({ length: CONCURRENCY }, (_, n) =>
+          createUser({ organizationId: org.id, role: "MEMBER", email: `burst-${i}-${n}@example.com` })
+        )
+      );
+      await createFacility({ organizationId: org.id, createdById: users[0].id });
+      const cookies = await Promise.all(users.map((u) => authCookie(u)));
+
+      const responses = await Promise.all(
+        users.map((_, n) =>
+          claimViaApi(
+            buildRequest("http://localhost/api/facility", {
+              method: "POST",
+              body: { name: `Burst Facility ${i}-${n}`, address: `${n} Main St` },
+              cookies: cookies[n],
+            })
+          )
+        )
+      );
+
+      const finalCount = await testDb.facility.count({ where: { organizationId: org.id, deletedAt: null } });
+      finalCounts.push(finalCount);
+      if (finalCount > 3) overrunCount += 1;
+
+      const statuses = responses.map((r) => r.status);
+      expect(statuses.filter((st) => st === 201)).toHaveLength(2);
+      expect(statuses.filter((st) => st === 403)).toHaveLength(CONCURRENCY - 2);
+      expect(finalCount).toBe(3);
     }
 
-    // The actual finding: the limit CAN be exceeded under concurrency. If this ever
-    // starts failing (overrunCount hits 0 across 15 trials), it likely means the
-    // route was made transactional and this test should be rewritten to assert the
-    // limit is now always enforced.
-    expect(overrunCount).toBeGreaterThan(0);
+    console.log(
+      `[race-condition] ${CONCURRENCY}-way burst: org limit exceeded in ${overrunCount}/${TRIALS} trials. ` +
+        `Final counts: ${JSON.stringify(finalCounts)}`
+    );
+    expect(overrunCount).toBe(0);
+  }, 60000);
+
+  it("the lock is per-organization: two DIFFERENT orgs claiming concurrently both succeed", async () => {
+    const setups = await Promise.all(
+      [0, 1].map(async (n) => {
+        const org = await createOrg();
+        await createMembership({ organizationId: org.id, plan: "TIER_A", status: "ACTIVE" });
+        const user = await createUser({ organizationId: org.id, role: "MEMBER", email: `iso-${n}@example.com` });
+        return { org, cookies: await authCookie(user) };
+      })
+    );
+
+    const responses = await Promise.all(
+      setups.map((st, n) =>
+        claimViaApi(
+          buildRequest("http://localhost/api/facility", {
+            method: "POST",
+            body: { name: `Independent Facility ${n}`, address: "1 Main St" },
+            cookies: st.cookies,
+          })
+        )
+      )
+    );
+    expect(responses.map((r) => r.status)).toEqual([201, 201]);
   });
 });

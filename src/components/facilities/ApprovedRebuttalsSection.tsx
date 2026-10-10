@@ -31,6 +31,8 @@ interface ApprovedRebuttalsSectionProps {
   rebuttals?: Rebuttal[];
   isLoading?: boolean;
   hasActiveMembership?: boolean;
+  /** True only when the viewer's organization owns this facility and may submit for it. */
+  canSubmitRebuttal?: boolean;
 }
 
 function RebuttalCard({ rebuttal }: { rebuttal: Rebuttal }) {
@@ -124,6 +126,7 @@ export function ApprovedRebuttalsSection({
   rebuttals,
   isLoading,
   hasActiveMembership,
+  canSubmitRebuttal,
 }: ApprovedRebuttalsSectionProps) {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
@@ -148,10 +151,16 @@ export function ApprovedRebuttalsSection({
         </h2>
         <EmptyState
           variant="no-rebuttals"
-          action={{
-            label: hasActiveMembership ? "Submit Rebuttal" : "Become a Member",
-            href: hasActiveMembership ? "/dashboard/rebuttals/new" : "/pricing",
-          }}
+          // Non-members are invited to join; "Submit Rebuttal" is offered only
+          // to members whose organization owns this facility; other members
+          // get no CTA (they cannot submit for a facility they do not own).
+          action={
+            !hasActiveMembership
+              ? { label: "Become a Member", href: "/pricing" }
+              : canSubmitRebuttal
+                ? { label: "Submit Rebuttal", href: "/dashboard/rebuttals/new" }
+                : undefined
+          }
         />
         <MemberCTA hasActiveMembership={hasActiveMembership} />
       </section>

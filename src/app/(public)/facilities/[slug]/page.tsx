@@ -77,6 +77,11 @@ export default async function FacilityDetailPage({
   let isClaimedByOther = false;
   let hasReachedLimit = false;
 
+  // Ownership is per ORGANIZATION (quota scope), not per claiming user, so
+  // every seat in the owning org sees the facility as theirs. createdById is
+  // only the audit trail of who clicked "Claim".
+  const isClaimed = facility.organizationId !== null || facility.createdById !== null;
+
   if (user) {
     const dbUser = await prisma.user.findUnique({
       where: { id: user.userId },
@@ -89,15 +94,17 @@ export default async function FacilityDetailPage({
                 plan: true,
               },
             },
-            _count: { select: { facilities: true } },
+            // Soft-deleted facilities do not count toward the quota (same
+            // rule as withOrgFacilityQuota, which enforces it server-side).
+            _count: { select: { facilities: { where: { deletedAt: null } } } },
           },
         },
       },
     });
 
     hasActiveMembership = dbUser?.organization?.membership?.status === "ACTIVE";
-    isClaimedByCurrentUser = facility.createdById === user.userId;
-    isClaimedByOther = facility.createdById !== null && facility.createdById !== user.userId;
+    isClaimedByCurrentUser = !!user.orgId && facility.organizationId === user.orgId;
+    isClaimedByOther = isClaimed && !isClaimedByCurrentUser;
 
     if (hasActiveMembership && dbUser?.organization?.membership) {
       hasReachedLimit = !canClaimFacility(
@@ -106,7 +113,7 @@ export default async function FacilityDetailPage({
       );
     }
   } else {
-    isClaimedByOther = facility.createdById !== null;
+    isClaimedByOther = isClaimed;
   }
 
   /**
@@ -114,7 +121,7 @@ export default async function FacilityDetailPage({
    *   1. User is logged in
    *   2. User role has submit_rebuttal permission (MEMBER only)
    *   3. User has an ACTIVE membership
-   *   4. User owns this facility (isClaimedByCurrentUser)
+   *   4. User's organization owns this facility (isClaimedByCurrentUser)
    */
   const canSubmit =
     !!user &&
@@ -288,7 +295,11 @@ export default async function FacilityDetailPage({
         />
 
         {/* 2. Approved Rebuttals */}
-        <ApprovedRebuttalsSection rebuttals={publishedRebuttals} hasActiveMembership={hasActiveMembership} />
+        <ApprovedRebuttalsSection
+          rebuttals={publishedRebuttals}
+          hasActiveMembership={hasActiveMembership}
+          canSubmitRebuttal={canSubmit}
+        />
       </ResponsiveContainer>
     </div>
     </>

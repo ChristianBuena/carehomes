@@ -235,31 +235,305 @@ describe("IDOR — accessing another org's/user's records by ID", () => {
     );
     expect(res.status).toBe(200);
   });
+
+  it("FIXED (new finding, TEST_REPORT #16): that public, unauthenticated response must NOT include the claiming " +
+     "user's password hash or email — getFacilityById() used `include: { createdBy: true }`, which returned the " +
+     "entire User row to anonymous callers", async () => {
+    const org = await createOrg();
+    const user = await createUser({
+      organizationId: org.id,
+      role: "MEMBER",
+      email: "claimant-private@example.com",
+      name: "Claimant Name",
+      password: "$2b$10$SENTINEL-PASSWORD-HASH",
+    });
+    const facility = await createFacility({ organizationId: org.id, createdById: user.id });
+
+    const res = await getFacility(
+      buildRequest(`http://localhost/api/facility/${facility.id}`),
+      { params: Promise.resolve({ id: facility.id }) }
+    );
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).not.toContain("SENTINEL-PASSWORD-HASH");
+    expect(text).not.toContain("claimant-private@example.com");
+
+    const body = JSON.parse(text);
+    expect(body.createdBy).toEqual({ id: user.id, name: "Claimant Name" });
+    expect(body).not.toHaveProperty("createdBy.password");
+  });
 });
 
-describe("Rate limiting on login (CONFIRMED GAP: none exists)", () => {
-  it("CONFIRMED GAP: 10 consecutive wrong-password attempts against the same account all return " +
-     "401 with no lockout, delay, or CAPTCHA — only the post-password OTP step rate-limits " +
-     "(5 attempts) and resend cooldown (60s) exist; the password step itself is unprotected " +
-     "against brute force", async () => {
+describe("Rate limiting on login — lockout per (email, client IP) (FIXED; was CONFIRMED GAP: none existed)", () => {
+  const EMAIL = "bruteforce@example.com";
+  const PASSWORD = "correct-password-123";
+
+  async function createTarget() {
     await signup(
       buildRequest("http://localhost/api/auth/signup", {
         method: "POST",
-        body: { name: "Target", email: "bruteforce@example.com", password: "correct-password-123", confirmPassword: "correct-password-123" },
+        body: { name: "Target", email: EMAIL, password: PASSWORD, confirmPassword: PASSWORD },
+      })
+    );
+  }
+  const attempt = (password: string, email: string = EMAIL, ip?: string) =>
+    login(
+      buildRequest("http://localhost/api/auth/login", {
+        method: "POST",
+        body: { email, password },
+        headers: ip ? { "x-forwarded-for": ip } : undefined,
+      })
+    );
+  // Requests without a forwarding header share the "unknown" address bucket.
+  const attemptRow = (email: string = EMAIL, ipAddress: string = "unknown") =>
+    testDb.loginAttempt.findUnique({ where: { email_ipAddress: { email, ipAddress } } });
+  const expireLock = (email: string = EMAIL, ipAddress: string = "unknown") =>
+    testDb.loginAttempt.update({
+      where: { email_ipAddress: { email, ipAddress } },
+      data: { lockedUntil: new Date(Date.now() - 1000) },
+    });
+
+  it("FIXED (was CONFIRMED GAP, 10x 401 with no escalation): of 10 consecutive wrong-password attempts against " +
+     "the same account from the same address, the first 4 return 401 and the 5th locks it — it and every later attempt " +
+     "return 429 with a Retry-After header", async () => {
+    await createTarget();
+
+    const statuses: number[] = [];
+    let lastLocked: Response | undefined;
+    for (let i = 0; i < 10; i++) {
+      const res = await attempt(`wrong-guess-${i}`);
+      statuses.push(res.status);
+      if (res.status === 429) lastLocked = res;
+    }
+    expect(statuses).toEqual([401, 401, 401, 401, 429, 429, 429, 429, 429, 429]);
+
+    const retryAfter = Number(lastLocked!.headers.get("Retry-After"));
+    expect(retryAfter).toBeGreaterThan(14 * 60);
+    expect(retryAfter).toBeLessThanOrEqual(15 * 60);
+    expect((await lastLocked!.json()).error).toMatch(/too many failed login attempts/i);
+
+    const row = await attemptRow();
+    expect(row!.lockedUntil!.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("while locked, even the CORRECT password is refused (429) and no OTP is issued", async () => {
+    await createTarget();
+    for (let i = 0; i < 5; i++) await attempt(`wrong-${i}`);
+    const otpsBefore = await testDb.mfaOtp.count({ where: { email: EMAIL } });
+
+    const res = await attempt(PASSWORD);
+    expect(res.status).toBe(429);
+    expect(res.headers.get("set-cookie") ?? "").not.toContain("mfa-pending");
+    expect(await testDb.mfaOtp.count({ where: { email: EMAIL } })).toBe(otpsBefore);
+  });
+
+  it("once the lock has expired the correct password works again, and the lock + counter are cleared", async () => {
+    await createTarget();
+    for (let i = 0; i < 5; i++) await attempt(`wrong-${i}`);
+    await expireLock();
+
+    const res = await attempt(PASSWORD);
+    expect(res.status).toBe(200);
+
+    // Lock and counter are cleared: the row is gone.
+    expect(await attemptRow()).toBeNull();
+  });
+
+  it("after an expired lock, a wrong password starts a fresh count (401, not an instant re-lock)", async () => {
+    await createTarget();
+    for (let i = 0; i < 5; i++) await attempt(`wrong-${i}`);
+    await expireLock();
+
+    expect((await attempt("still-wrong")).status).toBe(401);
+    const row = await attemptRow();
+    expect(row!.failedAttempts).toBe(1);
+    expect(row!.lockedUntil).toBeNull();
+  });
+
+  it("a successful login resets the counter: 4 wrong, 1 right, then 4 more wrong never locks", async () => {
+    await createTarget();
+    const statuses: number[] = [];
+    for (let i = 0; i < 4; i++) statuses.push((await attempt(`wrong-a-${i}`)).status);
+    statuses.push((await attempt(PASSWORD)).status);
+    for (let i = 0; i < 4; i++) statuses.push((await attempt(`wrong-b-${i}`)).status);
+
+    expect(statuses).toEqual([401, 401, 401, 401, 200, 401, 401, 401, 401]);
+    const row = await attemptRow();
+    expect(row!.lockedUntil).toBeNull();
+    expect(row!.failedAttempts).toBe(4);
+  });
+
+  it("5 CONCURRENT wrong guesses are all counted and lock the account (atomic increment)", async () => {
+    await createTarget();
+    await Promise.all(Array.from({ length: 5 }, (_, i) => attempt(`concurrent-${i}`)));
+
+    expect((await attempt(PASSWORD)).status).toBe(429);
+  });
+
+  // CHANGED in round 3 (KNOWN_ISSUES #6): this used to assert "8x 401, no
+  // lockout state" for an unknown email, which made a locked (429) account
+  // distinguishable from a non-existent (401) one. Unknown emails are now
+  // throttled exactly like real ones.
+  it("an unknown email gets exactly the same 401 -> 429 sequence as a real account (lockout does not reveal which emails exist)", async () => {
+    await createTarget();
+
+    const real: number[] = [];
+    const unknown: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      real.push((await attempt(`guess-${i}`)).status);
+      unknown.push((await attempt(`guess-${i}`, "nobody@example.com")).status);
+    }
+    expect(unknown).toEqual([401, 401, 401, 401, 429, 429, 429, 429]);
+    expect(unknown).toEqual(real);
+
+    const realLocked = await attempt("x");
+    const unknownLocked = await attempt("x", "nobody@example.com");
+    expect((await unknownLocked.json()).error).toBe((await realLocked.json()).error);
+    expect(await testDb.user.count({ where: { email: "nobody@example.com" } })).toBe(0);
+  });
+
+  it("locking one account does not affect another account", async () => {
+    await createTarget();
+    await signup(
+      buildRequest("http://localhost/api/auth/signup", {
+        method: "POST",
+        body: { name: "Other", email: "other@example.com", password: PASSWORD, confirmPassword: PASSWORD },
+      })
+    );
+    for (let i = 0; i < 5; i++) await attempt(`wrong-${i}`);
+
+    expect((await attempt(PASSWORD, "other@example.com")).status).toBe(200);
+  });
+  // ── Round 3: one person cannot lock out another ───────────────────────────
+  const ATTACKER_IP = "203.0.113.50";
+  const VICTIM_IP = "198.51.100.7";
+
+  it("an attacker who knows the email locks only THEIR OWN address: the real owner still signs in from theirs", async () => {
+    await createTarget();
+
+    const attacker: number[] = [];
+    for (let i = 0; i < 6; i++) attacker.push((await attempt(`guess-${i}`, EMAIL, ATTACKER_IP)).status);
+    expect(attacker).toEqual([401, 401, 401, 401, 429, 429]);
+
+    const victim = await attempt(PASSWORD, EMAIL, VICTIM_IP);
+    expect(victim.status).toBe(200);
+    expect(victim.headers.get("set-cookie") ?? "").toContain("mfa-pending");
+  });
+
+  it("the attacker's address stays locked for that email even with the correct password, and the owner's login does not clear it", async () => {
+    await createTarget();
+    for (let i = 0; i < 5; i++) await attempt(`guess-${i}`, EMAIL, ATTACKER_IP);
+
+    expect((await attempt(PASSWORD, EMAIL, VICTIM_IP)).status).toBe(200);
+    expect((await attempt(PASSWORD, EMAIL, ATTACKER_IP)).status).toBe(429);
+    expect((await attemptRow(EMAIL, ATTACKER_IP))!.lockedUntil!.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("failures from different addresses are counted separately: 4 wrong from each of 3 addresses locks none of them", async () => {
+    await createTarget();
+    const ips = ["203.0.113.1", "203.0.113.2", "203.0.113.3"];
+    for (const ip of ips) {
+      for (let i = 0; i < 4; i++) expect((await attempt(`guess-${i}`, EMAIL, ip)).status).toBe(401);
+    }
+    for (const ip of ips) {
+      const row = await attemptRow(EMAIL, ip);
+      expect(row!.failedAttempts).toBe(4);
+      expect(row!.lockedUntil).toBeNull();
+    }
+    // The real user's own failure history (none) is untouched.
+    const failuresBefore = await testDb.user.findUnique({ where: { email: EMAIL }, select: { failedLoginAttempts: true, lockedUntil: true } });
+    expect(failuresBefore).toEqual({ failedLoginAttempts: 0, lockedUntil: null });
+  });
+
+  it("one address locked for one email can still sign in to a different account", async () => {
+    await createTarget();
+    await signup(
+      buildRequest("http://localhost/api/auth/signup", {
+        method: "POST",
+        body: { name: "Other", email: "other@example.com", password: PASSWORD, confirmPassword: PASSWORD },
+      })
+    );
+    for (let i = 0; i < 5; i++) await attempt(`guess-${i}`, EMAIL, ATTACKER_IP);
+
+    expect((await attempt(PASSWORD, "other@example.com", ATTACKER_IP)).status).toBe(200);
+  });
+
+  it("the client address is the FIRST X-Forwarded-For hop; X-Real-IP is the fallback", async () => {
+    await createTarget();
+    await login(
+      buildRequest("http://localhost/api/auth/login", {
+        method: "POST",
+        body: { email: EMAIL, password: "wrong" },
+        headers: { "x-forwarded-for": `${ATTACKER_IP}, 10.0.0.1, 10.0.0.2` },
+      })
+    );
+    await login(
+      buildRequest("http://localhost/api/auth/login", {
+        method: "POST",
+        body: { email: EMAIL, password: "wrong" },
+        headers: { "x-real-ip": VICTIM_IP },
       })
     );
 
+    expect((await attemptRow(EMAIL, ATTACKER_IP))!.failedAttempts).toBe(1);
+    expect((await attemptRow(EMAIL, VICTIM_IP))!.failedAttempts).toBe(1);
+    expect(await testDb.loginAttempt.count()).toBe(2);
+  });
+
+  it("changing the letter case of the email does not get a fresh set of attempts", async () => {
+    await createTarget();
     const statuses: number[] = [];
-    for (let i = 0; i < 10; i++) {
-      const res = await login(
-        buildRequest("http://localhost/api/auth/login", {
-          method: "POST",
-          body: { email: "bruteforce@example.com", password: `wrong-guess-${i}` },
-        })
-      );
-      statuses.push(res.status);
-    }
-    // Every single attempt behaves identically — no escalating lockout.
-    expect(statuses.every((s) => s === 401)).toBe(true);
+    for (let i = 0; i < 3; i++) statuses.push((await attempt(`guess-${i}`, EMAIL, ATTACKER_IP)).status);
+    for (let i = 0; i < 3; i++) statuses.push((await attempt(`guess-${i}`, EMAIL.toUpperCase(), ATTACKER_IP)).status);
+
+    expect(statuses).toEqual([401, 401, 401, 401, 429, 429]);
+    expect(await testDb.loginAttempt.count()).toBe(1);
+  });
+
+  it("failures older than the 15-minute window no longer count towards the limit", async () => {
+    await createTarget();
+    for (let i = 0; i < 4; i++) await attempt(`guess-${i}`, EMAIL, ATTACKER_IP);
+    await testDb.loginAttempt.update({
+      where: { email_ipAddress: { email: EMAIL, ipAddress: ATTACKER_IP } },
+      data: { lastFailedAt: new Date(Date.now() - 16 * 60 * 1000) },
+    });
+
+    expect((await attempt("guess-late", EMAIL, ATTACKER_IP)).status).toBe(401);
+    expect((await attemptRow(EMAIL, ATTACKER_IP))!.failedAttempts).toBe(1);
+  });
+
+  it("a failure that arrives while the pair is locked neither extends nor resets the lock", async () => {
+    await createTarget();
+    for (let i = 0; i < 5; i++) await attempt(`guess-${i}`, EMAIL, ATTACKER_IP);
+    const before = await attemptRow(EMAIL, ATTACKER_IP);
+
+    // Concurrent requests can pass the lock check together; drive the counter directly.
+    const { recordLoginFailure, throttleKey } = await import("@/services/login-throttle.service");
+    const lockedUntil = await recordLoginFailure(throttleKey(EMAIL, ATTACKER_IP));
+
+    const after = await attemptRow(EMAIL, ATTACKER_IP);
+    expect(lockedUntil!.getTime()).toBe(before!.lockedUntil!.getTime());
+    expect(after!.lockedUntil!.getTime()).toBe(before!.lockedUntil!.getTime());
+    expect(after!.failedAttempts).toBe(before!.failedAttempts);
+  });
+
+  it("rows untouched for more than a day are pruned on the next failed attempt; active locks are kept", async () => {
+    const old = new Date(Date.now() - 25 * 60 * 60 * 1000);
+    await testDb.loginAttempt.create({ data: { email: "stale@example.com", ipAddress: "192.0.2.1", failedAttempts: 2, lastFailedAt: old } });
+    await testDb.loginAttempt.create({
+      data: { email: "stillLocked@example.com", ipAddress: "192.0.2.2", failedAttempts: 5, lastFailedAt: old, lockedUntil: new Date(Date.now() + 60_000) },
+    });
+
+    await attempt("wrong", "nobody@example.com", ATTACKER_IP);
+
+    expect(await attemptRow("stale@example.com", "192.0.2.1")).toBeNull();
+    expect(await attemptRow("stillLocked@example.com", "192.0.2.2")).not.toBeNull();
+  });
+
+  it("a non-string email or password is a 401, not a 500", async () => {
+    const res = await login(
+      buildRequest("http://localhost/api/auth/login", { method: "POST", body: { email: { not: "a string" }, password: ["x"] } })
+    );
+    expect(res.status).toBe(401);
   });
 });

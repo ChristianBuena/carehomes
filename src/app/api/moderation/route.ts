@@ -94,8 +94,8 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 5. Fetch current rebuttal to check existing status ─────────────────
-    const existingRebuttal = await prisma.rebuttal.findUnique({
-      where: { id },
+    const existingRebuttal = await prisma.rebuttal.findFirst({
+      where: { id, deletedAt: null },
       include: {
         user: { select: { email: true, name: true } },
         facility: { select: { name: true, slug: true } },

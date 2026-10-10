@@ -15,7 +15,8 @@ export default async function MyFacilitiesPage() {
 
   const [facilities, membership] = await Promise.all([
     prisma.facility.findMany({
-      where: { createdById: user.userId, deletedAt: null },
+      // Facilities belong to the organization — every seat sees the same list and quota.
+      where: { organizationId: user.orgId, deletedAt: null },
       include: {
         _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },
       },

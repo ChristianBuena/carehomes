@@ -12,6 +12,7 @@
     "test": "dotenv -e .env.test -- vitest run",
     "test:watch": "dotenv -e .env.test -- vitest",
     "test:e2e": "dotenv -e .env.test -- playwright test",
+    "test:e2e:prod": "dotenv -e .env.test -- playwright test --config playwright.prod.config.ts",
     "test:db:migrate": "dotenv -e .env.test -- prisma migrate deploy"
   },
   "prisma": {

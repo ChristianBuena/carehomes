@@ -10,6 +10,7 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { TIER_FACILITY_LIMITS } from "../src/lib/permissions";
 import bcrypt from "bcryptjs";
 
 const adapter = new PrismaPg({
@@ -49,7 +50,7 @@ async function main() {
         create: {
           plan: "TIER_C",
           status: "ACTIVE",
-          maxFacilities: 10,
+          maxFacilities: TIER_FACILITY_LIMITS.TIER_C,
           stripeCustomerId: "cus_mock_admin001",
           stripeSubscriptionId: "sub_mock_admin001",
           startDate: daysAgo(180),
@@ -67,7 +68,7 @@ async function main() {
         create: {
           plan: "TIER_B",
           status: "ACTIVE",
-          maxFacilities: 3,
+          maxFacilities: TIER_FACILITY_LIMITS.TIER_B,
           stripeCustomerId: "cus_mock_member001",
           stripeSubscriptionId: "sub_mock_member001",
           startDate: daysAgo(90),
@@ -85,7 +86,7 @@ async function main() {
         create: {
           plan: "NONE",
           status: "INACTIVE",
-          maxFacilities: 0,
+          maxFacilities: TIER_FACILITY_LIMITS.NONE,
         },
       },
     },

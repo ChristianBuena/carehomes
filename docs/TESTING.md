@@ -1,9 +1,14 @@
 # Testing
 
-No test framework existed in this repository before this test pass. This
-test pass added **Vitest** (unit + integration) and **Playwright** (E2E), per
-the ground rules: use what's in the repo, and if nothing exists, use Vitest
-+ Playwright and say what was installed.
+No test framework existed in this repository before the first test pass,
+which added **Vitest** (unit + integration) and **Playwright** (E2E).
+
+History: the first pass wrote tests that pinned the behaviour it found,
+bugs included, and changed no application code. The second pass (2026-10-10)
+fixed those bugs and turned each "confirms bug" test into a "FIXED" test.
+Round 3 closed the remaining open items and added tests for the areas the
+first pass skipped. Test names containing "FIXED" describe behaviour that
+used to be wrong.
 
 ## What was installed
 
@@ -16,15 +21,13 @@ package.json scripts added:
   "test":          dotenv -e .env.test -- vitest run
   "test:watch":    dotenv -e .env.test -- vitest
   "test:e2e":      dotenv -e .env.test -- playwright test
+  "test:e2e:prod": dotenv -e .env.test -- playwright test --config playwright.prod.config.ts
   "test:db:migrate": dotenv -e .env.test -- prisma migrate deploy
 ```
 
-New files: `vitest.config.ts`, `playwright.config.ts`, `.env.test` (gitignored
-— `.env*` was already in `.gitignore`), everything under `tests/`.
-
-**No application code was changed to make any test pass.** Every confirmed
-bug in TEST_REPORT.md was left exactly as found; tests assert the actual
-(sometimes buggy) behavior and say so explicitly in their names/comments.
+New files: `vitest.config.ts`, `playwright.config.ts`,
+`playwright.prod.config.ts`, `.env.test` (gitignored — `.env*` was already in
+`.gitignore`), everything under `tests/`.
 
 ## Test database — do this once
 
@@ -46,8 +49,17 @@ npm run test:db:migrate
 `carehomes_test`, specifically so a misconfigured `.env.test` can never
 accidentally point tests at a real database.
 
+New migrations are applied to the test database with the same
+`npm run test:db:migrate` (`prisma migrate deploy`). Never run
+`prisma migrate dev` against it or any other database from this workflow.
+Three migrations written during the fix passes have been applied to
+`carehomes_test` only and still need `npx prisma migrate deploy` on the dev
+and production databases: `20261010120000_add_processed_stripe_event`,
+`20261010130000_add_login_lockout`, `20261010140000_add_login_attempt`.
+
 Every Vitest integration test calls `resetDb()` in `beforeEach`, which
-`TRUNCATE ... RESTART IDENTITY CASCADE`s every application table. Tests run
+`TRUNCATE ... RESTART IDENTITY CASCADE`s every application table. A new
+model must be added to that list in `tests/helpers/db.ts`. Tests run
 with `fileParallelism: false` (one file at a time) because they share one
 physical database and would otherwise stomp on each other's fixtures.
 
@@ -68,6 +80,14 @@ physical database and would otherwise stomp on each other's fixtures.
 - **Cloudinary**: not mocked, but also never invoked — the rebuttal-action
   tests never attach a `document` file, so the `file.size > 0` branch that
   would call Cloudinary never executes.
+- **UploadThing**: `uploadthing/server`'s `UTApi` is replaced by a class
+  whose `deleteFiles` is a `vi.fn()` wherever `DELETE /api/files` is called.
+  The upload router's `middleware` and `onUploadComplete` callbacks are
+  invoked directly; no request reaches UploadThing.
+- **`fetch`** (used by `POST /api/rebuttal/watermark` to download the
+  original document) is replaced with `vi.spyOn(globalThis, "fetch")` and
+  returns an in-memory PDF built with `pdf-lib` (`tests/helpers/pdf.ts`). In
+  `watermark.test.ts` any un-mocked `fetch` call rejects.
 
 ## Why some tests mock `@/lib/auth` or `next/headers`, and some don't
 
@@ -93,6 +113,19 @@ physical database and would otherwise stomp on each other's fixtures.
      `rebuttal-action.test.ts`) — simpler, and the standard pattern for
      testing Next Server Actions outside the framework runtime.
 
+  Mocking `@/lib/auth` bypasses the database lookup of the user's current
+  organization, so those files cannot test stale-session behaviour.
+  `tests/integration/stale-org.test.ts` deliberately does **not** mock it: it
+  sets the cookie with `setRequestCookies()` and calls the real
+  `getUserFromRequest()`.
+
+## Client IP in tests
+
+`POST /api/auth/login` throttles per (email, client IP). A request built
+without an `x-forwarded-for` header lands in the shared `"unknown"` bucket,
+which is what the older lockout tests rely on. To act as a specific address,
+pass `headers: { "x-forwarded-for": "203.0.113.50" }` to `buildRequest()`.
+
 ## Folder structure
 
 ```
@@ -102,27 +135,49 @@ tests/
 ├── helpers/
 │   ├── db.ts                 testDb (real Prisma client), resetDb(), factories
 │   │                          (createOrg, createUser, createMembership, createFacility,
-│   │                           createRebuttal, createOrgWithUser)
+│   │                           createRebuttal, createMemberFile, createShareLink,
+│   │                           createTemplate, createOrgWithUser)
 │   ├── http.ts               buildRequest() / authCookie() — build a real NextRequest
 │   │                          with cookies, and sign a real session JWT for a fixture user
-│   └── nextRequestContext.ts backing store for the next/headers mock
+│   ├── nextRequestContext.ts backing store for the next/headers mock
+│   └── pdf.ts                builds test PDFs with pdf-lib and reads back the text drawn on each page
 ├── unit/
-│   ├── permissions.test.ts   hasPermission() full role x permission matrix, canClaimFacility() boundaries
-│   └── jwt.test.ts           sign/verify, tamper, expiry, mfa-pending token semantics
+│   ├── permissions.test.ts   hasPermission() full role x permission matrix, canClaimFacility() boundaries,
+│   │                          tier-limit single source of truth
+│   ├── jwt.test.ts           sign/verify, tamper, expiry, mfa-pending token semantics
+│   └── prisma-query-shape.test.ts  static check of every Prisma call in src/ against the schema
 ├── integration/               real route handlers + server actions, real Postgres (carehomes_test)
 │   ├── auth.test.ts           signup, login, full MFA flow (valid/wrong/expired/reused/max-attempts), /me, logout
-│   ├── facility-limits.test.ts tier boundaries via the API route, org quota sharing/isolation, race condition
+│   ├── facility-limits.test.ts tier boundaries via the API route, org quota sharing/isolation, concurrency
 │   ├── claim-action.test.ts   claimFacility() and linkSeatToOrg() server actions (real code, @/lib/auth mocked)
-│   ├── rebuttals.test.ts      /api/rebuttal, /api/rebuttal/[id] (IDOR), moderation flow + role gating
-│   ├── rebuttal-action.test.ts submitRebuttal()/updateRebuttal() server actions
+│   ├── rebuttals.test.ts      /api/rebuttal, /api/rebuttal/[id], moderation flow + role gating, soft delete
+│   ├── rebuttal-action.test.ts submitRebuttal()/updateRebuttal(): ownership, returned (never thrown) errors
 │   ├── billing.test.ts        checkout/portal metadata, webhook signature + events + idempotency, membership/update
-│   ├── admin.test.ts          access-review (confirms the broken-query bug), archive-moderation-logs
-│   └── security.test.ts       injection strings, long/empty/unicode input, IDOR, brute-force-login gap
+│   ├── admin.test.ts          access-review, archive-moderation-logs
+│   ├── security.test.ts       injection strings, long/empty/unicode input, IDOR, login lockout per (email, IP)
+│   ├── stale-org.test.ts      a user moved between orgs: the old session follows the database (real @/lib/auth)
+│   ├── route-smoke.test.ts    every API route's happy path; fails if a route has no case
+│   ├── files.test.ts          member files and share links: roles, private-to-uploader, IDOR, expiry, revocation
+│   ├── uploadthing.test.ts    upload authorization + completion callbacks (called directly), filenames, limits config
+│   ├── templates.test.ts      template library access by tier/status/role, content leakage, admin management
+│   └── watermark.test.ts      watermark content, who can generate/request, corrupt input, large files
 └── e2e/
     ├── fixtures.ts            seeds the test DB via a tsx subprocess (see below), injects a signed session cookie
     ├── db-cli.ts               the tsx subprocess entry point
-    └── claim-button.spec.ts   real browser rendering of every ClaimFacilityButton state
+    ├── claim-button.spec.ts   real browser rendering of every ClaimFacilityButton state, org-scoped dashboards
+    ├── action-errors.spec.ts  server-action errors are readable in the forms (also run against a production build)
+    └── share-page.spec.ts     the public /share/[token] page: valid, revoked, expired, unknown
 ```
+
+### Tests marked as expected failures
+
+A test whose name starts with `FAILS [Low|Medium|High]` asserts the
+**expected** behaviour for a defect that has been reported but not fixed. It
+is marked `it.fails` (Vitest) or `test.fail()` (Playwright), so it counts as
+passing while the defect exists and the suite stays green. When the defect is
+fixed the test fails as an "unexpected pass": remove the marker and the
+`FAILS […]:` prefix. Every such test is listed in TEST_REPORT.md. Vitest's
+summary shows them as "expected fail".
 
 ### Why E2E seeding shells out to a subprocess
 
@@ -151,8 +206,19 @@ login *form* itself is skipped, and that gap is covered elsewhere.
 ```bash
 npm test            # Vitest: all unit + integration tests, one run
 npm run test:watch  # Vitest: watch mode
-npm run test:e2e    # Playwright: boots a dev server on :3101 against carehomes_test, runs claim-button.spec.ts
+npm run test:e2e    # Playwright: boots a dev server on :3101 against carehomes_test, runs every spec in tests/e2e
+npm run test:e2e:prod  # Playwright: `next build` + `next start` on :3102, runs action-errors.spec.ts only
 ```
+
+`test:e2e:prod` exists because Next.js hides the message of an error thrown
+by a server action only in a production build. It is the run that proves the
+rebuttal forms show the server's real message. It rebuilds `.next`, so allow
+a few minutes.
+
+The dev-server run is slow on a cold `.next` cache (each first visit compiles
+its route). On a slow disk the first run after a clean checkout can time out
+across the board and pass on the next run; `action-errors.spec.ts` sets a 90
+second timeout for that reason.
 
 Vitest and Playwright both load `.env.test` via `dotenv-cli` in the npm
 script itself — you don't need to `source` anything manually. (Next.js
@@ -187,13 +253,20 @@ npm run build          # full production build
 ```
 
 `npm run build` performs real static-generation data fetches at build time
-(e.g. the home page), so it needs a reachable, correctly-migrated database.
-**It will fail against the current local dev `carehomes` database** because
-that database is missing most of the schema (see KNOWN_ISSUES.md) — this is
-an environment/migration-drift issue, not an application bug. Point it at
-`carehomes_test` (fully migrated by this test pass) to get a true read on
-whether the code itself builds:
+(e.g. the home page), so it needs a reachable database with every migration
+applied, including the three listed under "Test database". To build against
+`carehomes_test`:
 
 ```bash
 set -a && source .env.test && set +a && npm run build
 ```
+
+Two more checks run as ordinary Vitest tests:
+
+- `tests/unit/prisma-query-shape.test.ts` statically checks every Prisma
+  call in `src/` against the schema (tsc does not reject unknown `select` /
+  `include` / `where` / `data` fields — see KNOWN_ISSUES.md).
+- `tests/integration/route-smoke.test.ts` calls every API route's happy path
+  against the test database and fails if a route has no case, if any Prisma
+  operation errors, or if a response contains a stored password hash.
+  **Adding a route without adding a smoke case fails the suite.**

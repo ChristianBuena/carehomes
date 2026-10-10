@@ -6,10 +6,9 @@ import {
   getTakedownById,
   resolveTakedownRequest,
   emergencyUnpublishRebuttal,
+  RebuttalNotFoundError,
 } from "@/services/takedown.service";
 import { prisma } from "@/lib/prisma";
-
-const takedownDelegate = (prisma as any).takedownRequest;
 
 const updateTakedownSchema = z.object({
   action: z.enum(["resolve", "reject", "emergency_takedown", "assign", "in_review"]),
@@ -79,7 +78,7 @@ export async function PATCH(
     const { action, resolutionNotes, rebuttalId, assignedToId, emergencyReason } = validated.data;
 
     // Check request exists
-    const existing = await takedownDelegate.findUnique({ where: { id } });
+    const existing = await prisma.takedownRequest.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Takedown request not found" }, { status: 404 });
     }
@@ -131,7 +130,7 @@ export async function PATCH(
     }
 
     if (action === "assign") {
-      const updated = await takedownDelegate.update({
+      const updated = await prisma.takedownRequest.update({
         where: { id },
         data: {
           assignedToId: assignedToId || null,
@@ -143,7 +142,7 @@ export async function PATCH(
     }
 
     if (action === "in_review") {
-      const updated = await takedownDelegate.update({
+      const updated = await prisma.takedownRequest.update({
         where: { id },
         data: { status: "IN_REVIEW" },
       });
@@ -153,6 +152,9 @@ export async function PATCH(
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
+    if (error instanceof RebuttalNotFoundError) {
+      return NextResponse.json({ error: "Rebuttal not found" }, { status: 404 });
+    }
     console.error("Error updating takedown request:", error);
     return NextResponse.json({ error: "Failed to update takedown request" }, { status: 500 });
   }

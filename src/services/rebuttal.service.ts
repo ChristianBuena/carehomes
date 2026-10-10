@@ -35,7 +35,7 @@ export async function getRebuttalById(id: string) {
     where: { id, deletedAt: null },
     include: {
       user: { select: { id: true, name: true, email: true } },
-      facility: { select: { id: true, name: true, slug: true } },
+      facility: { select: { id: true, name: true, slug: true, organizationId: true } },
     },
   });
 }

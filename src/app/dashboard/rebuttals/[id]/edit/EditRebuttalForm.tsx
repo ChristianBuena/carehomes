@@ -51,12 +51,17 @@ export default function EditRebuttalForm({ rebuttal }: EditRebuttalFormProps) {
     const formData = new FormData(e.currentTarget);
 
     try {
-      await updateRebuttal(rebuttal.id, formData);
+      // The action returns its errors (thrown messages are hidden in production).
+      const result = await updateRebuttal(rebuttal.id, formData);
+      if (!result.success) {
+        setError(result.error);
+        setIsSubmitting(false);
+        return;
+      }
       router.push("/dashboard/rebuttals?resubmitted=true");
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong. Please try again.";
-      setError(message);
+    } catch {
+      // Only reached when the request itself fails (network, server crash).
+      setError("Something went wrong. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -105,7 +110,7 @@ export default function EditRebuttalForm({ rebuttal }: EditRebuttalFormProps) {
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-8 shadow-sm">
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-[var(--color-danger)]/10 text-[var(--color-danger)] p-4 rounded-lg flex gap-3 text-sm font-medium">
+            <div role="alert" className="bg-[var(--color-danger)]/10 text-[var(--color-danger)] p-4 rounded-lg flex gap-3 text-sm font-medium">
               <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
               <p>{error}</p>
             </div>

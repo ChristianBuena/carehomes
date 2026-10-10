@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "rebuttalId is required" }, { status: 400 });
         }
 
-        const rebuttal = await prisma.rebuttal.findUnique({
-            where: { id: rebuttalId },
+        const rebuttal = await prisma.rebuttal.findFirst({
+            where: { id: rebuttalId, deletedAt: null },
         });
 
         if (!rebuttal) {
@@ -109,8 +109,8 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "rebuttalId is required" }, { status: 400 });
         }
 
-        const rebuttal = await prisma.rebuttal.findUnique({
-            where: { id: rebuttalId },
+        const rebuttal = await prisma.rebuttal.findFirst({
+            where: { id: rebuttalId, deletedAt: null },
             select: {
                 id: true,
                 status: true,

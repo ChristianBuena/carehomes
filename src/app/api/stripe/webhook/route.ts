@@ -28,6 +28,29 @@ async function getMembershipUser(stripeSubscriptionId: string) {
   return membership?.organization?.users[0];
 }
 
+async function isEventAlreadyProcessed(eventId: string, eventType: string): Promise<boolean> {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ProcessedStripeEvent" (
+        "id" TEXT PRIMARY KEY,
+        "eventType" TEXT NOT NULL,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    const rowsInserted = await prisma.$executeRawUnsafe(
+      `INSERT INTO "ProcessedStripeEvent" ("id", "eventType") VALUES ($1, $2) ON CONFLICT ("id") DO NOTHING`,
+      eventId,
+      eventType
+    );
+
+    return rowsInserted === 0;
+  } catch (error) {
+    console.error("Failed to check webhook event idempotency:", error);
+    return false;
+  }
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
 
@@ -49,6 +72,12 @@ export async function POST(req: Request) {
   } catch (err: any) {
     console.error("Webhook signature verification failed:", err.message);
     return new NextResponse("Webhook Error", { status: 400 });
+  }
+
+  const alreadyProcessed = await isEventAlreadyProcessed(event.id, event.type);
+  if (alreadyProcessed) {
+    console.log("Stripe event already processed, skipping duplicate:", event.id);
+    return NextResponse.json({ received: true });
   }
 
   try {

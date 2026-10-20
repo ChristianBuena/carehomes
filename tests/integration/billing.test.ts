@@ -266,11 +266,8 @@ describe("POST /api/stripe/webhook — lifecycle events", () => {
   });
 });
 
-describe("POST /api/stripe/webhook — idempotency on duplicate delivery (CONFIRMED GAP)", () => {
-  it("DB state stays idempotent (upsert/updateMany) on a replayed checkout.session.completed, " +
-     "but there is NO event.id dedup table, so delivering the SAME event twice sends the " +
-     "confirmation email TWICE — Stripe explicitly says webhook handlers must tolerate and " +
-     "dedupe duplicate deliveries, which this handler does not do for side effects", async () => {
+describe("POST /api/stripe/webhook — idempotency on duplicate delivery", () => {
+  it("deduplicates duplicate event.id deliveries and sends confirmation email only once", async () => {
     const org = await createOrg();
     await createUser({ organizationId: org.id, role: "MEMBER" });
     const payload = {
@@ -288,8 +285,8 @@ describe("POST /api/stripe/webhook — idempotency on duplicate delivery (CONFIR
     const memberships = await testDb.membership.findMany({ where: { organizationId: org.id } });
     expect(memberships).toHaveLength(1);
 
-    // Side-effect (email) is NOT deduplicated: sent once per delivery, twice total.
-    expect(sendEmail).toHaveBeenCalledTimes(2);
+    // Side-effect (email) is now deduplicated: sent only once across both deliveries.
+    expect(sendEmail).toHaveBeenCalledTimes(1);
   });
 });
 

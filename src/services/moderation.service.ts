@@ -38,10 +38,15 @@ export async function approveRebuttal(
     where: { id, deletedAt: null },
   });
 
+  let watermarkedUrl = existing.watermarkedUrl;
+  if (existing.documentUrl && !watermarkedUrl) {
+    watermarkedUrl = await watermarkRebuttalDocument(existing.documentUrl);
+  }
   const rebuttal = await prisma.rebuttal.update({
     where: { id },
     data: {
       status: RebuttalStatus.APPROVED,
+      watermarkedUrl,
     },
   });
 
@@ -145,13 +150,13 @@ export async function archiveOldModerationLogs(cutoffDate?: Date): Promise<numbe
     // Upsert into archive table (skip already-archived entries via unique originalId)
     await tx.archivedModerationLog.createMany({
       data: logsToArchive.map((log) => ({
-        originalId:  log.id,
-        fromStatus:  log.fromStatus,
-        toStatus:    log.toStatus,
-        notes:       log.notes,
-        createdAt:   log.createdAt,
+        originalId: log.id,
+        fromStatus: log.fromStatus,
+        toStatus: log.toStatus,
+        notes: log.notes,
+        createdAt: log.createdAt,
         moderatorId: log.moderatorId,
-        rebuttalId:  log.rebuttalId,
+        rebuttalId: log.rebuttalId,
       })),
       skipDuplicates: true,
     });

@@ -57,7 +57,7 @@ export async function isPdfTextSearchable(pdfBuffer: Buffer): Promise<boolean> {
             try {
                 const streamBytes = Buffer.from(match[1], "latin1");
                 const decompressed = zlib.inflateSync(streamBytes).toString("latin1");
-                
+
                 if (decompressed.includes("BT") && decompressed.includes("ET")) {
                     return true;
                 }
@@ -80,4 +80,24 @@ export function isPdfFile(buffer: Buffer): boolean {
     // PDF files start with %PDF-
     const header = buffer.slice(0, 5).toString("ascii");
     return header === "%PDF-";
+}
+export async function watermarkRebuttalDocument(documentUrl: string): Promise<string> {
+    // 1. Download original PDF
+    const response = await fetch(documentUrl);
+    if (!response.ok) throw new Error("Failed to fetch original document");
+
+    const arrayBuffer = await response.arrayBuffer();
+    const pdfBuffer = Buffer.from(arrayBuffer);
+
+    // 2. Validate it's a searchable PDF
+    if (!isPdfFile(pdfBuffer)) throw new Error("File is not a valid PDF");
+    const isSearchable = await isPdfTextSearchable(pdfBuffer);
+    if (!isSearchable) throw new Error("PDF appears to be a scanned image");
+
+    // 3. Stamp watermark
+    const watermarkedBuffer = await applyWatermark(pdfBuffer);
+
+    // 4. Return watermarked URL (or data URL / storage URL)
+    const base64 = watermarkedBuffer.toString("base64");
+    return `data:application/pdf;base64,${base64}`;
 }

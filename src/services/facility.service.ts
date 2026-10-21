@@ -107,7 +107,7 @@ export async function getFacilities(filters?: FacilityFilters) {
         facilityNumber: true,
         ccldLink: true,
         updatedAt: true,
-        createdBy: { select: { id: true, name: true, email: true } },
+        createdBy: { select: { id: true, name: true } },
         _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },
       },
       orderBy: { name: "asc" },
@@ -139,7 +139,6 @@ export const getFacilityBySlug = cache(async (slug: string) => {
         select: {
           id: true,
           name: true,
-          email: true,
         },
       },
       _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },

@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, degrees, StandardFonts } from "pdf-lib";
+import zlib from "node:zlib";
 
 /**
  * Applies a diagonal "Public Redacted Version" watermark to every page of a PDF.
@@ -33,20 +34,40 @@ export async function applyWatermark(pdfBuffer: Buffer): Promise<Buffer> {
 
 /**
  * Checks if a PDF contains actual text (not just scanned images).
- * Returns true if the PDF has extractable text content.
+ * Returns true if the PDF has extractable text content or font definitions.
  */
 export async function isPdfTextSearchable(pdfBuffer: Buffer): Promise<boolean> {
     try {
         const pdfDoc = await PDFDocument.load(pdfBuffer);
         const pages = pdfDoc.getPages();
+        if (pages.length === 0) return false;
 
-        // pdf-lib doesn't extract text directly, but we can check
-        // if the PDF has content streams with text operators
-        // A basic heuristic: check raw bytes for text markers
-        const rawBytes = pdfBuffer.toString("binary");
-        const hasTextContent = rawBytes.includes("BT") && rawBytes.includes("ET");
+        const rawString = pdfBuffer.toString("latin1");
 
-        return hasTextContent && pages.length > 0;
+        // 1. Direct check: Check for uncompressed text markers or Font dictionary references
+        if (rawString.includes("/Font") || (rawString.includes("BT") && rawString.includes("ET"))) {
+            return true;
+        }
+
+        // 2. Compressed stream check: Extract and decompress streams to find text operators
+        const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+        let match;
+
+        while ((match = streamRegex.exec(rawString)) !== null) {
+            try {
+                const streamBytes = Buffer.from(match[1], "latin1");
+                const decompressed = zlib.inflateSync(streamBytes).toString("latin1");
+
+                if (decompressed.includes("BT") && decompressed.includes("ET")) {
+                    return true;
+                }
+            } catch {
+                // Not all streams are Flate compressed or text streams; continue checking
+                continue;
+            }
+        }
+
+        return false;
     } catch {
         return false;
     }
@@ -59,4 +80,24 @@ export function isPdfFile(buffer: Buffer): boolean {
     // PDF files start with %PDF-
     const header = buffer.slice(0, 5).toString("ascii");
     return header === "%PDF-";
+}
+export async function watermarkRebuttalDocument(documentUrl: string): Promise<string> {
+    // 1. Download original PDF
+    const response = await fetch(documentUrl);
+    if (!response.ok) throw new Error("Failed to fetch original document");
+
+    const arrayBuffer = await response.arrayBuffer();
+    const pdfBuffer = Buffer.from(arrayBuffer);
+
+    // 2. Validate it's a searchable PDF
+    if (!isPdfFile(pdfBuffer)) throw new Error("File is not a valid PDF");
+    const isSearchable = await isPdfTextSearchable(pdfBuffer);
+    if (!isSearchable) throw new Error("PDF appears to be a scanned image");
+
+    // 3. Stamp watermark
+    const watermarkedBuffer = await applyWatermark(pdfBuffer);
+
+    // 4. Return watermarked URL (or data URL / storage URL)
+    const base64 = watermarkedBuffer.toString("base64");
+    return `data:application/pdf;base64,${base64}`;
 }

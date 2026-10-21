@@ -9,7 +9,7 @@ import {
 } from "@/services/takedown.service";
 import { prisma } from "@/lib/prisma";
 
-const takedownDelegate = (prisma as any).takedownRequest;
+const takedownDelegate = prisma.takedownRequest;
 
 const updateTakedownSchema = z.object({
   action: z.enum(["resolve", "reject", "emergency_takedown", "assign", "in_review"]),

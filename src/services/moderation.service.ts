@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { RebuttalStatus } from "@/generated/prisma/enums";
-
+import { watermarkRebuttalDocument } from "@/services/pdf-watermark.service";
 
 // Creation of audit log entry
 async function createModerationLog({

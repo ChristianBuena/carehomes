@@ -270,3 +270,11 @@ Two more checks run as ordinary Vitest tests:
   against the test database and fails if a route has no case, if any Prisma
   operation errors, or if a response contains a stored password hash.
   **Adding a route without adding a smoke case fails the suite.**
+
+## Additions on branch `sow-code-gaps` (2026-10-31)
+
+- `npm run test:e2e:analytics`: `tests/e2e/analytics-consent.spec.ts` on its own dev server with a dummy GA id (`.env.test` leaves GA empty, so the banner is off in the main run). Google requests are aborted in the spec.
+- `npm run test:e2e:prod` now also runs `tests/e2e/security-headers.spec.ts` (production-only headers such as HSTS). Stripe and UploadThing hosts are intercepted; the Stripe checkout and portal routes are answered in the browser so the server never calls Stripe.
+- `resetDb()` also empties `"AuditLog"`. That table rejects TRUNCATE by trigger, so the helper disables that one trigger for the truncate and re-enables it (test database only).
+- Expected-fail tests now: 9 (A-1, A-2, D-8 and F-1 were fixed and turned into normal tests).
+- The dev server can take more than the 60-second Playwright start timeout on a slow disk. Run with a local copy of `playwright.config.ts` that only raises `webServer.timeout` if that happens.

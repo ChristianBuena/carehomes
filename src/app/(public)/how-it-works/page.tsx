@@ -174,7 +174,7 @@ export default function HowItWorksPage() {
         <ResponsiveContainer className="max-w-4xl flex flex-col items-center">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[var(--color-primary)] mb-6">Ready to get started?</h2>
           <p className="text-lg text-[var(--color-muted)] mb-10 max-w-2xl text-balance">
-            Join our platform today to ensure your facility's voice is heard securely and professionally.
+            Join our platform today to ensure your facility&apos;s voice is heard securely and professionally.
           </p>
           <Button asChild size="lg" className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-white font-semibold group h-14 px-8 text-lg rounded-full">
             <Link href="/pricing">

@@ -16,15 +16,13 @@ export default async function RebuttalFormPage() {
     redirect("/login");
   }
 
-  if (!hasPermission(user.role, "submit_rebuttal") && user.role !== "ADMIN") {
+  if (!hasPermission(user.role, "submit_rebuttal")) {
     redirect("/dashboard");
   }
 
-  // Fetch active facilities for the dropdown (excluding soft-deleted)
+  // Fetch the org's active facilities for the dropdown (excluding soft-deleted)
   const facilities = await prisma.facility.findMany({
-    where: user.role === "MEMBER"
-      ? { createdById: user.userId, deletedAt: null }
-      : { deletedAt: null },
+    where: { organizationId: user.orgId, deletedAt: null },
     select: { id: true, name: true, facilityNumber: true },
     orderBy: { name: "asc" },
   });

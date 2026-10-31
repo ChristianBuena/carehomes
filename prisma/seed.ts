@@ -10,7 +10,21 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { TIER_FACILITY_LIMITS } from "../src/lib/permissions";
 import bcrypt from "bcryptjs";
+import { readSeedConfig, SeedConfigError, type SeedConfig } from "./seed-config";
+
+// Validate BEFORE any database connection is created (release blocker S-7).
+let seedConfig: SeedConfig;
+try {
+  seedConfig = readSeedConfig(process.env);
+} catch (e) {
+  if (e instanceof SeedConfigError) {
+    console.error(`Seed aborted: ${e.message}`);
+    process.exit(1);
+  }
+  throw e;
+}
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -37,9 +51,10 @@ async function main() {
 
   // ── 1. Users ──────────────────────────────────────────────────────────────
 
-  const adminPassword = await bcrypt.hash("Admin@123456", 12);
-  const memberPassword = await bcrypt.hash("Member@123456", 12);
-  const freePassword = await bcrypt.hash("Free@123456", 12);
+  // No built-in passwords: everything comes from seed-config.ts (env only).
+  const adminPassword = await bcrypt.hash(seedConfig.adminPassword, 12);
+  const memberPassword = await bcrypt.hash(seedConfig.demoPassword, 12);
+  const freePassword = await bcrypt.hash(seedConfig.demoPassword, 12);
 
   // 1a. Organizations
   const adminOrg = await prisma.organization.create({
@@ -49,7 +64,7 @@ async function main() {
         create: {
           plan: "TIER_C",
           status: "ACTIVE",
-          maxFacilities: 10,
+          maxFacilities: TIER_FACILITY_LIMITS.TIER_C,
           stripeCustomerId: "cus_mock_admin001",
           stripeSubscriptionId: "sub_mock_admin001",
           startDate: daysAgo(180),
@@ -67,7 +82,7 @@ async function main() {
         create: {
           plan: "TIER_B",
           status: "ACTIVE",
-          maxFacilities: 3,
+          maxFacilities: TIER_FACILITY_LIMITS.TIER_B,
           stripeCustomerId: "cus_mock_member001",
           stripeSubscriptionId: "sub_mock_member001",
           startDate: daysAgo(90),
@@ -85,18 +100,18 @@ async function main() {
         create: {
           plan: "NONE",
           status: "INACTIVE",
-          maxFacilities: 0,
+          maxFacilities: TIER_FACILITY_LIMITS.NONE,
         },
       },
     },
   });
 
   const admin = await prisma.user.upsert({
-    where: { email: "carehomessupport444@gmail.com" },
+    where: { email: seedConfig.adminEmail },
     update: { organizationId: adminOrg.id },
     create: {
       name: "System Admin",
-      email: "carehomessupport444@gmail.com",
+      email: seedConfig.adminEmail,
       password: adminPassword,
       role: "ADMIN",
       organizationId: adminOrg.id,
@@ -506,11 +521,7 @@ async function main() {
   }
 
   console.log(`✅ Rebuttals: 2 APPROVED, 1 PENDING, 1 REJECTED`);
-  console.log("-----------------------------------------");
-  console.log("Admin Account:");
-  console.log("Email: carehomessupport444@gmail.com");
-  console.log("Password: Admin@123456");
-  console.log("-----------------------------------------");
+  console.log(`Admin account: ${seedConfig.adminEmail} (password from SEED_ADMIN_PASSWORD, not printed)`);
   console.log("✅ Seed complete.");
 }
 

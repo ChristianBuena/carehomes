@@ -28,10 +28,39 @@ export const createMembership = (args: {
   plan?: "NONE" | "TIER_A" | "TIER_B" | "TIER_C";
   status?: "ACTIVE" | "INACTIVE" | "PAST_DUE" | "CANCELED";
 }) => run("createMembership", args);
-export const createUser = (args: { organizationId?: string | null; role?: "MEMBER" | "MODERATOR" | "ADMIN"; email?: string }) =>
+export const createUser = (args: {
+  organizationId?: string | null;
+  role?: "MEMBER" | "MODERATOR" | "ADMIN";
+  email?: string;
+  name?: string;
+  password?: string;
+}) =>
   run<User>("createUser", args);
-export const createFacility = (args?: { organizationId?: string | null; createdById?: string | null; name?: string }) =>
+export const createFacility = (args?: { organizationId?: string | null; createdById?: string | null; name?: string; deletedAt?: string | null }) =>
   run<Facility>("createFacility", args);
+
+type RebuttalStatus = "PENDING" | "APPROVED" | "REJECTED" | "REQUEST_FIX";
+type Rebuttal = { id: string; title: string; status: RebuttalStatus };
+
+export const createRebuttal = (args: { userId: string; facilityId?: string | null; status?: RebuttalStatus; title?: string }) =>
+  run<Rebuttal>("createRebuttal", args);
+export const softDeleteFacility = (id: string) => run("softDeleteFacility", { id });
+export const setRebuttalStatus = (id: string, status: RebuttalStatus) => run("setRebuttalStatus", { id, status });
+export const countRebuttals = () => run<number>("countRebuttals");
+export const setRebuttalDocs = (id: string, documentUrl: string | null, watermarkedUrl: string | null) =>
+  run("setRebuttalDocs", { id, documentUrl, watermarkedUrl });
+
+type MemberFile = { id: string; filename: string; fileUrl: string };
+type ShareLink = { id: string; token: string };
+
+export const createMemberFile = (args: { userId: string; filename?: string }) => run<MemberFile>("createMemberFile", args);
+export const createShareLink = (args: {
+  userId: string;
+  shareAll?: boolean;
+  fileIds?: string[];
+  expiresAt?: string | null;
+  revokedAt?: string | null;
+}) => run<ShareLink>("createShareLink", args);
 
 /**
  * E2E scope note: driving the real login+OTP form would need either a real

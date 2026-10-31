@@ -15,6 +15,7 @@ more `Facility` rows and `User` rows.
 ```
 id, name, email (unique), password (bcrypt hash), role (MEMBER | MODERATOR | ADMIN)
 organizationId  -- nullable, FK to Organization, onDelete: SetNull
+failedLoginAttempts, lockedUntil  -- UNUSED since round 3 (see LoginAttempt); kept so nothing is dropped
 ```
 
 A user with `organizationId = null` is valid (e.g. a brand-new row created
@@ -32,6 +33,7 @@ status: ACTIVE | INACTIVE | PAST_DUE | CANCELED
 maxFacilities: Int
 stripeCustomerId, stripeSubscriptionId
 startDate, endDate, nextBillingDate
+canceledAt  -- declared so the schema matches the migrations; no code reads or writes it
 ```
 
 One membership per organization (`organizationId` is `@unique`). This is the
@@ -39,9 +41,8 @@ single row Stripe webhooks update. `maxFacilities` is denormalized onto this
 row by the webhook/membership-update routes for display purposes, but the
 actual limit enforcement at claim time is computed from `plan` via
 `canClaimFacility()`/`TIER_FACILITY_LIMITS` (see PERMISSIONS.md) — not read
-from this `maxFacilities` field. This means `maxFacilities` and the live
-`TIER_FACILITY_LIMITS` table can only drift apart if someone edits one
-without the other (see KNOWN_ISSUES.md).
+from this `maxFacilities` field. Every writer of `maxFacilities` now takes
+the number from `TIER_FACILITY_LIMITS`, so the two cannot drift.
 
 ### Facility
 
@@ -51,12 +52,11 @@ createdById    -- nullable, FK -> User, onDelete: SetNull  (AUDIT: who physicall
 organizationId -- nullable, FK -> Organization, onDelete: SetNull  (QUOTA: which org's count it is)
 ```
 
-This dual-FK design is CH-18's intended multi-seat mechanism: the quota check
-is supposed to use `organizationId` everywhere, while `createdById` stays as
-a historical "who actually clicked claim" record. In practice, this is only
-followed consistently on the *claim* path. The *rebuttal-submission* path
-still gates on `createdById` (or doesn't gate at all) — see TEST_REPORT.md
-finding #1/#2, this is the single biggest gap found in this test pass.
+This dual-FK design is CH-18's multi-seat mechanism: every ownership and
+quota check uses `organizationId`, while `createdById` stays as a historical
+"who actually clicked claim" record. Since the round-2 fixes this holds on
+the claim path, the rebuttal-submission route and action, the rebuttal read
+route, the public facility page and the dashboard pages.
 
 ### Rebuttal
 
@@ -85,14 +85,42 @@ short-lived, `purpose: "mfa_pending"`) binds the OTP step to the email that
 passed the password check, so the OTP endpoints never trust an email supplied
 in the request body. See "Auth / JWT flow" below.
 
+### LoginAttempt
+
+```
+id, email, ipAddress, failedAttempts, lastFailedAt, lockedUntil
+@@unique([email, ipAddress])
+```
+
+Login throttling state, one row per (email, client IP) pair that has failed
+the password step. `email` is whatever was typed, lower-cased, and need not
+belong to an account. See "Auth / JWT flow" step 2.
+
+### ProcessedStripeEvent
+
+```
+id (the Stripe event id), type, processedAt
+```
+
+One row per handled Stripe webhook event, used to make redelivery a no-op.
+
 ### Other models
 
 `CitationDeadline` (per-user, MEMBER-only), `ModerationLog` /
 `ArchivedModerationLog` (audit trail + 1-year archival job),
 `Template`/`TemplateDownload` (template library), `TakedownRequest` (72-hour
-SLA incident workflow), `ConsentLog` (e-signature audit trail for the
-membership agreement), `MemberFile`/`FileShareLink`/`FileShareLinkFile`/`FileShareAccessLog`
-(private file storage + time-limited attorney share links).
+SLA incident workflow), `MemberFile`/`FileShareLink`/`FileShareLinkFile`/`FileShareAccessLog`
+(private file storage + time-limited attorney share links; files belong to
+the uploading **user**, not to the organization).
+
+`ConsentLog` and `MembershipAgreement` (e-signature audit trail for the
+membership agreement) exist in the schema only. No route, server action,
+page, service or seed reads or writes them, so there is no signing flow.
+`ConsentLog.documentPublicId` is declared so the schema matches the
+migrations; nothing uses it.
+
+The schema and the migration history agree: `prisma migrate diff` between a
+fully migrated database and `schema.prisma` is empty (checked in round 3).
 
 ## How multi-seat works (CH-18)
 
@@ -102,21 +130,26 @@ membership agreement), `MemberFile`/`FileShareLink`/`FileShareLinkFile`/`FileSha
    at signup — every new signup gets its own fresh org.
 2. **Adding a second seat to an org** is a manual, ADMIN-only action:
    `linkSeatToOrg(targetUserId, orgId)` in `src/app/actions/linkSeatToOrg.ts`.
-   It re-points `User.organizationId`. There is no self-service "invite a
-   teammate" flow.
-3. **The JWT carries `orgId`** (see below), so every authenticated request
-   already knows which org's quota to check without an extra lookup in most
-   cases.
+   It only links a user who has **no** organization, to an organization
+   that exists; moving a user who is already in another org is refused.
+   There is no self-service "invite a teammate" flow.
+3. **The user's organization is read from the database on every request.**
+   The JWT still carries the `orgId` it was issued with, but
+   `resolveSessionUser()` in `src/lib/auth.ts` replaces it with the current
+   `User.organizationId` (one indexed primary-key lookup per request). A seat
+   that is linked, moved or removed therefore sees the change on its next
+   request, without signing in again. See "Auth / JWT flow" step 4.
 4. **Claiming a facility** checks the *organization's* current facility count
-   against its tier limit (`canClaimFacility`), not the individual user's —
-   this is the part of CH-18 that works as designed, and is covered
-   extensively in `tests/integration/claim-action.test.ts` and
+   against its tier limit (`canClaimFacility`), not the individual user's.
+   The check and the write are atomic: `withOrgFacilityQuota()` locks the
+   `Organization` row for the transaction. Covered in
+   `tests/integration/claim-action.test.ts` and
    `tests/integration/facility-limits.test.ts` (tier boundaries, cross-org
-   isolation, same-org sharing, no-org safety).
-5. **Submitting a rebuttal for a facility the org owns** is where CH-18 is
-   incomplete — see TEST_REPORT.md. The REST route checks the wrong field
-   (`createdById` instead of `organizationId`), and the server action used by
-   the dashboard form checks nothing at all.
+   isolation, same-org sharing, no-org safety, concurrency).
+5. **Submitting a rebuttal** requires the facility's `organizationId` to be
+   the caller's current organization, in both `POST /api/rebuttal` and the
+   `submitRebuttal()` server action, so any seat in the owning org can
+   submit. Only MEMBERs can submit.
 6. **Billing** activates/updates the `Membership` keyed by `organizationId`
    (from Stripe metadata), so it is already multi-seat-correct — any seat's
    dashboard reflects the same org-level plan/status.
@@ -125,8 +158,16 @@ membership agreement), `MemberFile`/`FileShareLink`/`FileShareLinkFile`/`FileSha
 
 1. `POST /api/auth/signup` — creates org+membership+user, hashes password
    with bcrypt (cost 10).
-2. `POST /api/auth/login` — verifies password; on success, creates an
-   `MfaOtp` row (unless a resend cooldown is active) and emails the code.
+2. `POST /api/auth/login` — first checks the throttle for this (email,
+   client IP) pair and answers 429 if it is locked. Then verifies the
+   password. A failure (wrong password **or** unknown email) is counted in
+   `LoginAttempt`; the 5th failure within 15 minutes locks the pair for 15
+   minutes. Because the lock is per address, an attacker who knows an email
+   locks only their own address and the real owner can still sign in from
+   theirs. The client IP comes from `X-Forwarded-For` (first entry), so the
+   app must sit behind a proxy that overwrites that header. On success the
+   pair's history is cleared, an
+   `MfaOtp` row is created (unless a resend cooldown is active) and the code is emailed.
    Issues a short-lived (`10 min`) `mfa-pending` cookie (httpOnly,
    `path: /api`) whose JWT payload is `{ email, purpose: "mfa_pending" }` —
    **not** a session token. `verifyToken()` explicitly rejects any token
@@ -140,10 +181,23 @@ membership agreement), `MemberFile`/`FileShareLink`/`FileShareLinkFile`/`FileSha
    guesses, and is single-use). On success, issues the real `auth-token`
    session cookie — a 7-day JWT with
    `{ userId, email, role, orgId }` — and clears the `mfa-pending` cookie.
-4. Every subsequent authenticated request reads `auth-token`, either via
-   `NextRequest.cookies` directly (most API routes) or via
-   `getUserFromRequest()` in `src/lib/auth.ts` (server actions and a few
-   routes), which wraps `next/headers` `cookies()` + `verifyToken()`.
+4. Every subsequent authenticated request reads `auth-token`. There are two
+   ways to turn it into a user, and which one a handler uses matters:
+   - `resolveSessionUser(token)` / `getUserFromRequest()` in
+     `src/lib/auth.ts` verify the token **and** load the user's current
+     `organizationId` from the database. Everything that makes an
+     organization-ownership decision uses these: all server actions, the
+     dashboard and facility pages, `POST /api/facility`, `POST /api/rebuttal`,
+     `GET`/`DELETE /api/rebuttal/[id]`, the Stripe checkout and portal
+     routes, and the `roleGuard` helpers. They return null (→ 401) if the
+     user no longer exists.
+   - `verifyToken(token)` in `src/lib/jwt.ts` only verifies the signature.
+     Routes whose checks need just `userId` and `role` still call it
+     directly (files, share links, deadlines, moderation, takedowns,
+     watermark, admin, UploadThing). `role` is therefore still token-based
+     and can be up to 7 days stale after a role change.
+   A static test (`tests/integration/stale-org.test.ts`) fails if any file
+   reads `.orgId` from a `verifyToken()` result.
 5. `src/middleware.ts` enforces authentication (401/redirect) for
    `/dashboard/*`, `/moderation/*`, `/admin/*`, `/api/admin/*`, `/member/*`
    only. **Most API routes are not in the middleware matcher** — they each
@@ -165,23 +219,35 @@ membership agreement), `MemberFile`/`FileShareLink`/`FileShareLinkFile`/`FileSha
   `invoice.payment_failed` (→ PAST_DUE), `invoice.upcoming` (reminder email
   only), `customer.subscription.deleted` (→ CANCELED, plan NONE,
   maxFacilities 0). All DB writes use `upsert`/`updateMany` keyed by
-  `organizationId` or `stripeSubscriptionId`, which makes them naturally
-  idempotent on redelivery — **but there is no `event.id` dedup table, so a
-  redelivered webhook event sends its confirmation/renewal/cancellation email
-  again** (confirmed in TEST_REPORT.md: DB state stays correct, email count
-  doubles).
+  `organizationId` or `stripeSubscriptionId`. Each `event.id` is also
+  claimed in `ProcessedStripeEvent` before it is handled, so a redelivered
+  event is acknowledged without re-sending its confirmation, renewal or
+  cancellation email. A failed handler releases its claim so Stripe's retry
+  is processed normally.
 - `POST /api/stripe/portal` opens a Billing Portal session for the org's
   `stripeCustomerId`.
 - `POST /api/membership/update` is a separate ADMIN-only manual override
   (`manage_memberships` permission) for support/testing — members can only
   reach an ACTIVE paid plan through the real Stripe flow.
 
-## Known structural inconsistency: three copies of the tier limit table
+## Tier limits: one table
 
-`TIER_FACILITY_LIMITS` (`src/lib/permissions.ts`), `TIER_LIMITS`
-(`src/config/tiers.ts`), and `tierConfig` (`src/app/api/stripe/webhook/route.ts`)
-all hard-code the same `{ NONE: 0, TIER_A: 1, TIER_B: 3, TIER_C: 10 }` mapping
-independently, with a comment in `permissions.ts` explaining the duplication
-is intentional (Edge-compatible middleware can't import a module that
-transitively pulls in `@prisma/client`). All three currently agree. There is
-no automated check that they stay that way — see KNOWN_ISSUES.md.
+`TIER_FACILITY_LIMITS` in `src/lib/permissions.ts` is the only place the
+`{ NONE: 0, TIER_A: 1, TIER_B: 3, TIER_C: 10 }` mapping is written. It lives
+there because that file is Edge-safe (no `@prisma/client` import).
+`TIER_LIMITS` in `src/config/tiers.ts` is the same object re-exported with a
+`Record<MembershipPlan, number>` type, and the Stripe webhook, the
+membership-update route and the seed import the numbers rather than repeat
+them. `tests/unit/permissions.test.ts` ("Tier limit single source of truth")
+fails if a second copy appears.
+
+## Server actions return their errors
+
+`submitRebuttal()`, `updateRebuttal()`, `claimFacility()` and
+`linkSeatToOrg()` return `{ success: true }` or `{ success: false, error }`
+and never throw a message meant for the user. Next.js replaces the message of
+an error thrown from a server action with a generic one in production builds,
+so a thrown message is readable only in development. Unexpected failures are
+logged on the server and returned as "Something went wrong. Please try
+again." The three rebuttal forms render the returned error in a
+`role="alert"` element.

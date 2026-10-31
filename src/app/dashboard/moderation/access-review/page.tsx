@@ -22,9 +22,11 @@ interface ReviewUser {
   role: string;
   createdAt: string;
   lastReviewedAt: string | null;
-  membership: {
-    plan: string;
-    status: string;
+  organization: {
+    membership: {
+      plan: string;
+      status: string;
+    } | null;
   } | null;
 }
 
@@ -118,7 +120,7 @@ export default function AccessReviewPage() {
               Quarterly Access Review
             </h1>
             <p className="mt-2 text-[var(--color-muted)]">
-              Review member accounts that haven't been verified in the last 90
+              Review member accounts that haven&apos;t been verified in the last 90
               days. Confirm they still hold valid facility licenses.
             </p>
           </div>
@@ -170,20 +172,20 @@ export default function AccessReviewPage() {
                     >
                       {user.role}
                     </Badge>
-                    {user.membership && (
+                    {user.organization?.membership && (
                       <Badge
                         variant={
-                          user.membership.status === "ACTIVE"
+                          user.organization.membership.status === "ACTIVE"
                             ? "default"
                             : "secondary"
                         }
                         className={
-                          user.membership.status === "ACTIVE"
+                          user.organization.membership.status === "ACTIVE"
                             ? "bg-[var(--color-success)] text-white text-xs"
                             : "text-xs"
                         }
                       >
-                        {user.membership.plan} — {user.membership.status}
+                        {user.organization.membership.plan} — {user.organization.membership.status}
                       </Badge>
                     )}
                   </div>

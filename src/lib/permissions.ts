@@ -11,7 +11,7 @@ export type Permission =
   | "view_own_facilities"    // MEMBER — view their claimed facilities
 
   // Rebuttal — member actions
-  | "submit_rebuttal"        // MEMBER — submit rebuttal for owned facility
+  | "submit_rebuttal"        // MEMBER only — submit rebuttal for a facility their org owns
   | "view_own_rebuttals"     // MEMBER — view their own rebuttal statuses
   | "edit_own_rebuttal"      // MEMBER — edit rebuttal when status is REQUEST_FIX
 
@@ -44,7 +44,7 @@ export const permissions: Record<Role, Permission[]> = {
     "manage_facilities",
     "claim_facility",
     "view_own_facilities",
-    "submit_rebuttal",
+    // submit_rebuttal is deliberately NOT granted: only MEMBERs submit rebuttals.
     "view_own_rebuttals",
     "edit_own_rebuttal",
     "moderate_rebuttals",
@@ -90,9 +90,13 @@ export function hasPermission(role: string, permission: Permission): boolean {
 }
 
 /**
- * Membership tier facility limits — must stay in sync with config/tiers.ts TIER_LIMITS.
- * (Duplicated here because config/tiers.ts imports from @prisma/client which is
- *  incompatible with the Next.js Edge runtime used by middleware.)
+ * Membership tier facility limits — THE single source of truth.
+ *
+ * This is the table canClaimFacility() enforces. Everything else that needs a
+ * limit (config/tiers.ts TIER_LIMITS, the Stripe webhook's maxFacilities, the
+ * membership-update route, the seed) imports it from here — never re-declare
+ * the numbers anywhere else. It lives in this file because permissions.ts is
+ * Edge-safe (no @prisma/client import), so middleware can use it too.
  *
  * Tier A  → 1 facility
  * Tier B  → 3 facilities

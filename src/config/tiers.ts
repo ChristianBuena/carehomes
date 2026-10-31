@@ -1,22 +1,19 @@
 import { MembershipPlan } from "@/generated/prisma/enums";
+import { TIER_FACILITY_LIMITS } from "@/lib/permissions";
 
 /**
- * Canonical tier facility limits — single source of truth for the entire platform.
- * Keep in sync with:
- *   - Stripe webhook (maxFacilities written to DB)
- *   - permissions.ts (TIER_FACILITY_LIMITS)
- *   - Pricing page UI
+ * Tier facility limits, typed against the Prisma MembershipPlan enum.
+ *
+ * This is NOT a second table: it is the same object as
+ * permissions.ts TIER_FACILITY_LIMITS (the table canClaimFacility enforces),
+ * which is the single source of truth. The Record<MembershipPlan, number>
+ * annotation makes tsc fail if the enum and that table ever disagree on keys.
  *
  * Tier A  → 1 facility   ($300/yr)
  * Tier B  → 3 facilities  ($400/yr)
  * Tier C  → 10 facilities ($500/yr)
  */
-export const TIER_LIMITS: Record<MembershipPlan, number> = {
-  NONE: 0,
-  TIER_A: 1,
-  TIER_B: 3,
-  TIER_C: 10,
-};
+export const TIER_LIMITS: Record<MembershipPlan, number> = TIER_FACILITY_LIMITS;
 
 /**
  * Get remaining facility slots for a user.

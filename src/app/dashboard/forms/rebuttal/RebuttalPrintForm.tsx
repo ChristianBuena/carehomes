@@ -16,6 +16,8 @@ interface Facility {
 export default function RebuttalPrintForm({ facilities }: { facilities: Facility[] }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Shown inline as well as toasted, so the message is visible on its own.
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -65,6 +67,7 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       if (!formData.facilityId || !formData.content) {
@@ -81,15 +84,23 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
       fd.append("content", `Date of Visit: ${formData.dateOfVisit}\nCitation Number: ${formData.citationNumber}\n\n${formData.content}\n\nSigned: ${formData.signature} (${formData.date})`);
       fd.append("redactionAcknowledged", "on");
 
-      await submitRebuttal(fd);
-      
+      // The action returns its errors (thrown messages are hidden in production).
+      const result = await submitRebuttal(fd);
+      if (!result.success) {
+        setSubmitError(result.error);
+        toast.error(result.error);
+        return;
+      }
+
       // Clear draft on successful submit
       localStorage.removeItem("rebuttal_form_draft");
       toast.success("Rebuttal submitted successfully!");
       router.push("/dashboard/rebuttals");
       
-    } catch (error: any) {
-      toast.error(error.message || "Failed to submit rebuttal");
+    } catch (error: unknown) {
+      const message = error instanceof Error && error.message ? error.message : "Failed to submit rebuttal";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -120,6 +131,15 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
           </Button>
         </div>
       </div>
+
+      {submitError && (
+        <div
+          role="alert"
+          className="print-hide mb-8 bg-[var(--color-danger)]/10 text-[var(--color-danger)] p-4 rounded-lg text-sm font-medium"
+        >
+          {submitError}
+        </div>
+      )}
 
       {/* The Printable Form Area */}
       <form onSubmit={handleSubmit} className="space-y-8 text-black">

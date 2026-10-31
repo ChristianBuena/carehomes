@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "rebuttalId is required" }, { status: 400 });
         }
 
-        const rebuttal = await prisma.rebuttal.findUnique({
-            where: { id: rebuttalId },
+        const rebuttal = await prisma.rebuttal.findFirst({
+            where: { id: rebuttalId, deletedAt: null },
         });
 
         if (!rebuttal) {
@@ -97,8 +97,11 @@ export async function POST(req: NextRequest) {
 
 /**
  * GET /api/rebuttal/watermark?rebuttalId=xxx
- * Returns the watermarked PDF URL — public access for approved rebuttals.
- * Returns the original URL only if requester is ADMIN or MODERATOR.
+ * ADMIN / MODERATOR only. Returns the watermarked and original URLs.
+ *
+ * Nobody else gets any document URL, for any status: public pages show
+ * approved rebuttal TEXT only until a working redaction pipeline exists
+ * (release decision 0c, docs/RELEASE_READINESS.md).
  */
 export async function GET(req: NextRequest) {
     try {
@@ -109,8 +112,8 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "rebuttalId is required" }, { status: 400 });
         }
 
-        const rebuttal = await prisma.rebuttal.findUnique({
-            where: { id: rebuttalId },
+        const rebuttal = await prisma.rebuttal.findFirst({
+            where: { id: rebuttalId, deletedAt: null },
             select: {
                 id: true,
                 status: true,
@@ -135,14 +138,13 @@ export async function GET(req: NextRequest) {
             // Not logged in — public access only
         }
 
-        // Public users only get watermarked version of APPROVED rebuttals
-        if (rebuttal.status !== "APPROVED" && !isPrivileged) {
+        if (!isPrivileged) {
             return NextResponse.json({ error: "Not authorized" }, { status: 403 });
         }
 
         return NextResponse.json({
             watermarkedUrl: rebuttal.watermarkedUrl ?? null,
-            originalUrl: isPrivileged ? rebuttal.documentUrl : null,
+            originalUrl: rebuttal.documentUrl,
         });
     } catch (error) {
         console.error("Watermark fetch error:", error);

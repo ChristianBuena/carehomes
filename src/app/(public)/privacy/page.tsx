@@ -7,9 +7,9 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Privacy Policy (DRAFT)",
+  title: "Privacy Policy ",
   description:
-    "Learn how CareHomesSupportDocs.org collects, uses, and protects your information.",
+    "Learn how CareHomesSupportDocs.com collects, uses, stores, and protects personal information for members and visitors."
 });
 
 const TOC_ITEMS = [
@@ -34,10 +34,10 @@ export default function PrivacyPolicyPage() {
     "@type": "WebPage",
     name: "Privacy Policy",
     description:
-      "Learn how CareHomesSupportDocs.org collects, uses, and protects your information.",
+      "Learn how CareHomesSupportDocs.com collects, uses, and protects your information.",
     publisher: {
       "@type": "Organization",
-      name: "CareHomesSupportDocs.org",
+      name: "CareHomesSupportDocs.com",
     },
     dateModified: new Date(lastUpdated).toISOString(),
   };
@@ -102,7 +102,7 @@ export default function PrivacyPolicyPage() {
                     1. Introduction & Scope
                   </h2>
                   <p>
-                    CareHomesSupportDocs.org ("we", "our", "us") respects your
+                    CareHomesSupportDocs.com (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) respects your
                     privacy. This Privacy Policy outlines how we collect, use,
                     disclose, and safeguard your information when you visit our
                     website or use our platform services.
@@ -158,7 +158,7 @@ export default function PrivacyPolicyPage() {
                       support inquiries, and platform updates.
                     </li>
                     <li>
-                      Improve and optimize our platform's functionality and
+                      Improve and optimize our platform&apos;s functionality and
                       security.
                     </li>
                   </ul>
@@ -247,7 +247,7 @@ export default function PrivacyPolicyPage() {
 
                 <section id="childrens-privacy" className="scroll-mt-28 mb-12">
                   <h2 className="text-2xl font-bold mb-4">
-                    10. Children's Privacy
+                    10. Children&apos;s Privacy
                   </h2>
                   <p>
                     Our platform is intended exclusively for adult professionals
@@ -264,7 +264,7 @@ export default function PrivacyPolicyPage() {
                     We may update this Privacy Policy periodically to reflect
                     changes in our practices or regulatory requirements. We will
                     notify members of significant changes via email and update
-                    the "Last Updated" date on this page.
+                    the &quot;Last Updated&quot; date on this page.
                   </p>
                 </section>
 
@@ -273,8 +273,8 @@ export default function PrivacyPolicyPage() {
                   <p>
                     If you have any questions, concerns, or privacy-related
                     requests, please contact our Privacy Officer at{" "}
-                    <a href="mailto:privacy@carehomessupportdocs.org">
-                      privacy@carehomessupportdocs.org
+                    <a href="mailto:privacy@carehomessupportdocs.com">
+                      privacy@carehomessupportdocs.com
                     </a>
                     .
                   </p>

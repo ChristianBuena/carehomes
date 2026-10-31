@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 
 /**
  * GET  /api/admin/access-review
@@ -40,13 +41,20 @@ export async function GET(req: NextRequest) {
         role: true,
         createdAt: true,
         lastReviewedAt: true,
-        membership: {
+        // Membership belongs to the Organization (CH-18), not the User.
+        organization: {
           select: {
-            plan: true,
-            status: true,
+            membership: {
+              select: {
+                plan: true,
+                status: true,
+              },
+            },
           },
         },
-      },
+        // `satisfies` makes tsc reject unknown fields here — the generic
+        // findMany() signature alone does not (see docs/KNOWN_ISSUES.md).
+      } satisfies Prisma.UserSelect,
       orderBy: { createdAt: "asc" },
     });
 

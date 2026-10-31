@@ -106,7 +106,7 @@ export default function TermsPage() {
                     1. Acceptance of Terms
                   </h2>
                   <p>
-                    By accessing or using CareHomesSupportDocs.org ("the Site"),
+                    By accessing or using CareHomesSupportDocs.org (&quot;the Site&quot;),
                     you agree to be bound by these Terms of Service. If you do
                     not agree to these terms, you may not use the Site.
                   </p>
@@ -177,7 +177,7 @@ export default function TermsPage() {
                     submitting content, you grant CareHomesSupportDocs.org a
                     non-exclusive, worldwide, royalty-free license to publish,
                     distribute, and display the content on the Site. The
-                    platform's code, design, and logos remain the exclusive
+                    platform&apos;s code, design, and logos remain the exclusive
                     property of CareHomesSupportDocs.org.
                   </p>
                 </section>
@@ -211,7 +211,7 @@ export default function TermsPage() {
                     9. Disclaimer of Warranties
                   </h2>
                   <p>
-                    The Site is provided on an "AS IS" and "AS AVAILABLE" basis.
+                    The Site is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis.
                     We disclaim all warranties, express or implied, including
                     merchantability, fitness for a particular purpose, and
                     non-infringement. We do not warrant that the site will be

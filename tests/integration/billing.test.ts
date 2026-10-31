@@ -37,6 +37,7 @@ import {
 import { buildRequest, authCookie } from "../helpers/http";
 import { setRequestHeaders, clearRequestContext } from "../helpers/nextRequestContext";
 import { sendEmail } from "@/lib/mailer";
+import { TIER_FACILITY_LIMITS, canClaimFacility } from "@/lib/permissions";
 import { POST as webhook } from "@/app/api/stripe/webhook/route";
 import { POST as checkout } from "@/app/api/stripe/checkout/route";
 import { POST as portal } from "@/app/api/stripe/portal/route";
@@ -173,6 +174,26 @@ describe("POST /api/stripe/webhook — signature verification", () => {
 });
 
 describe("POST /api/stripe/webhook — checkout.session.completed activates membership by organizationId", () => {
+  for (const [tier, priceEnv] of [["TIER_A", "STRIPE_PRICE_A"], ["TIER_B", "STRIPE_PRICE_B"], ["TIER_C", "STRIPE_PRICE_C"]] as const) {
+    it(`${tier}: the maxFacilities written by the webhook is exactly the limit canClaimFacility enforces (single source of truth)`, async () => {
+      const org = await createOrg();
+      const res = await webhook(
+        signedWebhookRequest({
+          id: `evt_limit_${tier}`,
+          type: "checkout.session.completed",
+          data: { object: { metadata: { orgId: org.id, priceId: process.env[priceEnv] }, customer: "cus_l", subscription: null } },
+        })
+      );
+      expect(res.status).toBe(200);
+
+      const membership = await testDb.membership.findUnique({ where: { organizationId: org.id } });
+      expect(membership?.plan).toBe(tier);
+      expect(membership?.maxFacilities).toBe(TIER_FACILITY_LIMITS[tier]);
+      expect(canClaimFacility(tier, membership!.maxFacilities)).toBe(false);
+      expect(canClaimFacility(tier, membership!.maxFacilities - 1)).toBe(true);
+    });
+  }
+
   it("creates an ACTIVE Membership for the org with the correct tier and maxFacilities", async () => {
     const org = await createOrg();
     await createUser({ organizationId: org.id, role: "MEMBER" }); // for the confirmation email lookup
@@ -266,11 +287,10 @@ describe("POST /api/stripe/webhook — lifecycle events", () => {
   });
 });
 
-describe("POST /api/stripe/webhook — idempotency on duplicate delivery (CONFIRMED GAP)", () => {
-  it("DB state stays idempotent (upsert/updateMany) on a replayed checkout.session.completed, " +
-     "but there is NO event.id dedup table, so delivering the SAME event twice sends the " +
-     "confirmation email TWICE — Stripe explicitly says webhook handlers must tolerate and " +
-     "dedupe duplicate deliveries, which this handler does not do for side effects", async () => {
+describe("POST /api/stripe/webhook — idempotency on duplicate delivery (FIXED)", () => {
+  it("FIXED (was CONFIRMED GAP, email sent twice): delivering the SAME event twice keeps the DB idempotent " +
+     "AND sends the confirmation email exactly ONCE — the event.id is recorded in ProcessedStripeEvent and a " +
+     "redelivery skips its side effects", async () => {
     const org = await createOrg();
     await createUser({ organizationId: org.id, role: "MEMBER" });
     const payload = {
@@ -281,15 +301,89 @@ describe("POST /api/stripe/webhook — idempotency on duplicate delivery (CONFIR
 
     const res1 = await webhook(signedWebhookRequest(payload));
     const res2 = await webhook(signedWebhookRequest(payload));
+    const res3 = await webhook(signedWebhookRequest(payload));
     expect(res1.status).toBe(200);
     expect(res2.status).toBe(200);
+    expect(res3.status).toBe(200);
 
     // DB side: idempotent, exactly one Membership row, correct final state.
     const memberships = await testDb.membership.findMany({ where: { organizationId: org.id } });
     expect(memberships).toHaveLength(1);
+    expect(memberships[0].status).toBe("ACTIVE");
 
-    // Side-effect (email) is NOT deduplicated: sent once per delivery, twice total.
+    // Side-effect (email) IS deduplicated: once per event, not once per delivery.
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+
+    const processed = await testDb.processedStripeEvent.findMany();
+    expect(processed.map((p) => ({ id: p.id, type: p.type }))).toEqual([
+      { id: "evt_dup_1", type: "checkout.session.completed" },
+    ]);
+  });
+
+  it("two DIFFERENT events for the same org each send their own email (dedup is per event.id, not per org/type)", async () => {
+    const org = await createOrg();
+    await createUser({ organizationId: org.id, role: "MEMBER" });
+    const object = { metadata: { orgId: org.id, priceId: process.env.STRIPE_PRICE_A }, customer: "cus_two", subscription: null };
+
+    await webhook(signedWebhookRequest({ id: "evt_two_a", type: "checkout.session.completed", data: { object } }));
+    await webhook(signedWebhookRequest({ id: "evt_two_b", type: "checkout.session.completed", data: { object } }));
+
     expect(sendEmail).toHaveBeenCalledTimes(2);
+    expect(await testDb.processedStripeEvent.count()).toBe(2);
+  });
+
+  it("the same event delivered CONCURRENTLY (5 at once) still sends exactly one email", async () => {
+    const org = await createOrg();
+    await createUser({ organizationId: org.id, role: "MEMBER" });
+    const payload = {
+      id: "evt_concurrent_1",
+      type: "checkout.session.completed",
+      data: { object: { metadata: { orgId: org.id, priceId: process.env.STRIPE_PRICE_B }, customer: "cus_c", subscription: null } },
+    };
+    // Build every signed request first: signedWebhookRequest() sets the shared header mock.
+    const requests = Array.from({ length: 5 }, () => signedWebhookRequest(payload));
+
+    const responses = await Promise.all(requests.map((r) => webhook(r)));
+    expect(responses.map((r) => r.status)).toEqual([200, 200, 200, 200, 200]);
+
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect(await testDb.membership.count({ where: { organizationId: org.id } })).toBe(1);
+    expect(await testDb.processedStripeEvent.count()).toBe(1);
+  });
+
+  it("if processing FAILS (500), the event is not marked processed, so Stripe's retry is handled in full " +
+     "and its email is still sent", async () => {
+    const org = await createOrg();
+    await createUser({ organizationId: org.id, role: "MEMBER" });
+    const payload = {
+      id: "evt_retry_1",
+      type: "checkout.session.completed",
+      data: { object: { metadata: { orgId: org.id, priceId: process.env.STRIPE_PRICE_A }, customer: "cus_r", subscription: "sub_retry" } },
+    };
+
+    // First delivery: Stripe's API is down while fetching the subscription.
+    mockSubscriptionsRetrieve.mockRejectedValueOnce(new Error("stripe unavailable"));
+    const failed = await webhook(signedWebhookRequest(payload));
+    expect(failed.status).toBe(500);
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(await testDb.processedStripeEvent.count()).toBe(0);
+
+    // Retry succeeds and is treated as a first delivery.
+    mockSubscriptionsRetrieve.mockResolvedValueOnce({ id: "sub_retry", current_period_end: Math.floor(Date.now() / 1000) + 86400 });
+    const retried = await webhook(signedWebhookRequest(payload));
+    expect(retried.status).toBe(200);
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect(await testDb.processedStripeEvent.count()).toBe(1);
+  });
+
+  it("an event with an invalid signature is rejected before anything is recorded", async () => {
+    const headers = { "stripe-signature": "t=1,v1=bad", "content-type": "application/json" };
+    setRequestHeaders(headers);
+    const res = await webhook(
+      new Request("http://localhost/api/stripe/webhook", { method: "POST", headers, body: JSON.stringify({ id: "evt_forged" }) })
+    );
+    expect(res.status).toBe(400);
+    expect(await testDb.processedStripeEvent.count()).toBe(0);
   });
 });
 

@@ -69,8 +69,8 @@ describe("claimFacility() server action — real code path", () => {
     expect(result.error).toMatch(/limit reached/i);
   });
 
-  it("CONFIRMED BUG: a soft-deleted facility still counts against the org's quota on this path " +
-     "(no deletedAt filter in claimFacility.ts, unlike /api/facility which does filter it)", async () => {
+  it("FIXED (was CONFIRMED BUG): a soft-deleted facility does NOT count against the org's quota on this path " +
+     "any more — claimFacility and /api/facility now share one quota check that filters deletedAt: null", async () => {
     const org = await createOrg();
     await createMembership({ organizationId: org.id, plan: "TIER_A", status: "ACTIVE" });
     const user = await createUser({ organizationId: org.id, role: "MEMBER" });
@@ -78,11 +78,29 @@ describe("claimFacility() server action — real code path", () => {
     const target = await createFacility({});
     asUser(user);
 
+    // The org has 0 ACTIVE facilities (the one it "has" is soft-deleted), so
+    // the claim is allowed.
     const result = await claimFacility(target.id);
-    // The org has 0 ACTIVE facilities (the one it "has" is soft-deleted), so a
-    // correct implementation would allow this claim. It does not.
+    expect(result.success).toBe(true);
+
+    const reread = await testDb.facility.findUnique({ where: { id: target.id } });
+    expect(reread!.organizationId).toBe(org.id);
+  });
+
+  it("a soft-deleted facility cannot be claimed — it is reported as not found and left untouched", async () => {
+    const org = await createOrg();
+    await createMembership({ organizationId: org.id, plan: "TIER_C", status: "ACTIVE" });
+    const user = await createUser({ organizationId: org.id, role: "MEMBER" });
+    const deleted = await createFacility({ deletedAt: new Date() });
+    asUser(user);
+
+    const result = await claimFacility(deleted.id);
     expect(result.success).toBe(false);
-    expect(result.error).toMatch(/limit reached/i);
+    expect(result.error).toMatch(/facility not found/i);
+
+    const reread = await testDb.facility.findUnique({ where: { id: deleted.id } });
+    expect(reread!.organizationId).toBeNull();
+    expect(reread!.createdById).toBeNull();
   });
 
   it("blocks with no active membership", async () => {
@@ -157,6 +175,65 @@ describe("claimFacility() server action — real code path", () => {
   });
 });
 
+describe("claimFacility() server action — race conditions (FIXED)", () => {
+  it("20 trials: the same TIER_A org claiming TWO different unclaimed facilities concurrently " +
+     "never ends up with both — exactly one claim succeeds, the other gets 'limit reached'", async () => {
+    const TRIALS = 20;
+    let overrunCount = 0;
+
+    for (let i = 0; i < TRIALS; i++) {
+      const org = await createOrg();
+      await createMembership({ organizationId: org.id, plan: "TIER_A", status: "ACTIVE" });
+      const user = await createUser({ organizationId: org.id, role: "MEMBER", email: `action-race-${i}@example.com` });
+      const [f1, f2] = await Promise.all([createFacility({}), createFacility({})]);
+      asUser(user);
+
+      const results = await Promise.all([claimFacility(f1.id), claimFacility(f2.id)]);
+
+      const finalCount = await testDb.facility.count({ where: { organizationId: org.id, deletedAt: null } });
+      if (finalCount > 1) overrunCount += 1;
+
+      expect(results.filter((r) => r.success)).toHaveLength(1);
+      expect(results.find((r) => !r.success)!.error).toMatch(/limit reached/i);
+      expect(finalCount).toBe(1);
+    }
+
+    console.log(`[race-condition] claimFacility action: org limit exceeded in ${overrunCount}/${TRIALS} trials.`);
+    expect(overrunCount).toBe(0);
+  }, 60000);
+
+  it("20 trials: two DIFFERENT orgs claiming the SAME unclaimed facility concurrently — exactly one wins, " +
+     "the loser is told it is already claimed, and the facility ends up owned by the winner only", async () => {
+    for (let i = 0; i < 20; i++) {
+      const orgA = await createOrg();
+      await createMembership({ organizationId: orgA.id, plan: "TIER_C", status: "ACTIVE" });
+      const userA = await createUser({ organizationId: orgA.id, role: "MEMBER", email: `same-a-${i}@example.com` });
+      const orgB = await createOrg();
+      await createMembership({ organizationId: orgB.id, plan: "TIER_C", status: "ACTIVE" });
+      const userB = await createUser({ organizationId: orgB.id, role: "MEMBER", email: `same-b-${i}@example.com` });
+      const facility = await createFacility({});
+
+      // getUserFromRequest() is the first thing each action call does, so the
+      // first call is "logged in" as A and the second as B.
+      mockGetUserFromRequest.mockReset();
+      mockGetUserFromRequest
+        .mockResolvedValueOnce({ userId: userA.id, email: userA.email, role: "MEMBER", orgId: orgA.id })
+        .mockResolvedValueOnce({ userId: userB.id, email: userB.email, role: "MEMBER", orgId: orgB.id });
+
+      const [resA, resB] = await Promise.all([claimFacility(facility.id), claimFacility(facility.id)]);
+
+      expect([resA.success, resB.success].filter(Boolean)).toHaveLength(1);
+      const loser = resA.success ? resB : resA;
+      expect(loser.error).toMatch(/already been claimed/i);
+
+      const reread = await testDb.facility.findUnique({ where: { id: facility.id } });
+      const winner = resA.success ? { user: userA, org: orgA } : { user: userB, org: orgB };
+      expect(reread!.organizationId).toBe(winner.org.id);
+      expect(reread!.createdById).toBe(winner.user.id);
+    }
+  }, 60000);
+});
+
 describe("linkSeatToOrg() server action — real code path", () => {
   it("ADMIN can link a user with no org to an existing org", async () => {
     const admin = await createUser({ role: "ADMIN", organizationId: null });
@@ -202,26 +279,46 @@ describe("linkSeatToOrg() server action — real code path", () => {
     expect(result.error).toBe("Target user not found");
   });
 
-  it("CONFIRMED BUG: linking to a nonexistent organizationId is NOT validated up front — " +
-     "it falls through to a raw DB foreign-key violation caught by the generic catch block, " +
-     "surfacing a vague 'Failed to link seat' error instead of 'Organization not found'", async () => {
+  it("FIXED (was CONFIRMED BUG): linking to a nonexistent organizationId is validated up front and " +
+     "rejected with a clear 'Organization not found' (not the generic catch-all from a foreign-key violation)", async () => {
     const admin = await createUser({ role: "ADMIN", organizationId: null });
     const target = await createUser({ organizationId: null, role: "MEMBER" });
     asUser(admin);
 
     const result = await linkSeatToOrg(target.id, "org_does_not_exist");
     expect(result.success).toBe(false);
-    // It IS rejected (good), but not with a clear "Organization not found" message —
-    // it's the generic catch-all, because there is no upfront existence check.
-    expect(result.error).toBe("Failed to link seat to organization");
+    expect(result.error).toBe("Organization not found");
 
     // And the user's organizationId must NOT have changed.
     const reread = await testDb.user.findUnique({ where: { id: target.id } });
     expect(reread!.organizationId).toBeNull();
   });
 
-  it("CONFIRMED BUG: a user already belonging to a DIFFERENT org can be silently re-linked " +
-     "to a new org with no block and no transfer of their existing facility claims", async () => {
+  it("an empty orgId is rejected with 'Organization not found'", async () => {
+    const admin = await createUser({ role: "ADMIN", organizationId: null });
+    const target = await createUser({ organizationId: null, role: "MEMBER" });
+    asUser(admin);
+
+    const result = await linkSeatToOrg(target.id, "");
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Organization not found");
+  });
+
+  it("an empty orgId can never be used to UNLINK a user from their current org", async () => {
+    const admin = await createUser({ role: "ADMIN", organizationId: null });
+    const org = await createOrg();
+    const target = await createUser({ organizationId: org.id, role: "MEMBER" });
+    asUser(admin);
+
+    const result = await linkSeatToOrg(target.id, "");
+    expect(result.success).toBe(false);
+
+    const reread = await testDb.user.findUnique({ where: { id: target.id } });
+    expect(reread!.organizationId).toBe(org.id);
+  });
+
+  it("FIXED (was CONFIRMED BUG): a user already belonging to a DIFFERENT org can NOT be re-linked — " +
+     "the move is blocked with a clear message, the user stays in their org, and their facility claims are untouched", async () => {
     const admin = await createUser({ role: "ADMIN", organizationId: null });
 
     const orgA = await createOrg();
@@ -232,17 +329,30 @@ describe("linkSeatToOrg() server action — real code path", () => {
     asUser(admin);
 
     const result = await linkSeatToOrg(userInOrgA.id, orgB.id);
-    // The task says this should likely be rejected ("if that is the rule"). It is not rejected.
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("User already belongs to another organization");
 
     const reread = await testDb.user.findUnique({ where: { id: userInOrgA.id } });
-    expect(reread!.organizationId).toBe(orgB.id);
+    expect(reread!.organizationId).toBe(orgA.id);
 
-    // The facility they claimed under orgA is untouched — still points at orgA,
-    // now orphaned from the user who is no longer in that org.
+    // The facility they claimed under orgA still belongs to orgA, and is still
+    // reachable from a user in that org (nothing was orphaned).
     const facilities = await testDb.facility.findMany({ where: { organizationId: orgA.id } });
     expect(facilities).toHaveLength(1);
     expect(facilities[0].createdById).toBe(userInOrgA.id);
+    expect(await testDb.facility.count({ where: { organizationId: orgB.id } })).toBe(0);
+  });
+
+  it("the block applies even when the user has claimed nothing in their current org", async () => {
+    const admin = await createUser({ role: "ADMIN", organizationId: null });
+    const orgA = await createOrg();
+    const orgB = await createOrg();
+    const user = await createUser({ organizationId: orgA.id, role: "MEMBER" });
+    asUser(admin);
+
+    const result = await linkSeatToOrg(user.id, orgB.id);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("User already belongs to another organization");
   });
 
   it("already-in-this-org is rejected with a clear message (no-op protection that DOES exist)", async () => {

@@ -83,8 +83,14 @@ in the shell environment take priority over both.
 
 ```bash
 npx prisma migrate deploy   # applies every migration in prisma/migrations in order
-npm run db:seed             # optional: seeds demo users, facilities, and rebuttals
+npm run db:seed             # optional, local/dev only: seeds demo users, facilities, and rebuttals
 ```
+
+The seed has no built-in passwords and refuses to run when `NODE_ENV` is
+`production`. Set `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` and
+`SEED_DEMO_PASSWORD` (12+ characters each) in your shell or `.env.local`
+first. For production, create the first admin as described in
+`docs/SECRET_ROTATION.md` ("Creating the first admin safely").
 
 **Note on the local `carehomes` database.** During this test pass, the local
 dev database used by `.env.local` was found to have never been migrated

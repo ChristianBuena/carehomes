@@ -24,14 +24,25 @@ export default async function ModerationPage() {
   }
 
   // Fetch pending rebuttals (excluding soft-deleted)
-  const pendingRebuttals = await prisma.rebuttal.findMany({
-    where: { status: "PENDING", deletedAt: null },
-    include: {
-      user: { select: { name: true, email: true } },
-      facility: { select: { name: true, slug: true, facilityNumber: true } },
-    },
-    orderBy: { createdAt: "asc" }, // Oldest first
-  });
+  // Explicit select: these rows are passed to a client component, so every
+  // field here ends up in the browser. Storage URLs stay on the server
+  // (SOW 11.3); the document opens through /api/rebuttal/[id]/document.
+  const pendingRebuttals = (
+    await prisma.rebuttal.findMany({
+      where: { status: "PENDING", deletedAt: null },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        status: true,
+        createdAt: true,
+        documentUrl: true,
+        user: { select: { name: true, email: true } },
+        facility: { select: { name: true, slug: true, facilityNumber: true } },
+      },
+      orderBy: { createdAt: "asc" }, // Oldest first
+    })
+  ).map(({ documentUrl, ...r }) => ({ ...r, hasDocument: documentUrl !== null }));
 
   // Quarterly access review count
   const ninetyDaysAgo = new Date();

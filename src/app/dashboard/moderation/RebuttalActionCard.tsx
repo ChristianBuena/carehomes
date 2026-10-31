@@ -11,6 +11,7 @@ interface RebuttalWithRelations {
   content: string;
   status: string;
   createdAt: Date | string;
+  hasDocument: boolean;
   user: {
     name: string | null;
     email: string;
@@ -84,6 +85,17 @@ export function RebuttalActionCard({ rebuttal }: RebuttalActionCardProps) {
           <div className="bg-[var(--color-bg)] rounded-lg p-4 text-sm text-[var(--color-text)] whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
             {rebuttal.content}
           </div>
+
+          {rebuttal.hasDocument && (
+            <a
+              href={`/api/rebuttal/${rebuttal.id}/document`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--color-primary)] hover:underline"
+            >
+              View supporting document
+            </a>
+          )}
           
           {error && (
             <p className="text-sm text-[var(--color-danger)] font-medium">

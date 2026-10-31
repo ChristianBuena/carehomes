@@ -21,6 +21,8 @@ export const revalidate = 300;
 
 export const metadata: Metadata = buildMetadata({
   title: "CareHomesSupportDocs.org — Rebuttal Management for Care Facilities",
+  description:
+    "CareHomesSupportDocs.org is a nonprofit platform that helps licensed California care facility operators securely manage, submit, and publish rebuttals to regulatory citations.",
 });
 
 const ngoSchema = {

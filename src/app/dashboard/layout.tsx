@@ -81,6 +81,12 @@ const NAV_LINKS = [
     permission: "manage_users",
   },
   {
+    name: "Reports",
+    href: "/dashboard/reports",
+    icon: ClipboardCheck,
+    permission: "manage_users",
+  },
+  {
     name: "Manage Facilities",
     href: "/dashboard/facilities/manage",
     icon: Settings,

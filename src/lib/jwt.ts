@@ -22,6 +22,12 @@ export type AuthTokenPayload = {
    * "@/lib/auth", which replace it with the current value from the database.
    */
   orgId: string;
+  /**
+   * User.tokenVersion when the token was issued. A token whose version no
+   * longer matches the database is revoked (see resolveSessionUser). Tokens
+   * issued before this claim existed count as version 0.
+   */
+  tv?: number;
 };
 
 /**
@@ -36,8 +42,12 @@ export async function signToken(payload: AuthTokenPayload) {
 }
 
 /**
- * Verify JWT token
+ * Verify JWT token (signature, expiry, purpose) WITHOUT the database checks.
  * Rejects MFA-pending tokens so they can never be used as a session.
+ *
+ * Do not use this to authorize a request: it cannot see revoked sessions or
+ * role changes. Use resolveSessionUser() / getUserFromRequest() from
+ * "@/lib/auth" instead (tests/unit/session-guard.test.ts enforces this).
  */
 export async function verifyToken(token: string): Promise<AuthTokenPayload> {
   const { payload } = await jwtVerify(token, secret);

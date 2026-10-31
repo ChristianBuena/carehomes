@@ -73,7 +73,7 @@ Meeting schedule and attendees are subject to client confirmation.
 |----------|-------------|-----------------|
 | P1 | Critical platform outage or security incident | Less than 4 business hours |
 | P2 | Major functionality affected | Within 1 business day |
-| P3 | Minor functionality issue | Within 3 business days |
+| P3 | Minor functionality issue | Within 2 business days |
 | P4 | Enhancement request or cosmetic issue | Next planned maintenance cycle |
 
 ---

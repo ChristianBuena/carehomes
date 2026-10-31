@@ -164,16 +164,22 @@ test("a TEAMMATE sees the org's facilities on the dashboard pages too: 'My Facil
 
   await loginAs(page, teammate);
 
+  // On a cold dev-server load React briefly keeps a display:none copy of the
+  // streamed page next to the visible one (S-19, tests/e2e/action-errors.spec.ts).
+  // Users only ever see one copy, so match visible elements only; the assertions
+  // are unchanged.
+  const visible = { visible: true } as const;
+
   await page.goto("/dashboard/facilities");
-  await expect(page.getByText(facility.name)).toBeVisible();
+  await expect(page.getByText(facility.name).filter(visible)).toBeVisible();
   await expect(page.getByText("Someone Elses Home")).toHaveCount(0);
-  await expect(page.getByText(/1 of 3 facility slots used/i)).toBeVisible();
+  await expect(page.getByText(/1 of 3 facility slots used/i).filter(visible)).toBeVisible();
 
   await page.goto("/dashboard");
-  await expect(page.getByText(/1 Owned/)).toBeVisible();
+  await expect(page.getByText(/1 Owned/).filter(visible)).toBeVisible();
 
   await page.goto("/dashboard/forms/redaction");
-  const options = page.locator("select[name='facilityId'] option");
+  const options = page.locator("select[name='facilityId']").filter(visible).locator("option");
   await expect(options.filter({ hasText: facility.name })).toHaveCount(1);
   await expect(options.filter({ hasText: "Someone Elses Home" })).toHaveCount(0);
 });

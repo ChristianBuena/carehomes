@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { getRebuttalById, softDeleteRebuttal } from "@/services/rebuttal.service";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 // GET /api/rebuttal/[id] — fetch a single rebuttal by ID (active only)
 // Restricted to the rebuttal's author, members of the facility's organization,
@@ -50,7 +51,15 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(rebuttal);
+    // Storage URLs stay on the server (SOW 11.3): the document is served by
+    // /api/rebuttal/[id]/document with the same access rule as this route.
+    const { documentUrl, watermarkedUrl: _watermarkedUrl, ...safe } = rebuttal;
+    void _watermarkedUrl;
+    return NextResponse.json({
+      ...safe,
+      hasDocument: documentUrl !== null,
+      documentDownloadUrl: documentUrl ? `/api/rebuttal/${rebuttal.id}/document` : null,
+    });
   } catch {
     return NextResponse.json({ error: "Failed to fetch rebuttal" }, { status: 500 });
   }
@@ -96,6 +105,14 @@ export async function DELETE(
 
     // SOFT DELETE — sets deletedAt, does NOT remove row
     await softDeleteRebuttal(id);
+    await recordAudit({
+      action: "REBUTTAL_DELETED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: id,
+      ...auditContextFromRequest(req),
+    });
 
     return NextResponse.json({ success: true, id });
   } catch {

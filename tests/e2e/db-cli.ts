@@ -68,6 +68,35 @@ async function main() {
       result = await testDb.rebuttal.update({ where: { id }, data: { documentUrl, watermarkedUrl } });
       break;
     }
+    case "listAccessReviews":
+      result = await testDb.accessReview.findMany({
+        where: { userId: (args as { userId: string }).userId },
+        select: { reviewerId: true, decision: true, notes: true },
+      });
+      break;
+    case "listShareLinks":
+      result = await testDb.fileShareLink.findMany({
+        where: { userId: (args as { userId: string }).userId },
+        select: { expiry: true, expiresAt: true },
+      });
+      break;
+    case "revokeShareLink":
+      result = await testDb.fileShareLink.update({
+        where: { id: (args as { id: string }).id },
+        data: { revokedAt: new Date() },
+      });
+      break;
+    case "setRebuttalWatermark": {
+      const { id, watermarkStatus, watermarkError } = args as { id: string; watermarkStatus: "APPLIED" | "FAILED" | null; watermarkError: string | null };
+      result = await testDb.rebuttal.update({ where: { id }, data: { watermarkStatus, watermarkError } });
+      break;
+    }
+    case "getRebuttalWatermark":
+      result = await testDb.rebuttal.findUnique({
+        where: { id: (args as { id: string }).id },
+        select: { watermarkStatus: true, watermarkError: true },
+      });
+      break;
     case "countRebuttals":
       result = await testDb.rebuttal.count();
       break;

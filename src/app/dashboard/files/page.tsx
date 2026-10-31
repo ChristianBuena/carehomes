@@ -13,14 +13,14 @@ import {
   Clock,
   Eye,
 } from "lucide-react";
-import type { ShareLinkExpiry, ShareLinkSummary, CreateShareLinkResponse } from "@/types/share";
+import { SHARE_LINK_EXPIRY_VALUES, type ShareLinkExpiry, type ShareLinkSummary, type CreateShareLinkResponse } from "@/types/share";
 
 // ── Local types ───────────────────────────────────────────────────────────────
 
 interface MemberFile {
   id: string;
   filename: string;
-  fileUrl: string;
+  downloadUrl: string;
   fileSize: number;
   fileType: string;
   mimeType: string;
@@ -96,8 +96,8 @@ function ShareDialog({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Link expiry
           </label>
-          <div className="grid grid-cols-3 gap-2">
-            {(["7d", "30d", null] as ShareLinkExpiry[]).map((opt) => (
+          <div className="grid grid-cols-2 gap-2">
+            {SHARE_LINK_EXPIRY_VALUES.map((opt) => (
               <button
                 key={String(opt)}
                 onClick={() => setExpiry(opt)}
@@ -107,7 +107,7 @@ function ShareDialog({
                     : "border-[var(--color-border)] text-gray-600 hover:bg-gray-50"
                 }`}
               >
-                {opt === "7d" ? "7 days" : opt === "30d" ? "30 days" : "No expiry"}
+                {opt === "7d" ? "7 days" : "30 days"}
               </button>
             ))}
           </div>
@@ -510,9 +510,7 @@ export default function FilesPage() {
                   {file.isQsfDoc ? "Untag QSF" : "Tag QSF"}
                 </button>
                 <a
-                  href={file.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={`${file.downloadUrl}?download=1`}
                   className="text-sm text-[var(--color-primary)] hover:underline"
                 >
                   Download

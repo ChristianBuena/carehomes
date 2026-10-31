@@ -30,25 +30,15 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
     redactionAcknowledged: false,
   });
 
-  // Load draft from localStorage on mount
+  // No drafts in browser storage (SOW 11.3): an unredacted draft could stay
+  // on a shared office computer. Remove any draft an older version saved.
   useEffect(() => {
-    const savedDraft = localStorage.getItem("rebuttal_form_draft");
-    if (savedDraft) {
-      try {
-        setFormData(JSON.parse(savedDraft));
-      } catch (e) {
-        console.error("Failed to parse saved draft", e);
-      }
+    try {
+      localStorage.removeItem("rebuttal_form_draft");
+    } catch {
+      // Storage unavailable (private mode): nothing to clean up.
     }
   }, []);
-
-  // Save to localStorage when form data changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      localStorage.setItem("rebuttal_form_draft", JSON.stringify(formData));
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [formData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -81,7 +71,18 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
       const fd = new FormData();
       fd.append("title", `Response to Citation ${formData.citationNumber || "Unknown"}`);
       fd.append("facilityId", formData.facilityId);
-      fd.append("content", `Date of Visit: ${formData.dateOfVisit}\nCitation Number: ${formData.citationNumber}\n\n${formData.content}\n\nSigned: ${formData.signature} (${formData.date})`);
+      // The published text holds the citation number and the response only.
+      // The signer's name, signing date and visit date are stored privately
+      // (SOW 11.3) and never published.
+      fd.append(
+        "content",
+        formData.citationNumber
+          ? `Citation Number: ${formData.citationNumber}\n\n${formData.content}`
+          : formData.content
+      );
+      fd.append("signerName", formData.signature);
+      fd.append("signedOn", formData.date);
+      fd.append("visitDate", formData.dateOfVisit);
       fd.append("redactionAcknowledged", "on");
 
       // The action returns its errors (thrown messages are hidden in production).
@@ -92,8 +93,6 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
         return;
       }
 
-      // Clear draft on successful submit
-      localStorage.removeItem("rebuttal_form_draft");
       toast.success("Rebuttal submitted successfully!");
       router.push("/dashboard/rebuttals");
       
@@ -118,7 +117,7 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
             <FileText className="w-5 h-5 text-[var(--color-primary)]" /> Fillable Rebuttal Form
           </h2>
           <p className="text-sm text-[var(--color-muted)] mt-1">
-            Fill out this form to generate a clean PDF or submit it directly to your dashboard. Drafts are auto-saved.
+            Fill out this form to generate a clean PDF or submit it directly to your dashboard. Your entries are not saved in this browser; submit or print before leaving the page.
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">

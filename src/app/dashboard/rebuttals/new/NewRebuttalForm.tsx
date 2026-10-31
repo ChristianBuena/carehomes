@@ -127,7 +127,7 @@ export default function NewRebuttalForm({ facilities }: { facilities: FacilityOp
                 type="file" 
                 id="document" 
                 name="document" 
-                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={handleFileChange}
               />
@@ -141,7 +141,7 @@ export default function NewRebuttalForm({ facilities }: { facilities: FacilityOp
                   )}
                 </div>
                 <p className="text-xs text-[var(--color-muted)]">
-                  PDF, PNG, JPG or Word (max. 10MB)
+                  PDF, PNG or JPG (max. 10MB)
                 </p>
               </div>
             </div>

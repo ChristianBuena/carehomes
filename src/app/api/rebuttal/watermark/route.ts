@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { applyWatermark, isPdfFile, isPdfTextSearchable } from "@/services/pdf-watermark.service";
 
 /**
  * POST /api/rebuttal/watermark
- * Admin/Moderator triggers watermarking of an approved rebuttal's document.
- * Called automatically when a rebuttal is approved.
+ * Admin/Moderator manually (re)generates the "PUBLIC REDACTED VERSION" copy.
+ * Approval now makes this copy automatically (src/services/approved-copy.service.ts,
+ * called from POST /api/moderation); the moderation page's retry button uses
+ * POST /api/rebuttal/[id]/approved-copy. This older route is kept as is.
  */
 export async function POST(req: NextRequest) {
     try {
@@ -17,7 +19,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const user = await verifyToken(token);
+        const user = await getSessionUser(token);
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         if (!hasPermission(user.role, "moderate_rebuttals")) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
         // ── 7. Save watermarked URL to DB ────────────────────────────────────
         await prisma.rebuttal.update({
             where: { id: rebuttalId },
-            data: { watermarkedUrl },
+            data: { watermarkedUrl, watermarkStatus: "APPLIED", watermarkError: null, watermarkUpdatedAt: new Date() },
         });
 
         console.log(`✅ Watermark applied to rebuttal: ${rebuttalId}`);
@@ -131,8 +134,9 @@ export async function GET(req: NextRequest) {
         try {
             const token = req.cookies.get("auth-token")?.value;
             if (token) {
-                const user = await verifyToken(token);
-                isPrivileged = hasPermission(user.role, "moderate_rebuttals");
+                // An invalid or revoked token is treated as the public (no 401 here).
+                const user = await getSessionUser(token);
+                isPrivileged = !!user && hasPermission(user.role, "moderate_rebuttals");
             }
         } catch {
             // Not logged in — public access only
@@ -142,9 +146,10 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Not authorized" }, { status: 403 });
         }
 
+        // App routes only, never the storage URL or the data URL (SOW 11.3).
         return NextResponse.json({
-            watermarkedUrl: rebuttal.watermarkedUrl ?? null,
-            originalUrl: rebuttal.documentUrl,
+            watermarkedUrl: rebuttal.watermarkedUrl ? `/api/rebuttal/${rebuttal.id}/document?version=approved-copy` : null,
+            originalUrl: rebuttal.documentUrl ? `/api/rebuttal/${rebuttal.id}/document` : null,
         });
     } catch (error) {
         console.error("Watermark fetch error:", error);

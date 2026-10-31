@@ -5,7 +5,7 @@
  * this checks the page applies the same rules.
  */
 import { test, expect } from "@playwright/test";
-import { resetDb, createOrg, createUser, createMemberFile, createShareLink } from "./fixtures";
+import { resetDb, createOrg, createUser, createMemberFile, createShareLink, revokeShareLink } from "./fixtures";
 
 test.describe.configure({ timeout: 90000 });
 
@@ -29,7 +29,27 @@ test("a valid link shows only the selected files to a logged-out visitor", async
 
   await expect(page.getByText("shared-plan.pdf")).toBeVisible();
   await expect(page.getByText("private-notes.pdf")).toHaveCount(0);
-  await expect(page.locator(`a[href="${shared.fileUrl}"]`)).toHaveCount(1);
+  // SOW 11.3: the download goes through the app, never straight to storage.
+  const download = page.getByRole("link", { name: "Download shared-plan.pdf" });
+  await expect(download).toHaveCount(1);
+  expect(await download.getAttribute("href")).toMatch(new RegExp(`^/api/share/${link.token}/files/[A-Za-z0-9_-]{32}\\?download=1$`));
+});
+
+test("FIXED (SOW 11.3): the page source contains no storage URL or key, and a download link stops working once the link is revoked", async ({ page, request }) => {
+  const { owner, shared, notShared } = await ownerWithFiles();
+  const link = await createShareLink({ userId: owner.id, fileIds: [shared.id] });
+
+  await page.goto(`/share/${link.token}`);
+  await expect(page.getByText("shared-plan.pdf")).toBeVisible();
+  const html = await page.content();
+  for (const secret of [shared.fileUrl, notShared.fileUrl, "utfs.test", shared.id]) {
+    expect(html).not.toContain(secret);
+  }
+
+  const href = await page.getByRole("link", { name: "Download shared-plan.pdf" }).getAttribute("href");
+  await revokeShareLink(link.id);
+  const after = await request.get(href!);
+  expect(after.status()).toBe(410);
 });
 
 test("a revoked link shows 'Link Revoked' and no files or file URLs", async ({ page }) => {

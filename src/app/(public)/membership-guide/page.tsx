@@ -68,7 +68,7 @@ const COMPARISON_ROWS: ComparisonRow[] = [
   },
   {
     category: "Citation Rebuttal System",
-    feature: "Tamper-Evident Watermarked PDFs",
+    feature: "Watermarked Supporting Documents",
     tier300: "Included",
     tier400: "Included",
     tier500: "Included",
@@ -144,10 +144,10 @@ const CORE_PILLARS = [
       "Every rebuttal undergoes independent moderation before going live. Our review board ensures neutral, non-inflammatory phrasing and confirms that no resident identifying details are present, safeguarding your facility's professionalism.",
   },
   {
-    title: "4. Tamper-Evident Watermarked PDFs",
+    title: "4. Watermarked Supporting Documents",
     icon: ShieldCheck,
     description:
-      "Approved rebuttals automatically generate official, cryptographically timestamped and watermarked PDFs. These documents serve as verified public records suitable for sharing with licensing analysts, ombudsmen, and prospective families.",
+      "While a rebuttal is under review, every view or download of its supporting document (PDF, PNG or JPG) is marked \u201cFOR ATTORNEY REVIEW ONLY\u201d on every page. When a rebuttal is approved, a copy marked \u201cPUBLIC REDACTED VERSION\u201d is kept for the moderation team. Public facility pages show the approved rebuttal text only; supporting documents are not published.",
   },
   {
     title: "5. Secure Legal & Attorney Sharing",
@@ -284,7 +284,7 @@ export default function MembershipGuidePage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[var(--color-success)] shrink-0 mt-0.5" />
-                      <span><strong>Watermarked PDFs:</strong> Official authenticated documents</span>
+                      <span><strong>Watermarked documents:</strong> drafts marked &ldquo;For Attorney Review Only&rdquo;</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[var(--color-success)] shrink-0 mt-0.5" />
@@ -498,7 +498,7 @@ export default function MembershipGuidePage() {
               {
                 step: "5",
                 title: "Live Publication",
-                desc: "Our review team approves within 24–48h. Your watermarked rebuttal goes live publicly.",
+                desc: "Our review team approves within 24–48h. The approved rebuttal text goes live on the facility page.",
               },
             ].map((item) => (
               <div

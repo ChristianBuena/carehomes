@@ -50,6 +50,19 @@ export const countRebuttals = () => run<number>("countRebuttals");
 export const setRebuttalDocs = (id: string, documentUrl: string | null, watermarkedUrl: string | null) =>
   run("setRebuttalDocs", { id, documentUrl, watermarkedUrl });
 
+export const listAccessReviews = (userId: string) =>
+  run<Array<{ reviewerId: string | null; decision: string; notes: string | null }>>("listAccessReviews", { userId });
+
+export const listShareLinks = (userId: string) =>
+  run<Array<{ expiry: string; expiresAt: string | null }>>("listShareLinks", { userId });
+
+export const revokeShareLink = (id: string) => run("revokeShareLink", { id });
+
+export const setRebuttalWatermark = (id: string, watermarkStatus: "APPLIED" | "FAILED" | null, watermarkError: string | null) =>
+  run("setRebuttalWatermark", { id, watermarkStatus, watermarkError });
+export const getRebuttalWatermark = (id: string) =>
+  run<{ watermarkStatus: string | null; watermarkError: string | null }>("getRebuttalWatermark", { id });
+
 type MemberFile = { id: string; filename: string; fileUrl: string };
 type ShareLink = { id: string; token: string };
 

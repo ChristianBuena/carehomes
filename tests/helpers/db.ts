@@ -32,9 +32,26 @@ export async function resetDb() {
       "Organization",
       "MembershipAgreement",
       "ProcessedStripeEvent",
-      "LoginAttempt"
+      "LoginAttempt",
+      "AccessReview"
     RESTART IDENTITY CASCADE;
   `);
+  await resetAuditLog();
+}
+
+/**
+ * "AuditLog" is append-only: a trigger rejects TRUNCATE for every role
+ * (migration 20261031120000_add_audit_log). Tests own the test database, so
+ * they switch that one trigger off for the truncate and straight back on.
+ * Only the test database is ever touched (tests/setup.ts guards DATABASE_URL).
+ */
+export async function resetAuditLog() {
+  await testDb.$executeRawUnsafe(`ALTER TABLE "AuditLog" DISABLE TRIGGER "audit_log_no_truncate"`);
+  try {
+    await testDb.$executeRawUnsafe(`TRUNCATE TABLE "AuditLog"`);
+  } finally {
+    await testDb.$executeRawUnsafe(`ALTER TABLE "AuditLog" ENABLE TRIGGER "audit_log_no_truncate"`);
+  }
 }
 
 export async function disconnectDb() {

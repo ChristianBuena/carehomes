@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission, type Permission } from "@/lib/permissions";
 import {
   approveRebuttal,
@@ -9,6 +9,9 @@ import {
 } from "@/services/moderation.service";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
+import { describeMailError } from "@/lib/log-safe";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
+import { createApprovedCopy, type ApprovedCopyResult } from "@/services/approved-copy.service";
 
 const ACTION_PERMISSION_MAP: Record<string, Permission> = {
   approve: "approve_rebuttal",
@@ -21,7 +24,8 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     if (!hasPermission(user.role, "moderate_rebuttals")) {
       return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
@@ -50,7 +54,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // ── 2. Top-level queue access ──────────────────────────────────────────
     if (!hasPermission(user.role, "moderate_rebuttals")) {
@@ -125,6 +130,29 @@ export async function POST(req: NextRequest) {
       rebuttal = await rejectRebuttal(id, user.userId, actionNotes);
     } else {
       rebuttal = await requestFixRebuttal(id, user.userId, actionNotes);
+    }
+
+    await recordAudit({
+      action:
+        action === "approve"
+          ? "REBUTTAL_APPROVED"
+          : action === "reject"
+            ? "REBUTTAL_REJECTED"
+            : "REBUTTAL_FIX_REQUESTED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: id,
+      metadata: { fromStatus: existingRebuttal.status },
+      ...auditContextFromRequest(req),
+    });
+
+    // ── 7b. Approved copy ("PUBLIC REDACTED VERSION", SOW 11.2) ────────────
+    // Never blocks approval: a failure is logged, flagged on the rebuttal and
+    // audited, and the moderator is told so they can retry.
+    let approvedCopy: ApprovedCopyResult | undefined;
+    if (action === "approve") {
+      approvedCopy = await createApprovedCopy(id, { userId: user.userId, role: user.role }, auditContextFromRequest(req));
     }
 
     // ── 8. Send notification email to member ───────────────────────────────
@@ -218,9 +246,8 @@ export async function POST(req: NextRequest) {
         }
 
         await sendEmail({ to: memberEmail, subject, text, html });
-        console.log(`Member notification sent to: ${memberEmail} (${action})`);
       } catch (emailError) {
-        console.error("Failed to send member notification:", emailError);
+        console.error("Failed to send member notification:", describeMailError(emailError));
       }
     } else {
       console.log(`Status unchanged (${statusMap[action]}) — no email sent`);
@@ -232,10 +259,18 @@ export async function POST(req: NextRequest) {
       request_fix: "Fix requested — member has been notified",
     };
 
+    const copyFailed = approvedCopy?.status === "FAILED";
     return NextResponse.json({
       success: true,
-      message: messages[action] ?? "Action completed",
-      rebuttal,
+      message: copyFailed
+        ? `${messages[action]}. The approved copy of the document could not be made; it is flagged for a retry.`
+        : messages[action] ?? "Action completed",
+      rebuttal: (({ documentUrl, watermarkedUrl, ...r }) => {
+        void documentUrl;
+        void watermarkedUrl;
+        return r;
+      })(rebuttal),
+      ...(approvedCopy && { approvedCopy }),
     });
   } catch (err) {
     console.error("Moderation error:", err);

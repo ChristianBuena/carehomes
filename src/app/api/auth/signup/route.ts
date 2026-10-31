@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth-utils';
+import { auditContextFromRequest, recordAudit } from '@/services/audit.service';
 
 export async function POST(request: NextRequest) {
   console.log("🔥 SIGNUP API HIT");
@@ -65,6 +66,16 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         organizationId: organization.id,
       },
+    });
+
+    await recordAudit({
+      action: 'AUTH_SIGNUP',
+      actorId: user.id,
+      actorRole: user.role,
+      targetType: 'User',
+      targetId: user.id,
+      metadata: { organizationId: organization.id },
+      ...auditContextFromRequest(request),
     });
 
     return NextResponse.json(

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { shareFileDownloadPath, shareFileRef } from "@/services/file-storage.service";
 
 // ── GET — public, unauthenticated endpoint for attorneys ─────────────────────
 // Returns file metadata for a valid, non-expired, non-revoked share link.
@@ -20,7 +21,6 @@ export async function GET(
             select: {
               id: true,
               filename: true,
-              fileUrl: true,
               fileSize: true,
               fileType: true,
               mimeType: true,
@@ -51,14 +51,18 @@ export async function GET(
     return NextResponse.json({ error: "This share link has expired" }, { status: 410 });
   }
 
-  // Determine which files to serve
+  // Determine which files to serve. No storage URL is returned: each file is
+  // downloaded through /api/share/[token]/files/[fileId], which re-checks the
+  // link every time (SOW 11.3).
   let files: Array<{
+    ref: string;
     filename: string;
-    fileUrl: string;
     fileSize: number;
     fileType: string;
     mimeType: string;
+    downloadUrl: string;
   }>;
+
 
   if (link.shareAll) {
     // Dynamic: fetch all non-deleted files for the owner right now
@@ -66,27 +70,30 @@ export async function GET(
       where: { userId: link.userId, deletedAt: null },
       orderBy: { uploadedAt: "desc" },
       select: {
+        id: true,
         filename: true,
-        fileUrl: true,
         fileSize: true,
         fileType: true,
         mimeType: true,
       },
     });
-    files = allFiles.map((f) => ({
+    files = allFiles.map(({ id, ...f }) => ({
+      ref: shareFileRef(link.id, id),
       ...f,
       fileType: f.fileType as string,
+      downloadUrl: shareFileDownloadPath(token, link.id, id),
     }));
   } else {
     // Only selected, non-deleted files
     files = link.selectedFiles
       .filter((sf) => !sf.file.deletedAt)
       .map((sf) => ({
+        ref: shareFileRef(link.id, sf.file.id),
         filename: sf.file.filename,
-        fileUrl: sf.file.fileUrl,
         fileSize: sf.file.fileSize,
         fileType: sf.file.fileType as string,
         mimeType: sf.file.mimeType,
+        downloadUrl: shareFileDownloadPath(token, link.id, sf.file.id),
       }));
   }
 

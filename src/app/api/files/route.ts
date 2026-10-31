@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { UTApi } from "uploadthing/server";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 const utapi = new UTApi();
 
@@ -12,7 +13,8 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get("userId");
@@ -32,7 +34,6 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         filename: true,
-        fileUrl: true,
         fileSize: true,
         fileType: true,
         mimeType: true,
@@ -42,7 +43,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(files);
+    // No storage URL: downloads go through /api/files/[id]/download (SOW 11.3).
+    return NextResponse.json(
+      files.map((f) => ({ ...f, downloadUrl: `/api/files/${f.id}/download` }))
+    );
   } catch {
     return NextResponse.json({ error: "Failed to fetch files" }, { status: 500 });
   }
@@ -54,7 +58,8 @@ export async function DELETE(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
     const fileId = searchParams.get("id");
@@ -81,6 +86,16 @@ export async function DELETE(req: NextRequest) {
       data: { deletedAt: new Date() },
     });
 
+    await recordAudit({
+      action: "FILE_DELETED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "MemberFile",
+      targetId: fileId,
+      metadata: { ownerId: file.userId },
+      ...auditContextFromRequest(req),
+    });
+
     // Also delete from UploadThing storage
     try {
       await utapi.deleteFiles(file.fileKey);
@@ -100,7 +115,8 @@ export async function PATCH(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const { id, label, isQsfDoc } = body as {
@@ -127,9 +143,29 @@ export async function PATCH(req: NextRequest) {
         ...(label !== undefined && { label }),
         ...(isQsfDoc !== undefined && { isQsfDoc }),
       },
+      select: {
+        id: true,
+        filename: true,
+        fileSize: true,
+        fileType: true,
+        mimeType: true,
+        label: true,
+        isQsfDoc: true,
+        uploadedAt: true,
+      },
     });
 
-    return NextResponse.json(updated);
+    await recordAudit({
+      action: "FILE_UPDATED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "MemberFile",
+      targetId: id,
+      metadata: { label: label !== undefined, isQsfDoc: isQsfDoc ?? null },
+      ...auditContextFromRequest(req),
+    });
+
+    return NextResponse.json({ ...updated, downloadUrl: `/api/files/${updated.id}/download` });
   } catch {
     return NextResponse.json({ error: "Failed to update file" }, { status: 500 });
   }

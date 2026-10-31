@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 // ── GET — fetch all deadlines for the logged-in member ────────────────────
@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
         const token = req.cookies.get("auth-token")?.value;
         if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const user = await verifyToken(token);
+        const user = await getSessionUser(token);
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         // MEMBER only
         if (user.role !== "MEMBER") {
@@ -32,7 +33,8 @@ export async function POST(req: NextRequest) {
         const token = req.cookies.get("auth-token")?.value;
         if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const user = await verifyToken(token);
+        const user = await getSessionUser(token);
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         // MEMBER only
         if (user.role !== "MEMBER") {
@@ -74,7 +76,8 @@ export async function PUT(req: NextRequest) {
         const token = req.cookies.get("auth-token")?.value;
         if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const user = await verifyToken(token);
+        const user = await getSessionUser(token);
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         if (user.role !== "MEMBER") {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -123,7 +126,8 @@ export async function DELETE(req: NextRequest) {
         const token = req.cookies.get("auth-token")?.value;
         if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const user = await verifyToken(token);
+        const user = await getSessionUser(token);
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         if (user.role !== "MEMBER") {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -102,13 +102,15 @@ describe("A. Files — who can VIEW (GET /api/files)", () => {
     expect((await list()).status).toBe(401);
   });
 
-  it("the uploader sees their own files (and the file URL used to download them)", async () => {
+  it("the uploader sees their own files, with an app download route and NO storage URL (SOW 11.3)", async () => {
     const w = await world();
     const res = await list(w.cookies.owner);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string; filename: string; fileUrl: string }[];
+    const body = (await res.json()) as Record<string, unknown>[];
     expect(body).toHaveLength(1);
-    expect(body[0]).toMatchObject({ id: w.file.id, filename: "owner-plan.pdf", fileUrl: w.file.fileUrl });
+    expect(body[0]).toMatchObject({ id: w.file.id, filename: "owner-plan.pdf", downloadUrl: `/api/files/${w.file.id}/download` });
+    expect(body[0]).not.toHaveProperty("fileUrl");
+    expect(JSON.stringify(body)).not.toContain(w.file.fileUrl);
   });
 
   it("the listing does not expose the storage key or the owner id", async () => {
@@ -294,7 +296,7 @@ describe("A. Files — who can EDIT the label / QSF flag (PATCH /api/files)", ()
 });
 
 describe("A. Files — invalid session token", () => {
-  it.fails("FAILS [Low]: a garbage auth-token is answered with 401 on every file route (actual: 500 — the catch-all swallows the verification error)", async () => {
+  it("FIXED A-2 (was FAILS [Low]): a garbage auth-token is answered with 401 on every file route", async () => {
     const w = await world();
     const bad = { "auth-token": "not-a-jwt" };
     const statuses = [
@@ -345,17 +347,17 @@ describe("A. Share links — who can CREATE (POST /api/files/share)", () => {
 
   it("two links never share a token", async () => {
     const w = await world();
-    const a = (await (await share(w.cookies.owner, { shareAll: true, expiry: null })).json()) as { token: string };
-    const b = (await (await share(w.cookies.owner, { shareAll: true, expiry: null })).json()) as { token: string };
+    const a = (await (await share(w.cookies.owner, { shareAll: true, expiry: "7d" })).json()) as { token: string };
+    const b = (await (await share(w.cookies.owner, { shareAll: true, expiry: "7d" })).json()) as { token: string };
     expect(a.token).not.toBe(b.token);
   });
 
   it("an ADMIN can create a share link for their own files", async () => {
     const w = await world();
-    expect((await share(w.cookies.admin, { shareAll: true, expiry: null })).status).toBe(200);
+    expect((await share(w.cookies.admin, { shareAll: true, expiry: "30d" })).status).toBe(200);
   });
 
-  it("expiry: '7d' and '30d' set expiresAt 7 and 30 days ahead; null means never", async () => {
+  it("expiry: '7d' and '30d' set expiresAt 7 and 30 days ahead; null (never) is refused (maximum 30 days)", async () => {
     const w = await world();
     const day = 24 * 60 * 60 * 1000;
     const make = async (expiry: string | null) =>
@@ -363,13 +365,13 @@ describe("A. Share links — who can CREATE (POST /api/files/share)", () => {
 
     const seven = await make("7d");
     const thirty = await make("30d");
-    const never = await make(null);
 
     expect(seven.expiry).toBe("DAYS_7");
     expect(Math.abs(new Date(seven.expiresAt!).getTime() - (Date.now() + 7 * day))).toBeLessThan(5 * 60 * 1000);
     expect(thirty.expiry).toBe("DAYS_30");
     expect(Math.abs(new Date(thirty.expiresAt!).getTime() - (Date.now() + 30 * day))).toBeLessThan(2 * 60 * 60 * 1000);
-    expect(never).toMatchObject({ expiry: "NEVER", expiresAt: null });
+    const never = await share(w.cookies.owner, { shareAll: true, expiry: null });
+    expect(never.status).toBe(400);
   });
 
   it("selected-files mode with no files: 400", async () => {
@@ -404,18 +406,19 @@ describe("A. Share links — who can CREATE (POST /api/files/share)", () => {
     expect((await share(w.cookies.owner, { shareAll: false, fileIds: [w.file.id], expiry: null })).status).toBe(403);
   });
 
-  it.fails("FAILS [Medium]: an unrecognised expiry value is rejected with 400 (actual: 200 and a link that NEVER expires)", async () => {
+  it("FIXED A-1 (was FAILS [Medium]): an unrecognised expiry value is rejected with 400", async () => {
     const w = await world();
     const res = await share(w.cookies.owner, { shareAll: true, expiry: "1h" });
     expect(res.status).toBe(400);
   });
 
-  it("…and what actually happens today: expiry '1h', '7 days' and 7 all silently create a never-expiring link", async () => {
+  it("FIXED A-1: '1h', '7 days', 7, null, 'never', 'NEVER', '90d' and a missing expiry are all 400, and no link is created", async () => {
     const w = await world();
-    for (const expiry of ["1h", "7 days", 7]) {
-      const body = (await (await share(w.cookies.owner, { shareAll: true, expiry })).json()) as { expiry: string; expiresAt: string | null };
-      expect(body).toMatchObject({ expiry: "NEVER", expiresAt: null });
+    for (const expiry of ["1h", "7 days", 7, null, "never", "NEVER", "90d", undefined]) {
+      const res = await share(w.cookies.owner, { shareAll: true, expiry });
+      expect(res.status, String(expiry)).toBe(400);
     }
+    expect(await testDb.fileShareLink.count()).toBe(0);
   });
 
   it.fails("FAILS [Low]: listing the same file twice is accepted or rejected as a bad request (actual: 403 'not owned by you')", async () => {
@@ -495,9 +498,19 @@ describe("A. Share links — public access (GET /api/share/[token])", () => {
     const body = (await res.json()) as { orgName: string; files: Record<string, unknown>[] };
     expect(body.orgName).toBe("Org A");
     expect(body.files).toEqual([
-      { filename: "owner-plan.pdf", fileUrl: w.file.fileUrl, fileSize: 1024, fileType: "PDF", mimeType: "application/pdf" },
+      {
+        ref: expect.any(String),
+        filename: "owner-plan.pdf",
+        downloadUrl: expect.stringMatching(new RegExp(`^/api/share/${link.token}/files/[A-Za-z0-9_-]{32}$`)),
+        fileSize: 1024,
+        fileType: "PDF",
+        mimeType: "application/pdf",
+      },
     ]);
+    // No storage URL of any file, shared or not (SOW 11.3).
+    expect(JSON.stringify(body)).not.toContain(w.file.fileUrl);
     expect(JSON.stringify(body)).not.toContain(other.fileUrl);
+    expect(JSON.stringify(body)).not.toContain("utfs.test");
   });
 
   it("the public response carries no internal ids, owner id or email", async () => {
@@ -505,8 +518,8 @@ describe("A. Share links — public access (GET /api/share/[token])", () => {
     const link = await createShareLink({ userId: w.owner.id, fileIds: [w.file.id] });
     const text = await (await open(link.token)).text();
 
-    // (The storage key is not checked: an UploadThing file URL contains it by design.)
-    for (const secret of [w.file.id, w.owner.id, w.owner.email, link.id]) {
+    // The storage key is now checked too: no storage URL is returned any more.
+    for (const secret of [w.file.id, w.file.fileKey, w.owner.id, w.owner.email, link.id]) {
       expect(text.includes(secret)).toBe(false);
     }
   });

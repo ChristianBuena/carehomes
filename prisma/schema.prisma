@@ -85,6 +85,11 @@ model User {
   updatedAt      DateTime  @updatedAt
   lastReviewedAt DateTime?
 
+  // Session revocation (SOW 11.1a). Every session token carries the version it
+  // was issued with; bumping this number invalidates all of the user's
+  // sessions at once (logout, admin "revoke sessions").
+  tokenVersion Int @default(0)
+
   // UNUSED since login throttling moved to LoginAttempt (keyed on email + IP).
   // Kept so no migration has to drop columns.
   failedLoginAttempts Int       @default(0)
@@ -112,6 +117,9 @@ model User {
 
   assignedTakedowns TakedownRequest[]  @relation("AssignedTakedowns")
   resolvedTakedowns TakedownRequest[]  @relation("ResolvedTakedowns")
+
+  accessReviewsReceived AccessReview[] @relation("AccessReviewsReceived")
+  accessReviewsGiven    AccessReview[] @relation("AccessReviewsGiven")
 
   @@index([email])
   @@index([organizationId])
@@ -196,6 +204,20 @@ model Rebuttal {
   documentUrl    String?
   watermarkedUrl String?
   status         RebuttalStatus @default(PENDING)
+
+  // Approved copy ("PUBLIC REDACTED VERSION") made when the rebuttal is
+  // approved. FAILED flags a rebuttal whose copy could not be made: approval
+  // still succeeded; a moderator can retry from the moderation page.
+  watermarkStatus    WatermarkStatus?
+  watermarkError     String?
+  watermarkUpdatedAt DateTime?
+
+  // PRIVATE signer details from the print form (SOW 11.3 "limit PII").
+  // Visible to the member and to moderators only; never part of `content`,
+  // which is published on approval.
+  signerName String?
+  signedOn   DateTime? @db.Date
+  visitDate  DateTime? @db.Date
 
   // SOFT DELETE — set instead of hard-deleting rows
   deletedAt DateTime?
@@ -656,4 +678,68 @@ model FileShareAccessLog {
   @@index([shareLinkId])
   @@index([shareLinkId, accessedAt])
   @@index([accessedAt])
+}
+
+//
+// AUDIT LOG (SOW 3E.5 "audit trail (activity logs)")
+// Append-only. The migration adds a database trigger that rejects every
+// UPDATE, DELETE and TRUNCATE on this table, for every role the app uses.
+// actorId is deliberately NOT a foreign key: deleting a user must not need to
+// rewrite (UPDATE) audit rows. No email addresses are stored here.
+//
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  actorId   String?
+  actorRole Role?
+
+  action     String
+  targetType String?
+  targetId   String?
+
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId])
+}
+
+//
+// ACCESS REVIEW HISTORY (SOW 11.1 "quarterly permission audit")
+// One row per review: who reviewed which account, when, with what decision.
+// User.lastReviewedAt is kept as the "due" marker; this table is the record.
+//
+
+enum WatermarkStatus {
+  APPLIED
+  FAILED
+}
+
+enum AccessReviewDecision {
+  KEEP_ACCESS
+  CHANGE_REQUESTED
+}
+
+model AccessReview {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("AccessReviewsReceived", fields: [userId], references: [id], onDelete: Cascade)
+
+  reviewerId String?
+  reviewer   User?   @relation("AccessReviewsGiven", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  reviewerRole Role
+  roleAtReview Role
+  decision     AccessReviewDecision @default(KEEP_ACCESS)
+  notes        String?
+  reviewedAt   DateTime             @default(now())
+
+  @@index([userId, reviewedAt])
+  @@index([reviewedAt])
 }

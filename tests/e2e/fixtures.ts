@@ -53,6 +53,9 @@ export const setRebuttalDocs = (id: string, documentUrl: string | null, watermar
 export const listAccessReviews = (userId: string) =>
   run<Array<{ reviewerId: string | null; decision: string; notes: string | null }>>("listAccessReviews", { userId });
 
+export const listShareLinks = (userId: string) =>
+  run<Array<{ expiry: string; expiresAt: string | null }>>("listShareLinks", { userId });
+
 type MemberFile = { id: string; filename: string; fileUrl: string };
 type ShareLink = { id: string; token: string };
 

@@ -3,29 +3,25 @@ import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
-import type { ShareLinkExpiry } from "@/types/share";
+import { SHARE_LINK_EXPIRY_VALUES, SHARE_LINK_MAX_DAYS, type ShareLinkExpiry } from "@/types/share";
 import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
-function expiryToEnum(expiry: ShareLinkExpiry): "DAYS_7" | "DAYS_30" | "NEVER" {
-  if (expiry === "7d") return "DAYS_7";
-  if (expiry === "30d") return "DAYS_30";
-  return "NEVER";
+function isShareLinkExpiry(value: unknown): value is ShareLinkExpiry {
+  return (SHARE_LINK_EXPIRY_VALUES as readonly unknown[]).includes(value);
 }
 
-function expiryToDate(expiry: ShareLinkExpiry): Date | null {
-  if (expiry === "7d") {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d;
-  }
-  if (expiry === "30d") {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    return d;
-  }
-  return null;
+function expiryToEnum(expiry: ShareLinkExpiry): "DAYS_7" | "DAYS_30" {
+  return expiry === "7d" ? "DAYS_7" : "DAYS_30";
+}
+
+function expiryToDate(expiry: ShareLinkExpiry): Date {
+  const days = expiry === "7d" ? 7 : 30;
+  if (days > SHARE_LINK_MAX_DAYS) throw new Error("share link expiry above the maximum");
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d;
 }
 
 function buildShareUrl(req: NextRequest, token: string): string {
@@ -48,7 +44,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as {
       shareAll: boolean;
       fileIds?: string[];
-      expiry: ShareLinkExpiry;
+      expiry: unknown;
     };
 
     const { shareAll, fileIds, expiry } = body;
@@ -74,6 +70,16 @@ export async function POST(req: NextRequest) {
           { status: 403 }
         );
       }
+    }
+
+    // Every new link expires: 7 or 30 days. Anything else (including null,
+    // "never", "1h" or a number) is refused instead of silently becoming a
+    // never-expiring link (A-1).
+    if (!isShareLinkExpiry(expiry)) {
+      return NextResponse.json(
+        { error: `expiry must be one of: ${SHARE_LINK_EXPIRY_VALUES.join(", ")} (maximum ${SHARE_LINK_MAX_DAYS} days)` },
+        { status: 400 }
+      );
     }
 
     // Generate cryptographically random token

@@ -2,7 +2,14 @@
 // CH-42: Attorney File Sharing — shared types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ShareLinkExpiry = "7d" | "30d" | null;
+/**
+ * Allowed lifetimes for a NEW share link (SOW 11.3 secure sharing).
+ * Maximum 30 days; "never" is no longer offered. Links created before this
+ * rule may still have expiry NEVER in the database (see MIGRATION_RUNBOOK).
+ */
+export const SHARE_LINK_EXPIRY_VALUES = ["7d", "30d"] as const;
+export type ShareLinkExpiry = (typeof SHARE_LINK_EXPIRY_VALUES)[number];
+export const SHARE_LINK_MAX_DAYS = 30;
 
 /** Slim file descriptor returned on the public share page */
 export interface ShareAccessFile {

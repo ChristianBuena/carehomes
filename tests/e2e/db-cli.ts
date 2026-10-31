@@ -74,6 +74,12 @@ async function main() {
         select: { reviewerId: true, decision: true, notes: true },
       });
       break;
+    case "listShareLinks":
+      result = await testDb.fileShareLink.findMany({
+        where: { userId: (args as { userId: string }).userId },
+        select: { expiry: true, expiresAt: true },
+      });
+      break;
     case "countRebuttals":
       result = await testDb.rebuttal.count();
       break;

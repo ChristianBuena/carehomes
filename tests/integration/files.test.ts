@@ -345,17 +345,17 @@ describe("A. Share links — who can CREATE (POST /api/files/share)", () => {
 
   it("two links never share a token", async () => {
     const w = await world();
-    const a = (await (await share(w.cookies.owner, { shareAll: true, expiry: null })).json()) as { token: string };
-    const b = (await (await share(w.cookies.owner, { shareAll: true, expiry: null })).json()) as { token: string };
+    const a = (await (await share(w.cookies.owner, { shareAll: true, expiry: "7d" })).json()) as { token: string };
+    const b = (await (await share(w.cookies.owner, { shareAll: true, expiry: "7d" })).json()) as { token: string };
     expect(a.token).not.toBe(b.token);
   });
 
   it("an ADMIN can create a share link for their own files", async () => {
     const w = await world();
-    expect((await share(w.cookies.admin, { shareAll: true, expiry: null })).status).toBe(200);
+    expect((await share(w.cookies.admin, { shareAll: true, expiry: "30d" })).status).toBe(200);
   });
 
-  it("expiry: '7d' and '30d' set expiresAt 7 and 30 days ahead; null means never", async () => {
+  it("expiry: '7d' and '30d' set expiresAt 7 and 30 days ahead; null (never) is refused (maximum 30 days)", async () => {
     const w = await world();
     const day = 24 * 60 * 60 * 1000;
     const make = async (expiry: string | null) =>
@@ -363,13 +363,13 @@ describe("A. Share links — who can CREATE (POST /api/files/share)", () => {
 
     const seven = await make("7d");
     const thirty = await make("30d");
-    const never = await make(null);
 
     expect(seven.expiry).toBe("DAYS_7");
     expect(Math.abs(new Date(seven.expiresAt!).getTime() - (Date.now() + 7 * day))).toBeLessThan(5 * 60 * 1000);
     expect(thirty.expiry).toBe("DAYS_30");
     expect(Math.abs(new Date(thirty.expiresAt!).getTime() - (Date.now() + 30 * day))).toBeLessThan(2 * 60 * 60 * 1000);
-    expect(never).toMatchObject({ expiry: "NEVER", expiresAt: null });
+    const never = await share(w.cookies.owner, { shareAll: true, expiry: null });
+    expect(never.status).toBe(400);
   });
 
   it("selected-files mode with no files: 400", async () => {
@@ -404,18 +404,19 @@ describe("A. Share links — who can CREATE (POST /api/files/share)", () => {
     expect((await share(w.cookies.owner, { shareAll: false, fileIds: [w.file.id], expiry: null })).status).toBe(403);
   });
 
-  it.fails("FAILS [Medium]: an unrecognised expiry value is rejected with 400 (actual: 200 and a link that NEVER expires)", async () => {
+  it("FIXED A-1 (was FAILS [Medium]): an unrecognised expiry value is rejected with 400", async () => {
     const w = await world();
     const res = await share(w.cookies.owner, { shareAll: true, expiry: "1h" });
     expect(res.status).toBe(400);
   });
 
-  it("…and what actually happens today: expiry '1h', '7 days' and 7 all silently create a never-expiring link", async () => {
+  it("FIXED A-1: '1h', '7 days', 7, null, 'never', 'NEVER', '90d' and a missing expiry are all 400, and no link is created", async () => {
     const w = await world();
-    for (const expiry of ["1h", "7 days", 7]) {
-      const body = (await (await share(w.cookies.owner, { shareAll: true, expiry })).json()) as { expiry: string; expiresAt: string | null };
-      expect(body).toMatchObject({ expiry: "NEVER", expiresAt: null });
+    for (const expiry of ["1h", "7 days", 7, null, "never", "NEVER", "90d", undefined]) {
+      const res = await share(w.cookies.owner, { shareAll: true, expiry });
+      expect(res.status, String(expiry)).toBe(400);
     }
+    expect(await testDb.fileShareLink.count()).toBe(0);
   });
 
   it.fails("FAILS [Low]: listing the same file twice is accepted or rejected as a bad request (actual: 403 'not owned by you')", async () => {

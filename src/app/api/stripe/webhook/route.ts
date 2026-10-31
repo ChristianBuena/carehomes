@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
+import { describeMailError } from "@/lib/log-safe";
 import Stripe from "stripe";
 import { TIER_FACILITY_LIMITS } from "@/lib/permissions";
 import { recordAudit } from "@/services/audit.service";
@@ -178,7 +179,7 @@ export async function POST(req: Request) {
             });
           }
         } catch (emailError) {
-          console.error("Failed to send confirmation email:", emailError);
+          console.error("Failed to send confirmation email:", describeMailError(emailError));
         }
 
         break;

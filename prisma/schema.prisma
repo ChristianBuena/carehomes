@@ -205,6 +205,13 @@ model Rebuttal {
   watermarkedUrl String?
   status         RebuttalStatus @default(PENDING)
 
+  // PRIVATE signer details from the print form (SOW 11.3 "limit PII").
+  // Visible to the member and to moderators only; never part of `content`,
+  // which is published on approval.
+  signerName String?
+  signedOn   DateTime? @db.Date
+  visitDate  DateTime? @db.Date
+
   // SOFT DELETE — set instead of hard-deleting rows
   deletedAt DateTime?
 

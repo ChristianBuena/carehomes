@@ -10,6 +10,11 @@ export const metadata = {
   description: "View and manage all rebuttals you have submitted.",
 };
 
+/** Calendar dates are stored as UTC midnight; show them without shifting the day. */
+function formatPrivateDate(d: Date): string {
+  return new Date(d).toLocaleDateString("en-US", { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" });
+}
+
 const STATUS_CONFIG = {
   APPROVED: {
     label: "Approved",
@@ -131,6 +136,16 @@ export default async function MyRebuttalsPage({
                         <> · Reviewed by {rebuttal.moderatedBy.name}</>
                       )}
                     </p>
+                    {(rebuttal.signerName || rebuttal.visitDate) && (
+                      <p className="text-xs text-[var(--color-muted)] mt-1">
+                        {rebuttal.signerName && (
+                          <>Signed by {rebuttal.signerName}{rebuttal.signedOn && <> on {formatPrivateDate(rebuttal.signedOn)}</>}</>
+                        )}
+                        {rebuttal.signerName && rebuttal.visitDate && " · "}
+                        {rebuttal.visitDate && <>Visit date {formatPrivateDate(rebuttal.visitDate)}</>}
+                        {" "}(private, not published)
+                      </p>
+                    )}
                   </div>
 
                   <span

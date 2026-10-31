@@ -9,6 +9,7 @@ import {
 } from "@/services/moderation.service";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
+import { describeMailError } from "@/lib/log-safe";
 import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 const ACTION_PERMISSION_MAP: Record<string, Permission> = {
@@ -236,9 +237,8 @@ export async function POST(req: NextRequest) {
         }
 
         await sendEmail({ to: memberEmail, subject, text, html });
-        console.log(`Member notification sent to: ${memberEmail} (${action})`);
       } catch (emailError) {
-        console.error("Failed to send member notification:", emailError);
+        console.error("Failed to send member notification:", describeMailError(emailError));
       }
     } else {
       console.log(`Status unchanged (${statusMap[action]}) — no email sent`);

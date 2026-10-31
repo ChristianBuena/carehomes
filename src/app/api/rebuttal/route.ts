@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { createRebuttal } from "@/services/rebuttal.service";
 import { sendEmail } from "@/lib/mailer";
+import { describeMailError } from "@/lib/log-safe";
 import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 export async function POST(req: NextRequest) {
@@ -134,7 +135,7 @@ export async function POST(req: NextRequest) {
       console.log(`Moderator alert sent to ${moderators.length} recipient(s)`);
     } catch (emailError) {
       // Don't fail the submission if email fails
-      console.error("Failed to send moderator alert:", emailError);
+      console.error("Failed to send moderator alert:", describeMailError(emailError));
     }
 
     return NextResponse.json(rebuttal);

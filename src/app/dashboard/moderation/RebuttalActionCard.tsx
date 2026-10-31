@@ -12,6 +12,9 @@ interface RebuttalWithRelations {
   status: string;
   createdAt: Date | string;
   hasDocument: boolean;
+  signerName: string | null;
+  signedOn: Date | string | null;
+  visitDate: Date | string | null;
   user: {
     name: string | null;
     email: string;
@@ -79,6 +82,15 @@ export function RebuttalActionCard({ rebuttal }: RebuttalActionCardProps) {
                 Submitted:{" "}
                 {new Date(rebuttal.createdAt).toLocaleDateString("en-US")}
               </span>
+              {rebuttal.signerName && (
+                <span>
+                  Signed by: {rebuttal.signerName}
+                  {rebuttal.signedOn && ` (${new Date(rebuttal.signedOn).toLocaleDateString("en-US", { timeZone: "UTC" })})`}
+                </span>
+              )}
+              {rebuttal.visitDate && (
+                <span>Visit date: {new Date(rebuttal.visitDate).toLocaleDateString("en-US", { timeZone: "UTC" })}</span>
+              )}
             </div>
           </div>
 

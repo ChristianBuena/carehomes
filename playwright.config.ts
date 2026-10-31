@@ -2,6 +2,8 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  // Needs a GA id on the server: run with playwright.analytics.config.ts.
+  testIgnore: "analytics-consent.spec.ts",
   timeout: 30000,
   fullyParallel: false,
   workers: 1,

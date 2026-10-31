@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
+import { describeMailError } from "@/lib/log-safe";
 import { calculateSla, SlaUrgency } from "@/lib/sla";
 import { TakedownReason, TakedownStatus } from "@/types/takedown.types";
 import { RebuttalStatus } from "@/generated/prisma/enums";
@@ -231,7 +232,7 @@ export async function createTakedownRequest(data: CreateTakedownInput) {
       html: getAcknowledgmentEmailHtml(ticketNumber, data.requesterName, data.facilityOrRebuttal, data.reason),
     });
   } catch (emailErr) {
-    console.error("Failed to send requester acknowledgment email:", emailErr);
+    console.error("Failed to send requester acknowledgment email:", describeMailError(emailErr));
   }
 
   // Alert Admins and Moderators
@@ -253,7 +254,7 @@ export async function createTakedownRequest(data: CreateTakedownInput) {
       )
     );
   } catch (modAlertErr) {
-    console.error("Failed to notify moderators of takedown request:", modAlertErr);
+    console.error("Failed to notify moderators of takedown request:", describeMailError(modAlertErr));
   }
 
   return request;
@@ -385,7 +386,7 @@ export async function resolveTakedownRequest(params: {
       ),
     });
   } catch (err) {
-    console.error("Failed to send resolution email:", err);
+    console.error("Failed to send resolution email:", describeMailError(err));
   }
 
   return request;

@@ -37,6 +37,10 @@ export default async function ModerationPage() {
         status: true,
         createdAt: true,
         documentUrl: true,
+        // Private signer details: shown to moderators, never published.
+        signerName: true,
+        signedOn: true,
+        visitDate: true,
         user: { select: { name: true, email: true } },
         facility: { select: { name: true, slug: true, facilityNumber: true } },
       },

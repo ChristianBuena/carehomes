@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AnalyticsChoiceButton } from "@/components/layout/AnalyticsConsent";
 import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import { siteConfig } from "@/lib/site-config";
@@ -121,9 +122,12 @@ export function GlobalFooter() {
         
         {/* Copyright bar */}
         <div className="mt-12 md:mt-16 border-t border-white/10 pt-8 flex flex-col md:flex-row md:items-center md:justify-between">
-          <p className="text-xs leading-5 text-white/60">
-            &copy; {currentYear} CareHomesSupportDocs.org. All rights reserved.
-          </p>
+          <div className="flex flex-wrap items-center gap-x-4">
+            <p className="text-xs leading-5 text-white/60">
+              &copy; {currentYear} CareHomesSupportDocs.org. All rights reserved.
+            </p>
+            {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && <AnalyticsChoiceButton />}
+          </div>
           <div className="mt-4 flex space-x-6 md:mt-0">
             {siteConfig.socialLinks.map((item) => (
               <a key={item.platform} href={item.href} className="text-white/60 hover:text-white">

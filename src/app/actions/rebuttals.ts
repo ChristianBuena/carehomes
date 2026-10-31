@@ -21,6 +21,36 @@ function fail(error: string): ActionResult {
 
 const UNEXPECTED_ERROR = "Something went wrong. Please try again.";
 
+const MAX_SIGNER_NAME = 120;
+
+/** "YYYY-MM-DD" -> Date (UTC midnight), "" -> null, anything else -> "invalid". */
+function parseFormDate(value: FormDataEntryValue | null): Date | null | "invalid" {
+  if (value === null || value === "") return null;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "invalid";
+  const d = new Date(`${value}T00:00:00.000Z`);
+  return isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value ? "invalid" : d;
+}
+
+/**
+ * Private signer details (SOW 11.3): stored in their own columns, shown to
+ * the member and moderators only, never written into the published text.
+ */
+function parseSignerDetails(formData: FormData):
+  | { ok: true; signerName: string | null; signedOn: Date | null; visitDate: Date | null }
+  | { ok: false; error: string } {
+  const rawName = formData.get("signerName");
+  const signerName = typeof rawName === "string" ? rawName.trim() : "";
+  if (signerName.length > MAX_SIGNER_NAME) {
+    return { ok: false, error: `Signer name must be at most ${MAX_SIGNER_NAME} characters.` };
+  }
+  const signedOn = parseFormDate(formData.get("signedOn"));
+  const visitDate = parseFormDate(formData.get("visitDate"));
+  if (signedOn === "invalid" || visitDate === "invalid") {
+    return { ok: false, error: "Dates must be valid calendar dates." };
+  }
+  return { ok: true, signerName: signerName || null, signedOn, visitDate };
+}
+
 /** Uploads a rebuttal document to Cloudinary and returns its URL. */
 async function uploadDocument(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
@@ -60,6 +90,9 @@ export async function submitRebuttal(formData: FormData): Promise<ActionResult> 
     if (!redactionChecked) {
       return fail("You must acknowledge the redaction policy.");
     }
+
+    const signer = parseSignerDetails(formData);
+    if (!signer.ok) return fail(signer.error);
 
     // Permission + facility ownership — mirrors POST /api/rebuttal. Checked before
     // any upload so a rejected submission never stores a document.
@@ -112,6 +145,9 @@ export async function submitRebuttal(formData: FormData): Promise<ActionResult> 
         documentUrl,
         userId: user.userId,
         status: "PENDING",
+        signerName: signer.signerName,
+        signedOn: signer.signedOn,
+        visitDate: signer.visitDate,
       },
       select: { id: true },
     });

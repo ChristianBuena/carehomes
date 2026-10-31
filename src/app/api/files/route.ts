@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { UTApi } from "uploadthing/server";
@@ -13,7 +13,8 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get("userId");
@@ -55,7 +56,8 @@ export async function DELETE(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
     const fileId = searchParams.get("id");
@@ -111,7 +113,8 @@ export async function PATCH(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const { id, label, isQsfDoc } = body as {

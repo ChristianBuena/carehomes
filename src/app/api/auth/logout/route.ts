@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/jwt';
+import { getSessionUser, revokeUserSessions } from '@/lib/auth';
 import { auditContextFromRequest, recordAudit } from '@/services/audit.service';
 
+/**
+ * POST /api/auth/logout
+ *
+ * Clears the cookie AND revokes the session server-side (SOW 11.1a): the
+ * user's token version is bumped, so a copied or stolen cookie stops working
+ * immediately. This signs the user out on every device.
+ */
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value;
-  if (token) {
-    try {
-      const session = await verifyToken(token);
-      await recordAudit({
-        action: 'AUTH_LOGOUT',
-        actorId: session.userId,
-        actorRole: session.role,
-        ...auditContextFromRequest(request),
-      });
-    } catch {
-      // Invalid or expired token: nothing to attribute; still clear the cookie.
-    }
+  const session = await getSessionUser(request.cookies.get('auth-token')?.value);
+  if (session) {
+    await revokeUserSessions(session.userId);
+    await recordAudit({
+      action: 'AUTH_LOGOUT',
+      actorId: session.userId,
+      actorRole: session.role,
+      ...auditContextFromRequest(request),
+    });
   }
 
   const response = NextResponse.json(

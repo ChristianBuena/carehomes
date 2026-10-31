@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!hasPermission(user.role, "manage_file_shares")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -126,7 +127,8 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!hasPermission(user.role, "manage_file_shares")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

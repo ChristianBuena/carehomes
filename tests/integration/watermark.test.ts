@@ -208,7 +208,7 @@ describe("D. Watermark route — who can generate one (POST /api/rebuttal/waterm
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-  it.fails("FAILS [Low]: a garbage auth-token is answered with 401 (actual: 500)", async () => {
+  it("FIXED D-8 (was FAILS [Low]): a garbage auth-token is answered with 401", async () => {
     const w = await world();
     expect((await post({ "auth-token": "not-a-jwt" }, { rebuttalId: w.rebuttal.id })).status).toBe(401);
   });

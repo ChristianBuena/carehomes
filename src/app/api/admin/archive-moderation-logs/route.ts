@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { archiveOldModerationLogs } from "@/services/moderation.service";
 import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // PERMISSION CHECK — ADMIN only
     if (!hasPermission(user.role, "manage_facilities")) {

@@ -85,6 +85,11 @@ model User {
   updatedAt      DateTime  @updatedAt
   lastReviewedAt DateTime?
 
+  // Session revocation (SOW 11.1a). Every session token carries the version it
+  // was issued with; bumping this number invalidates all of the user's
+  // sessions at once (logout, admin "revoke sessions").
+  tokenVersion Int @default(0)
+
   // UNUSED since login throttling moved to LoginAttempt (keyed on email + IP).
   // Kept so no migration has to drop columns.
   failedLoginAttempts Int       @default(0)

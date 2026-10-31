@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
@@ -19,7 +19,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!hasPermission(user.role, "moderate_rebuttals")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -78,7 +79,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const caller = await verifyToken(token);
+    const caller = await getSessionUser(token);
+    if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!hasPermission(caller.role, "moderate_rebuttals")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -89,6 +91,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "userId is required" },
         { status: 400 }
+      );
+    }
+
+    // A moderator may not sign off on an ADMIN account (or their own):
+    // privileged access must be reviewed by someone with more authority.
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
+    if (!target) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    if (caller.role !== "ADMIN" && (target.role === "ADMIN" || target.id === caller.userId)) {
+      return NextResponse.json(
+        { error: "Forbidden: only an admin can review this account" },
+        { status: 403 }
       );
     }
 

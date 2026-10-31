@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { getFacilityById, softDeleteFacility } from "@/services/facility.service";
 import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
@@ -39,7 +39,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // PERMISSION CHECK — only ADMINs may delete facilities
     if (!hasPermission(user.role, "manage_facilities")) {

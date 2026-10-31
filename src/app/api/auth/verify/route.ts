@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
         email: true,
         role: true,
         organizationId: true,
+        tokenVersion: true,
       },
     });
 
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
       email: user.email,
       role: user.role,
       orgId: user.organizationId,
+      tv: user.tokenVersion,
     });
 
     await recordAudit({

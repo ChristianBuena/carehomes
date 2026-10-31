@@ -1,5 +1,5 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { recordAudit } from "@/services/audit.service";
@@ -25,7 +25,8 @@ export const ourFileRouter = {
 
             if (!token) throw new Error("Unauthorized");
 
-            const user = await verifyToken(token);
+            const user = await getSessionUser(token);
+            if (!user) throw new Error("Unauthorized");
 
             return { userId: user.userId };
         })

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,12 +14,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 🔐 VERIFY JWT
-    let decoded;
-
-    try {
-      decoded = await verifyToken(token);
-    } catch (err) {
+    // 🔐 VERIFY SESSION (signature, expiry, revocation)
+    const decoded = await getSessionUser(token);
+    if (!decoded) {
       return NextResponse.json(
         { error: "Invalid token" },
         { status: 401 }

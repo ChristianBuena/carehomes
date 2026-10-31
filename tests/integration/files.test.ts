@@ -294,7 +294,7 @@ describe("A. Files — who can EDIT the label / QSF flag (PATCH /api/files)", ()
 });
 
 describe("A. Files — invalid session token", () => {
-  it.fails("FAILS [Low]: a garbage auth-token is answered with 401 on every file route (actual: 500 — the catch-all swallows the verification error)", async () => {
+  it("FIXED A-2 (was FAILS [Low]): a garbage auth-token is answered with 401 on every file route", async () => {
     const w = await world();
     const bad = { "auth-token": "not-a-jwt" };
     const statuses = [

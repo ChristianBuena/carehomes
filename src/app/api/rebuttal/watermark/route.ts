@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { applyWatermark, isPdfFile, isPdfTextSearchable } from "@/services/pdf-watermark.service";
@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const user = await verifyToken(token);
+        const user = await getSessionUser(token);
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         if (!hasPermission(user.role, "moderate_rebuttals")) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -131,8 +132,9 @@ export async function GET(req: NextRequest) {
         try {
             const token = req.cookies.get("auth-token")?.value;
             if (token) {
-                const user = await verifyToken(token);
-                isPrivileged = hasPermission(user.role, "moderate_rebuttals");
+                // An invalid or revoked token is treated as the public (no 401 here).
+                const user = await getSessionUser(token);
+                isPrivileged = !!user && hasPermission(user.role, "moderate_rebuttals");
             }
         } catch {
             // Not logged in — public access only

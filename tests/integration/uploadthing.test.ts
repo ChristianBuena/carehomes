@@ -110,7 +110,7 @@ describe("F. UploadThing — authorization runs BEFORE a file is accepted (middl
     }
   });
 
-  it.fails("FAILS [Low]: a valid token for a user that no longer exists is rejected before the upload (actual: accepted — the file is stored at UploadThing and only the later database write fails)", async () => {
+  it("FIXED F-1 (was FAILS [Low]): a valid token for a user that no longer exists is rejected before the upload (the session is checked against the database)", async () => {
     const ghost = await createUser({ organizationId: null, role: "MEMBER" });
     const cookies = await authCookie(ghost);
     await testDb.user.delete({ where: { id: ghost.id } });
@@ -118,14 +118,21 @@ describe("F. UploadThing — authorization runs BEFORE a file is accepted (middl
     await expect(authorize(cookies)).rejects.toThrow();
   });
 
-  it("…and for that deleted user the completion callback then fails, leaving no file record", async () => {
+  it("…and for that deleted user nothing is stored: authorization fails, and the completion callback would fail too", async () => {
     const ghost = await createUser({ organizationId: null, role: "MEMBER" });
     const cookies = await authCookie(ghost);
     await testDb.user.delete({ where: { id: ghost.id } });
 
-    const metadata = await authorize(cookies);
-    await expect(route.onUploadComplete({ metadata, file: uploaded() })).rejects.toThrow();
+    await expect(authorize(cookies)).rejects.toThrow("Unauthorized");
+    await expect(route.onUploadComplete({ metadata: { userId: ghost.id }, file: uploaded() })).rejects.toThrow();
     expect(await testDb.memberFile.count()).toBe(0);
+  });
+
+  it("a revoked session (logged out elsewhere) is rejected before the upload", async () => {
+    const user = await createUser({ organizationId: null, role: "MEMBER" });
+    const cookies = await authCookie(user);
+    await testDb.user.update({ where: { id: user.id }, data: { tokenVersion: { increment: 1 } } });
+    await expect(authorize(cookies)).rejects.toThrow("Unauthorized");
   });
 });
 

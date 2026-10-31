@@ -287,6 +287,18 @@ const CASES: SmokeCase[] = [
       r.GET(buildRequest("http://localhost/api/admin/audit-log?format=json", { cookies: w.adminCookies }), noParams),
   },
   {
+    id: "src/app/api/admin/sessions/revoke/route.ts#POST",
+    run: (w, r) =>
+      r.POST(
+        buildRequest("http://localhost/api/admin/sessions/revoke", {
+          method: "POST",
+          body: { userId: w.moderator.id },
+          cookies: w.adminCookies,
+        }),
+        noParams
+      ),
+  },
+  {
     id: "src/app/api/admin/archive-moderation-logs/route.ts#POST",
     run: async (w, r) => {
       // One log older than the default 1-year cutoff, so the archive transaction really runs.

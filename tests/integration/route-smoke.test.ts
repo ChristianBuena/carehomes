@@ -341,6 +341,14 @@ const CASES: SmokeCase[] = [
     },
   },
   {
+    id: "src/app/api/admin/reports/kpi/route.ts#GET",
+    run: (w, r) =>
+      Promise.all([
+        r.GET(buildRequest("http://localhost/api/admin/reports/kpi?report=turnaround", { cookies: w.adminCookies }), noParams),
+        r.GET(buildRequest("http://localhost/api/admin/reports/kpi?report=revisions&format=csv", { cookies: w.adminCookies }), noParams),
+      ]),
+  },
+  {
     id: "src/app/api/admin/sessions/revoke/route.ts#POST",
     run: (w, r) =>
       r.POST(

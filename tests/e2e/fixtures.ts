@@ -58,6 +58,11 @@ export const listShareLinks = (userId: string) =>
 
 export const revokeShareLink = (id: string) => run("revokeShareLink", { id });
 
+export const setRebuttalWatermark = (id: string, watermarkStatus: "APPLIED" | "FAILED" | null, watermarkError: string | null) =>
+  run("setRebuttalWatermark", { id, watermarkStatus, watermarkError });
+export const getRebuttalWatermark = (id: string) =>
+  run<{ watermarkStatus: string | null; watermarkError: string | null }>("getRebuttalWatermark", { id });
+
 type MemberFile = { id: string; filename: string; fileUrl: string };
 type ShareLink = { id: string; token: string };
 

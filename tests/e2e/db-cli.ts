@@ -86,6 +86,17 @@ async function main() {
         data: { revokedAt: new Date() },
       });
       break;
+    case "setRebuttalWatermark": {
+      const { id, watermarkStatus, watermarkError } = args as { id: string; watermarkStatus: "APPLIED" | "FAILED" | null; watermarkError: string | null };
+      result = await testDb.rebuttal.update({ where: { id }, data: { watermarkStatus, watermarkError } });
+      break;
+    }
+    case "getRebuttalWatermark":
+      result = await testDb.rebuttal.findUnique({
+        where: { id: (args as { id: string }).id },
+        select: { watermarkStatus: true, watermarkError: true },
+      });
+      break;
     case "countRebuttals":
       result = await testDb.rebuttal.count();
       break;

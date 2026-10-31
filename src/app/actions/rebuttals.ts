@@ -6,6 +6,7 @@ import { hasPermission } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 import { v2 as cloudinary } from "cloudinary";
 import type { ActionResult } from "@/types/action-result";
+import { detectMarkableKind } from "@/services/pdf-watermark.service";
 import { auditContextFromHeaders, recordAudit } from "@/services/audit.service";
 
 cloudinary.config({
@@ -49,6 +50,18 @@ function parseSignerDetails(formData: FormData):
     return { ok: false, error: "Dates must be valid calendar dates." };
   }
   return { ok: true, signerName: signerName || null, signedOn, visitDate };
+}
+
+const UNSUPPORTED_DOCUMENT =
+  "Upload a PDF, PNG or JPG. Other files (including Word) cannot be marked FOR ATTORNEY REVIEW ONLY.";
+
+/**
+ * True when the file is a PDF, PNG or JPEG by its bytes. Drafts must be
+ * stamped "FOR ATTORNEY REVIEW ONLY" whenever they are viewed (SOW 11.2),
+ * which is only possible for these types.
+ */
+async function isMarkableUpload(file: File): Promise<boolean> {
+  return detectMarkableKind(new Uint8Array(await file.slice(0, 8).arrayBuffer())) !== null;
 }
 
 /** Uploads a rebuttal document to Cloudinary and returns its URL. */
@@ -124,6 +137,7 @@ export async function submitRebuttal(formData: FormData): Promise<ActionResult> 
     let documentUrl: string | null = null;
 
     if (file && file.size > 0) {
+      if (!(await isMarkableUpload(file))) return fail(UNSUPPORTED_DOCUMENT);
       if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
         return fail("Cloudinary configuration is missing in the environment variables.");
       }
@@ -201,6 +215,7 @@ export async function updateRebuttal(rebuttalId: string, formData: FormData): Pr
     let documentUrl: string | null = existing.documentUrl;
 
     if (file && file.size > 0) {
+      if (!(await isMarkableUpload(file))) return fail(UNSUPPORTED_DOCUMENT);
       if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
         return fail("Cloudinary configuration is missing in the environment variables.");
       }
@@ -222,6 +237,13 @@ export async function updateRebuttal(rebuttalId: string, formData: FormData): Pr
         documentUrl,
         status: "PENDING",        // Re-enter moderation queue
         moderatedById: null,      // Clear previous reviewer
+        // A new document needs a new approved copy when it is approved.
+        ...(documentUrl !== existing.documentUrl && {
+          watermarkedUrl: null,
+          watermarkStatus: null,
+          watermarkError: null,
+          watermarkUpdatedAt: null,
+        }),
       },
     });
 

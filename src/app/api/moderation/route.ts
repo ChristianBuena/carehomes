@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
 import { describeMailError } from "@/lib/log-safe";
 import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
+import { createApprovedCopy, type ApprovedCopyResult } from "@/services/approved-copy.service";
 
 const ACTION_PERMISSION_MAP: Record<string, Permission> = {
   approve: "approve_rebuttal",
@@ -146,6 +147,14 @@ export async function POST(req: NextRequest) {
       ...auditContextFromRequest(req),
     });
 
+    // ── 7b. Approved copy ("PUBLIC REDACTED VERSION", SOW 11.2) ────────────
+    // Never blocks approval: a failure is logged, flagged on the rebuttal and
+    // audited, and the moderator is told so they can retry.
+    let approvedCopy: ApprovedCopyResult | undefined;
+    if (action === "approve") {
+      approvedCopy = await createApprovedCopy(id, { userId: user.userId, role: user.role }, auditContextFromRequest(req));
+    }
+
     // ── 8. Send notification email to member ───────────────────────────────
     if (!isSameStatus) {
       try {
@@ -250,10 +259,18 @@ export async function POST(req: NextRequest) {
       request_fix: "Fix requested — member has been notified",
     };
 
+    const copyFailed = approvedCopy?.status === "FAILED";
     return NextResponse.json({
       success: true,
-      message: messages[action] ?? "Action completed",
-      rebuttal,
+      message: copyFailed
+        ? `${messages[action]}. The approved copy of the document could not be made; it is flagged for a retry.`
+        : messages[action] ?? "Action completed",
+      rebuttal: (({ documentUrl, watermarkedUrl, ...r }) => {
+        void documentUrl;
+        void watermarkedUrl;
+        return r;
+      })(rebuttal),
+      ...(approvedCopy && { approvedCopy }),
     });
   } catch (err) {
     console.error("Moderation error:", err);

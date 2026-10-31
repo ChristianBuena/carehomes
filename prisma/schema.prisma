@@ -205,6 +205,13 @@ model Rebuttal {
   watermarkedUrl String?
   status         RebuttalStatus @default(PENDING)
 
+  // Approved copy ("PUBLIC REDACTED VERSION") made when the rebuttal is
+  // approved. FAILED flags a rebuttal whose copy could not be made: approval
+  // still succeeded; a moderator can retry from the moderation page.
+  watermarkStatus    WatermarkStatus?
+  watermarkError     String?
+  watermarkUpdatedAt DateTime?
+
   // PRIVATE signer details from the print form (SOW 11.3 "limit PII").
   // Visible to the member and to moderators only; never part of `content`,
   // which is published on approval.
@@ -707,6 +714,11 @@ model AuditLog {
 // One row per review: who reviewed which account, when, with what decision.
 // User.lastReviewedAt is kept as the "due" marker; this table is the record.
 //
+
+enum WatermarkStatus {
+  APPLIED
+  FAILED
+}
 
 enum AccessReviewDecision {
   KEEP_ACCESS

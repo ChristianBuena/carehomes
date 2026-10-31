@@ -325,6 +325,20 @@ const CASES: SmokeCase[] = [
     },
   },
   {
+    id: "src/app/api/rebuttal/[id]/approved-copy/route.ts#POST",
+    run: async (w, r) => {
+      const pdf = await buildTextPdf();
+      await testDb.rebuttal.update({
+        where: { id: w.approved.id },
+        data: { documentUrl: `data:application/pdf;base64,${pdf.toString("base64")}`, watermarkStatus: "FAILED" },
+      });
+      return r.POST(
+        buildRequest(`http://localhost/api/rebuttal/${w.approved.id}/approved-copy`, { method: "POST", cookies: w.moderatorCookies }),
+        withParams({ id: w.approved.id })
+      );
+    },
+  },
+  {
     id: "src/app/api/rebuttal/[id]/document/route.ts#GET",
     run: async (w, r) => {
       await testDb.rebuttal.update({ where: { id: w.pending.id }, data: { documentUrl: "https://files.test/smoke.pdf" } });

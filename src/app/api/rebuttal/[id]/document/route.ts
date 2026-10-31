@@ -9,6 +9,7 @@ import {
   storageErrorResponse,
   StoredFileUnavailableError,
 } from "@/services/file-storage.service";
+import { DRAFT_MARK, markDocument, UnmarkableDocumentError } from "@/services/pdf-watermark.service";
 import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 /**
@@ -16,10 +17,25 @@ import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
  * Allowed: the author, members of the facility's organization, MODERATOR and
  * ADMIN. Never public (release decision 0c). The Cloudinary URL is never sent
  * to the browser (SOW 11.3).
+ *
+ * Until the rebuttal is APPROVED the document is a draft: every view and
+ * download is a PDF stamped "FOR ATTORNEY REVIEW ONLY" on every page
+ * (SOW 11.2). If the file cannot be stamped (Word, encrypted or corrupt
+ * PDF), it is NOT served.
+ *
  * ?download=1 forces "save as".
  * ?version=approved-copy serves the stored "PUBLIC REDACTED VERSION" copy of
  * an approved rebuttal (MODERATOR and ADMIN only).
  */
+const EXT_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  doc: "application/msword",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+};
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser(req.cookies.get("auth-token")?.value);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -29,7 +45,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     where: { id, deletedAt: null },
     select: {
       id: true,
-      title: true,
       status: true,
       userId: true,
       documentUrl: true,
@@ -63,32 +78,48 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     throw err;
   }
 
+  const isDraft = !wantsApprovedCopy && rebuttal.status !== "APPROVED";
+  const ext = wantsApprovedCopy
+    ? "pdf"
+    : /\.([a-z0-9]{2,5})(?:$|\?)/i.exec(rebuttal.documentUrl)?.[1]?.toLowerCase() ?? "pdf";
+
+  let body: Uint8Array = bytes;
+  let mimeType = EXT_TYPES[ext] ?? "application/octet-stream";
+  let filename = `rebuttal-${rebuttal.id}.${ext}`;
+
+  if (isDraft) {
+    try {
+      body = new Uint8Array(await markDocument(bytes, DRAFT_MARK));
+    } catch (err) {
+      const unsupported = err instanceof UnmarkableDocumentError;
+      return NextResponse.json(
+        {
+          error: unsupported
+            ? "This file type cannot be marked FOR ATTORNEY REVIEW ONLY, so it is not shown while the rebuttal is under review. Ask the member to upload a PDF, PNG or JPG."
+            : "This document could not be marked FOR ATTORNEY REVIEW ONLY (it may be encrypted or damaged), so it is not shown while the rebuttal is under review.",
+        },
+        { status: 422 }
+      );
+    }
+    mimeType = "application/pdf";
+    filename = `rebuttal-${rebuttal.id}-FOR-ATTORNEY-REVIEW-ONLY.pdf`;
+  }
+
   await recordAudit({
     action: "FILE_DOWNLOADED",
     actorId: user.userId,
     actorRole: user.role,
     targetType: "Rebuttal",
     targetId: rebuttal.id,
-    metadata: { status: rebuttal.status, version: wantsApprovedCopy ? "approved-copy" : "original" },
+    metadata: {
+      status: rebuttal.status,
+      version: wantsApprovedCopy ? "approved-copy" : isDraft ? "draft-marked" : "original",
+    },
     ...auditContextFromRequest(req),
   });
 
-  const ext = wantsApprovedCopy
-    ? "pdf"
-    : /\.([a-z0-9]{2,5})(?:$|\?)/i.exec(rebuttal.documentUrl)?.[1]?.toLowerCase() ?? "pdf";
-  const mimeType =
-    ext === "pdf"
-      ? "application/pdf"
-      : ext === "docx"
-        ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        : ext === "png"
-          ? "image/png"
-          : ext === "jpg" || ext === "jpeg"
-            ? "image/jpeg"
-            : "application/octet-stream";
-
-  return fileResponse(bytes, {
-    filename: `rebuttal-${rebuttal.id}.${ext}`,
+  return fileResponse(body, {
+    filename,
     mimeType,
     download: req.nextUrl.searchParams.get("download") === "1",
   });

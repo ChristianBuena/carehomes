@@ -57,6 +57,7 @@ import {
   createRebuttal,
 } from "../helpers/db";
 import { buildRequest, authCookie } from "../helpers/http";
+import { buildRealTextPdf } from "../helpers/pdf";
 import { getUserFromRequest } from "@/lib/auth";
 import { GET as downloadFile } from "@/app/api/files/[id]/download/route";
 import { GET as shareFile } from "@/app/api/share/[token]/files/[ref]/route";
@@ -249,6 +250,9 @@ describe("rebuttal documents", () => {
     );
 
   it("author, teammate and moderator can open it; it is fetched with a SIGNED Cloudinary URL", async () => {
+    // A real PDF: drafts are stamped before they are served (draft-watermark.test.ts).
+    const real = Uint8Array.from(await buildRealTextPdf());
+    fetchSpy.mockImplementation(async () => new Response(Uint8Array.from(real), { status: 200 }));
     const w = await world();
     for (const u of [w.author, w.teammate, w.moderator]) {
       expect((await get(w.rebuttal.id, u)).status).toBe(200);

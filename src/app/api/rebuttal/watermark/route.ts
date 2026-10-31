@@ -6,8 +6,10 @@ import { applyWatermark, isPdfFile, isPdfTextSearchable } from "@/services/pdf-w
 
 /**
  * POST /api/rebuttal/watermark
- * Admin/Moderator triggers watermarking of an approved rebuttal's document.
- * Called automatically when a rebuttal is approved.
+ * Admin/Moderator manually (re)generates the "PUBLIC REDACTED VERSION" copy.
+ * Approval now makes this copy automatically (src/services/approved-copy.service.ts,
+ * called from POST /api/moderation); the moderation page's retry button uses
+ * POST /api/rebuttal/[id]/approved-copy. This older route is kept as is.
  */
 export async function POST(req: NextRequest) {
     try {
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
         // ── 7. Save watermarked URL to DB ────────────────────────────────────
         await prisma.rebuttal.update({
             where: { id: rebuttalId },
-            data: { watermarkedUrl },
+            data: { watermarkedUrl, watermarkStatus: "APPLIED", watermarkError: null, watermarkUpdatedAt: new Date() },
         });
 
         console.log(`✅ Watermark applied to rebuttal: ${rebuttalId}`);

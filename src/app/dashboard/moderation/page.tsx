@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
 import { ShieldAlert, AlertCircle, ArrowLeft, ShieldCheck } from "lucide-react";
 import { RebuttalActionCard } from "./RebuttalActionCard";
+import { ApprovedCopyRetry } from "./ApprovedCopyRetry";
 
 export const metadata = {
   title: "Moderation Dashboard",
@@ -47,6 +48,13 @@ export default async function ModerationPage() {
       orderBy: { createdAt: "asc" }, // Oldest first
     })
   ).map(({ documentUrl, ...r }) => ({ ...r, hasDocument: documentUrl !== null }));
+
+  // Approved rebuttals whose approved copy could not be made (SOW 11.2).
+  const failedCopies = await prisma.rebuttal.findMany({
+    where: { status: "APPROVED", deletedAt: null, watermarkStatus: "FAILED" },
+    select: { id: true, title: true, watermarkError: true, watermarkUpdatedAt: true },
+    orderBy: { watermarkUpdatedAt: "desc" },
+  });
 
   // Quarterly access review count
   const ninetyDaysAgo = new Date();
@@ -108,6 +116,34 @@ export default async function ModerationPage() {
             </Link>
           </div>
         </div>
+
+        {failedCopies.length > 0 && (
+          <section
+            aria-labelledby="failed-copies-heading"
+            className="rounded-xl border border-[var(--color-warning)] bg-[var(--color-surface)] p-6 shadow-sm"
+          >
+            <h2 id="failed-copies-heading" className="text-lg font-bold text-[var(--color-text)]">
+              Approved copies that need attention ({failedCopies.length})
+            </h2>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
+              These rebuttals were approved, but the &ldquo;PUBLIC REDACTED VERSION&rdquo; copy of their document could not be made.
+            </p>
+            <ul className="mt-4 divide-y divide-[var(--color-border)]">
+              {failedCopies.map((r) => (
+                <li key={r.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium text-[var(--color-text)]">{r.title}</p>
+                    <p className="text-xs text-[var(--color-muted)]">
+                      Reason: {r.watermarkError ?? "unknown"}
+                      {r.watermarkUpdatedAt && ` · ${r.watermarkUpdatedAt.toLocaleString("en-US")}`}
+                    </p>
+                  </div>
+                  <ApprovedCopyRetry rebuttalId={r.id} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Content */}
         {pendingRebuttals.length === 0 ? (

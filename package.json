@@ -7,6 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "scan:secrets": "tsx scripts/secret-scan.ts",
+    "scan:secrets:history": "tsx scripts/secret-scan.ts --history",
     "db:seed": "npx prisma db seed",
     "postinstall": "prisma generate",
     "test": "dotenv -e .env.test -- vitest run",

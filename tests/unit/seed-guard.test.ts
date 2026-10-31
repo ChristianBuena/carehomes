@@ -19,8 +19,8 @@ const UNREACHABLE_DB = "postgresql://seed-guard-test@127.0.0.1:1/never";
 
 const GOOD = {
   SEED_ADMIN_EMAIL: "First.Admin@example.org",
-  SEED_ADMIN_PASSWORD: "a-long-admin-passphrase",
-  SEED_DEMO_PASSWORD: "a-long-demo-passphrase",
+  SEED_ADMIN_PASSWORD: "a-long-admin-passphrase", // secret-scan:allow (test fixture)
+  SEED_DEMO_PASSWORD: "a-long-demo-passphrase", // secret-scan:allow (test fixture)
 };
 
 describe("readSeedConfig", () => {

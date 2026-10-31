@@ -62,7 +62,7 @@ Copy `.env.local` (already present for local dev) or create one with:
 
 ```
 DATABASE_URL="postgresql://user:pass@localhost:5432/carehomes"
-JWT_SECRET="any-long-random-string"
+JWT_SECRET="replace-with-a-long-random-string"
 EMAIL_USER=...        # Gmail account used by Nodemailer
 EMAIL_PASS=...        # Gmail app password
 STRIPE_SECRET_KEY=...

@@ -59,3 +59,12 @@ describe("removed dependencies stay removed", () => {
     expect(pkg.devDependencies?.["next-auth"]).toBeUndefined();
   });
 });
+
+describe("Prisma CLI, client and adapter stay on the same version", () => {
+  // npm audit fix moved the prisma CLI (which runs the generator) ahead of
+  // @prisma/client once; generated code and runtime must match.
+  it("prisma, @prisma/client and @prisma/adapter-pg are identical versions", () => {
+    const v = ["prisma", "@prisma/client", "@prisma/adapter-pg"].map(installedVersion);
+    expect(new Set(v).size, v.join(" / ")).toBe(1);
+  });
+});

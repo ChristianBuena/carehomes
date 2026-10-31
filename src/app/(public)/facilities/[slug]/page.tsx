@@ -140,7 +140,6 @@ export default async function FacilityDetailPage({
     summary: r.content,
     moderationStatus: "approved" as const,
     publishedAt: r.updatedAt.toISOString(),
-    filesUrl: r.documentUrl ?? undefined,
   }));
 
   const localBusinessSchema = {

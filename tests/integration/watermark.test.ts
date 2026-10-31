@@ -227,14 +227,14 @@ describe("D. Watermark route — who can request the result (GET /api/rebuttal/w
     expect((await get(undefined, "no-such-rebuttal")).status).toBe(404);
   });
 
-  it("APPROVED (published) rebuttal: anyone gets the watermarked version, and nobody outside moderation gets the original", async () => {
+  it("CHANGED (release decision 0c, was: anyone got the watermarked copy): an APPROVED rebuttal's document is not served outside moderation — public, another org's member and the author all get 403 with no URL of any kind", async () => {
     const w = await watermarked("APPROVED");
     for (const cookies of [undefined, w.cookies.outsider, w.cookies.author]) {
       const res = await get(cookies, w.rebuttal.id);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(403);
       const text = await res.text();
-      expect(JSON.parse(text)).toEqual({ watermarkedUrl: "data:application/pdf;base64,AAAA", originalUrl: null });
       expect(text).not.toContain(ORIGINAL_URL);
+      expect(text).not.toContain("data:application/pdf");
     }
   });
 
@@ -265,23 +265,26 @@ describe("D. Watermark route — who can request the result (GET /api/rebuttal/w
     }
   });
 
-  it("a garbage token is treated as the public: approved is served without the original, unpublished is refused", async () => {
+  it("a garbage token is treated as the public: approved and unpublished are both refused (release decision 0c)", async () => {
     const approved = await watermarked("APPROVED");
     const bad = { "auth-token": "not-a-jwt" };
-    expect(await (await get(bad, approved.rebuttal.id)).json()).toMatchObject({ originalUrl: null });
+    const approvedRes = await get(bad, approved.rebuttal.id);
+    expect(approvedRes.status).toBe(403);
+    expect(await approvedRes.text()).not.toContain("data:application/pdf");
 
     const pending = await createRebuttal({ userId: approved.author.id, facilityId: approved.facility.id, status: "PENDING" });
     expect((await get(bad, pending.id)).status).toBe(403);
   });
 
-  it.fails("FAILS [High]: the ORIGINAL (un-watermarked) document of a published rebuttal is not available to the public (actual: GET /api/rebuttal/published, no login, returns documentUrl for every approved rebuttal)", async () => {
+  it("FIXED D-1 (was FAILS [High]): the ORIGINAL document of a published rebuttal is not available to the public through GET /api/rebuttal/published — and neither is the watermarked copy (release decision 0c)", async () => {
     const w = await watermarked("APPROVED");
     const text = await (await getPublished()).text();
     expect(text).toContain(w.rebuttal.id);
     expect(text).not.toContain(ORIGINAL_URL);
+    expect(text).not.toContain("data:application/pdf");
   });
 
-  it.fails("FAILS [Medium]: the public list of published rebuttals does not expose the author's email address (actual: it does)", async () => {
+  it("FIXED D-2 (was FAILS [Medium]): the public list of published rebuttals does not expose the author's email address", async () => {
     const w = await watermarked("APPROVED");
     const text = await (await getPublished()).text();
     expect(text).toContain(w.rebuttal.id);

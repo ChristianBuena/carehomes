@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, FileText, CheckCircle2 } from "lucide-react";
+import { FileText, CheckCircle2 } from "lucide-react";
 
 export type Rebuttal = {
   id: string;
@@ -24,7 +24,6 @@ export type Rebuttal = {
   summary: string;
   moderationStatus: "approved";
   publishedAt: string;
-  filesUrl?: string;
 };
 
 interface ApprovedRebuttalsSectionProps {
@@ -55,18 +54,7 @@ function RebuttalCard({ rebuttal }: { rebuttal: Rebuttal }) {
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
             <CardTitle className="text-lg">
-              {rebuttal.filesUrl ? (
-                <Link
-                  href={rebuttal.filesUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline text-[var(--color-primary)]"
-                >
-                  {rebuttal.title}
-                </Link>
-              ) : (
-                rebuttal.title
-              )}
+              {rebuttal.title}
             </CardTitle>
             <CardDescription className="mt-1 font-medium text-[var(--color-text)]">
               Re: Citation #{rebuttal.citationId} dated {formattedCitationDate}
@@ -100,18 +88,6 @@ function RebuttalCard({ rebuttal }: { rebuttal: Rebuttal }) {
         <div className="text-sm font-medium text-[var(--color-muted)]">
           Published {formattedPublishedDate}
         </div>
-        {rebuttal.filesUrl && (
-          <Button variant="default" size="sm" asChild>
-            <Link
-              href={rebuttal.filesUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View Redacted Document
-              <ExternalLink className="w-3.5 h-3.5 ml-2" />
-            </Link>
-          </Button>
-        )}
       </CardFooter>
       <div className="px-4 pb-4 bg-[var(--color-bg)] text-xs text-[var(--color-muted)] italic rounded-b-xl">
         This rebuttal was submitted by the facility operator and published after

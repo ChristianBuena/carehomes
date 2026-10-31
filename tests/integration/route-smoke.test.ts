@@ -651,7 +651,12 @@ const CASES: SmokeCase[] = [
   {
     id: "src/app/api/rebuttal/watermark/route.ts#GET",
     run: (w, r) =>
-      r.GET(buildRequest(`http://localhost/api/rebuttal/watermark?rebuttalId=${w.approved.id}`), noParams),
+      // Moderator: since release decision 0c this route serves document URLs
+      // to moderation only (public gets 403, see public-exposure.test.ts).
+      r.GET(
+        buildRequest(`http://localhost/api/rebuttal/watermark?rebuttalId=${w.approved.id}`, { cookies: w.moderatorCookies }),
+        noParams
+      ),
   },
   {
     id: "src/app/api/rebuttal/watermark/route.ts#POST",

@@ -120,7 +120,7 @@ export default function AccessReviewPage() {
               Quarterly Access Review
             </h1>
             <p className="mt-2 text-[var(--color-muted)]">
-              Review member accounts that haven't been verified in the last 90
+              Review member accounts that haven&apos;t been verified in the last 90
               days. Confirm they still hold valid facility licenses.
             </p>
           </div>

@@ -19,7 +19,7 @@ export function ProviderDisclaimerSection() {
               <strong> You must contact the providers directly</strong> to discuss your case, request a consultation, and determine their fees.
             </p>
             <p className="text-[var(--color-text)] leading-relaxed">
-              We highly recommend interviewing multiple professionals to find the best fit for your specific facility's needs and current regulatory challenges.
+              We highly recommend interviewing multiple professionals to find the best fit for your specific facility&apos;s needs and current regulatory challenges.
             </p>
             <div className="pt-2">
               <Button variant="outline" asChild>

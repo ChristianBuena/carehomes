@@ -2,6 +2,8 @@
 
 Audit date: 2026-10-31
 Audited code: branch `round-3-cleanup-and-skipped-areas` at commit `41d027f` (working tree clean). This is the branch the round 3 test report describes.
+
+**Update 2026-10-31 (branch `release-blockers`):** CH-28 (LPO SOP), CH-27 (accessibility) and the CH-32 training docs are now merged; draft policies were added in `docs/policies/`. Rows 3A.2, 3B.1, 3B.2b, 3B.2c and 11.4 were updated; all other Part 1 rows still describe the first audit. Part 4 re-sorts every MISSING and PARTIAL row into CODE GAP / DOCUMENT / EXTERNAL SETUP / OUT OF SCOPE OR NEEDS CHANGE ORDER. Companion files: `docs/CHANGE_ORDER_DRAFT.md`, `docs/HANDOVER_CHECKLIST.md`.
 SOW source: `docs/SOW_Nonprofit_LPO_Single_Integrator web base business_21JUN2026.docx` (untracked; there is no `docs/SOW.md`). Section numbers below follow that file.
 
 Method: every status below was checked against the code on this branch, by command, or by looking for the document in the repo (all local branches and all `origin/*` branches). Where a claim comes from the existing docs (TEST_REPORT.md, KNOWN_ISSUES.md and others), it was re-checked. Nothing was taken on trust.
@@ -36,17 +38,17 @@ Status key: DONE = implemented and verified. PARTIAL = exists but incomplete or 
 | SOW ref | Requirement | Where it lives | Evidence | Status | Gap or action |
 |---|---|---|---|---|---|
 | 3A.1 | Stakeholder interviews; confirm use cases and priority matters | Not in repo | Searched all branches for "discovery", "stakeholder", "interview": not found | MISSING | Produce the Discovery Summary and get it signed (Milestone 1 evidence). If it exists outside the repo, attach it. |
-| 3A.2 | Process map: intake, triage, drafting, attorney review, signature, filing, close | Unmerged doc | `origin/CH-28-LPO-Workflow:docs/lpo-workflow-sop.md` sections 1 to 9 match the nine stages | NOT CODE | Text only, on an unmerged branch. SOW 4.1 asks for a PDF process map. The app implements none of intake, triage, signature, filing or close. |
+| 3A.2 | Process map: intake, triage, drafting, attorney review, signature, filing, close | Doc (merged on `release-blockers`) | `docs/lpo-workflow-sop.md` sections 1 to 9 match the nine stages (merged from `origin/CH-28-LPO-Workflow`) | NOT CODE | Text only. SOW 4.1 asks for a PDF process map. The app implements none of intake, triage, signature, filing or close. |
 | 3A.3 | Security and privacy baseline; tool access and permission model | Code and docs | `src/lib/permissions.ts`; `docs/PERMISSIONS.md`; `src/middleware.ts:66-73` | PARTIAL | The app permission model is documented and tested (72 role-by-permission assertions in `tests/unit/permissions.test.ts`). There is no written security and privacy baseline, and no access model for the SOW tool stack (Notion, Drive, Airtable). |
 
 ### Section 3B: Ethics and compliance framework
 
 | SOW ref | Requirement | Where it lives | Evidence | Status | Gap or action |
 |---|---|---|---|---|---|
-| 3B.1 | Outsourcing and supervision SOP aligned to ABA Model Rule 5.3 and CA analogs | Not found | `git grep -E "5\.3\|Model Rule"` across every `origin/*` branch: no hits | MISSING | Write it. This is also an 11.4 security/compliance requirement. |
+| 3B.1 | Outsourcing and supervision SOP aligned to ABA Model Rule 5.3 and CA analogs | Draft doc | `docs/policies/ethics-supervision-policy.md` (DRAFT - for attorney review, added on `release-blockers`) | PARTIAL | Counsel review and client approval needed. Was MISSING at the first audit. |
 | 3B.2a | Confidentiality policy | Privacy page | `src/app/(public)/privacy/page.tsx` (DRAFT banner at lines 52, 61, 78) | PARTIAL | Public-facing draft only. No internal confidentiality policy for the PH team. |
-| 3B.2b | Conflicts policy | Not found | No conflicts protocol in any doc or page | MISSING | Write the conflicts protocol (also SOW 4.2). |
-| 3B.2c | Data retention policy | Privacy page section 6 | `privacy/page.tsx:197-198` | PARTIAL | Draft, not approved. Code does not enforce retention: no deletion job for users, files or rebuttals. Only moderation log archival exists (`moderation.service.ts:135`). |
+| 3B.2b | Conflicts policy | Draft doc | `docs/policies/conflicts-protocol.md` (DRAFT - for attorney review, added on `release-blockers`) | PARTIAL | Counsel review and client approval needed. Was MISSING at the first audit. |
+| 3B.2c | Data retention policy | Privacy page section 6; draft policy | `privacy/page.tsx:197-198`; `docs/policies/data-retention-policy.md` (DRAFT, added on `release-blockers`) | PARTIAL | Draft, not approved. Code does not enforce retention: no deletion job for users, files or rebuttals. Only moderation log archival exists (`moderation.service.ts:135`). |
 | 3B.2d | Disclaimer policy | Disclaimer page, footer, banner | `src/app/(public)/disclaimer/page.tsx`; `src/components/layout/GlobalFooter.tsx:31,115`; `src/components/sections/DisclaimerBanner.tsx:31-39` | DONE | "Not legal advice" and "not a government agency" text is present and shown site-wide in the footer. Still needs client approval (9.3). |
 | 3B.3 | Ethics counsel review and document update | Not found | Privacy and Terms still say "subject to formal attorney review before launch" (`privacy/page.tsx:83`, `terms/page.tsx:87`) | EXTERNAL | Confirm whether ethics counsel was engaged. The pages show the review has not happened. |
 
@@ -164,7 +166,7 @@ Status key: DONE = implemented and verified. PARTIAL = exists but incomplete or 
 | 11.3c | Encrypted storage | Third-party providers | Postgres, UploadThing and Cloudinary. No app-level encryption of files or fields | PARTIAL | Encryption at rest depends on the providers and the DB host. Not verifiable from code. Rebuttal documents are uploaded to Cloudinary with default (public) delivery (`rebuttals.ts:30`). Member files use UploadThing URLs (`uploadthing.ts:44`). Anyone holding the URL can fetch the file without logging in. |
 | 11.3d | Secure sharing policies | Share links | Token: `randomBytes(32)` (`files/share/route.ts:78`). Revocation returns 410 (`share/[token]/route.ts:45-47`). Expiry returns 410 (lines 50-52). Access logged (lines 100-110) | PARTIAL | Options are 7 days, 30 days or NEVER. An unrecognised expiry value silently creates a never-expiring link (A-1, `tests/integration/files.test.ts:407`). Revoking a link does not revoke the raw storage URLs it already handed out. No written sharing policy document. |
 | 11.3e | Password storage | bcrypt | `src/lib/auth-utils.ts:7` (`bcrypt.hash(password, 10)`). Minimum length 8 (`signup/route.ts:26`) | DONE | Acceptable. Cost 10 is the bcrypt default. Consider 12. |
-| 11.4 | Supervision and outsourcing policies aligned to ABA MR 5.3; CA rule alignment noted | Not found | See 3B.1 | MISSING | Write and have counsel review. |
+| 11.4 | Supervision and outsourcing policies aligned to ABA MR 5.3; CA rule alignment noted | Draft doc | See 3B.1 | PARTIAL | Counsel review needed; CA rule alignment is an open question for counsel in the draft. Was MISSING at the first audit. |
 
 #### 11.3 field inventory (everything the app stores)
 
@@ -257,14 +259,14 @@ There is **no general `AuditLog` model** (confirmed in `prisma/schema.prisma`). 
 
 ### Row count by status
 
-| Status | Rows |
-|---|---|
-| DONE | 3 |
-| PARTIAL | 32 |
-| MISSING | 38 |
-| EXTERNAL | 16 |
-| NOT CODE | 4 |
-| **Total** | **93** |
+| Status | First audit (round-3 @ `41d027f`) | Now (`release-blockers`) |
+|---|---|---|
+| DONE | 3 | 3 |
+| PARTIAL | 32 | 35 |
+| MISSING | 38 | 35 |
+| EXTERNAL | 16 | 16 |
+| NOT CODE | 4 | 4 |
+| **Total** | **93** | **93** |
 
 Counted by script across every matrix table above (Sections 2 to 14, Annex A, Annex B). The field inventory and audit-trail tables are supporting detail and are not counted. The three DONE rows are 3B.2d (disclaimers), 11.1c (MFA) and 11.3e (password hashing).
 
@@ -322,3 +324,105 @@ A lean, low-cost **tool stack**: Notion KB, Tally/Google Forms, Airtable/Sheets,
 6. **Clarify Section 3C (nonprofit formation)** as project management only, with government timelines outside the integrator's control (SOW 8.3), so milestone acceptance does not wait on IRS processing.
 7. **Clarify 3H (QSF)** as not elected, unless the client says otherwise.
 8. **Fill in the blank SOW fields** and get signatures before invoicing (see RELEASE_READINESS.md Part 3).
+
+## Part 4: Re-sort of every MISSING and PARTIAL row (release-blockers, 2026-10-31)
+
+Each MISSING or PARTIAL row from Part 1 is placed in exactly one group. Status is the current status on branch `release-blockers`. Three rows moved from MISSING to PARTIAL on this branch because draft policies now exist (3B.1, 3B.2b, 11.4); they still need counsel review. References like C1 or B5 point to `docs/CHANGE_ORDER_DRAFT.md`; S-numbers point to `docs/RELEASE_READINESS.md`.
+
+| Group | Rows |
+|---|---|
+| CODE GAP | 8 |
+| DOCUMENT | 43 |
+| EXTERNAL SETUP | 10 |
+| OUT OF SCOPE OR NEEDS CHANGE ORDER | 9 |
+| **Total** | **70** |
+
+### CODE GAP (8)
+
+| SOW ref | Status | Requirement | What closes it |
+|---|---|---|---|
+| 3E.5 | PARTIAL | Audit trail (activity logs) | AuditLog for login, claims, billing, role and file actions (RELEASE_READINESS S-16) |
+| 11.1a | PARTIAL | Least-privilege access | Moderator can mark admins reviewed; role stale up to 7 days (S-14, S-15) |
+| 11.1b | PARTIAL | Quarterly permission audit | Access review blocked for moderators by middleware; no reviewer recorded (S-14) |
+| 11.3b | PARTIAL | Limit PII collection | Signer name in published text, localStorage drafts, emails in logs (S-22, S-25) |
+| 11.3c | PARTIAL | Encrypted storage | Storage URLs reachable without login; private ACL/signed delivery (S-12) |
+| 11.3d | PARTIAL | Secure sharing policies | Unknown expiry creates a never-expiring link (S-11 / A-1) |
+| 12.2 | PARTIAL | Draft turnaround time per matter type | Report from ModerationLog; analytics only on unmerged CH-34 |
+| 12.3 | PARTIAL | Attorney revision cycles per draft (target 2 or fewer) | Report on REQUEST_FIX counts per rebuttal |
+
+### DOCUMENT (43)
+
+| SOW ref | Status | Requirement | What closes it |
+|---|---|---|---|
+| 2.3 | PARTIAL | Governance, ethics/supervision, confidentiality and data-handling policies | Policies: drafts now in docs/policies/; need counsel and client approval |
+| 2.4 | PARTIAL | Basic training and a 60-day stabilization window | Training docs now merged (docs/training/); slides, screencasts and stabilization runbook still to write |
+| 3A.1 | MISSING | Stakeholder interviews; confirm use cases and priority matters | Discovery Summary |
+| 3A.3 | PARTIAL | Security and privacy baseline; tool access and permission model | Written security and privacy baseline covering app and tools |
+| 3B.1 | PARTIAL | Outsourcing and supervision SOP aligned to ABA Model Rule 5.3 and CA analogs | Draft written (docs/policies/ethics-supervision-policy.md); counsel review |
+| 3B.2a | PARTIAL | Confidentiality policy | Internal confidentiality policy; public privacy notice still DRAFT |
+| 3B.2b | PARTIAL | Conflicts policy | Draft written (docs/policies/conflicts-protocol.md); counsel review |
+| 3B.2c | PARTIAL | Data retention policy | Draft written (docs/policies/data-retention-policy.md); enforcement jobs are a later code item |
+| 3C.3 | MISSING | Renewal calendar and compliance checklist | Renewal calendar and compliance checklist |
+| 3E.3 | PARTIAL | Quality checkpoints | QA checklist as a standalone document |
+| 3E.4 | MISSING | Naming and versioning standards | Naming and versioning standard (C9) |
+| 3E.7 | PARTIAL | Redline and approval cycle defined | Redline and approval procedure written out |
+| 3F.3 | MISSING | 5 to 7 short screencasts hosted in knowledge base | Record 5 to 7 screencasts and link them (C10) |
+| 3G.1 | MISSING | Soft launch with first 3 to 5 member intakes; hypercare SLAs | Soft-launch record with first 3 to 5 intakes (depends on intake, C2) |
+| 3G.2 | MISSING | 60-day stabilization: weekly standups, triage, improvements | Stabilization runbook, issue log, weekly status (C11) |
+| 4.2 | PARTIAL | Ethics and supervision policy; confidentiality/data policy; conflicts protocol; standard disclaimers | Policy pack: drafts written; approval and Word/PDF export |
+| 4.3 | MISSING | Governance pack: bylaws, COI policy, board minutes templates | Governance pack (C8) |
+| 4.6 | PARTIAL | LPO workflow SOPs, naming/versioning conventions, QA checklist, redline/approval procedure | QA checklist and versioning conventions |
+| 4.7 | PARTIAL | Training materials: slides, playbooks, screencasts (links) | Slides and screencasts (C10) |
+| 4.8 | MISSING | Go-live report and 60-day stabilization summary | Go-live report and stabilization summary (C11) |
+| 5.1 | MISSING | Discovery complete (Week 2) | Signed Discovery Summary |
+| 5.2 | PARTIAL | Ethics and compliance draft (Week 3) | Policy Pack v1 as a delivered file |
+| 5.4 | MISSING | LPO SOPs and pilot (Week 5) | Pilot record on 2 test matters with attorney approvals (C12) |
+| 5.5 | MISSING | Training complete (Week 6) | Attendance record and posted materials |
+| 5.6 | MISSING | Go-Live (Week 7) | Go-live record: first real matters processed |
+| 5.7 | MISSING | Stabilization report (Week 14) | Post-go-live report |
+| 9.1 | MISSING | Deliverables meet described content and format, and pass client UAT within 5 business days | UAT pack and UAT sign-off |
+| 9.2 | MISSING | Pilot matters processed end to end with documented approvals and no blocking defects | Pilot record (after the release blockers are closed) |
+| 9.3 | MISSING | Policies approved by client (and ethics counsel if engaged) | Written policy approval |
+| 10.1 | MISSING | 60-day support window post go-live | Support runbook and go-live date |
+| 10.2 | MISSING | Response times P1 under 4 business hours, P2 under 1 day, P3 under 2 days | P1 to P3 definitions, owners; alerting is a small code/ops follow-up |
+| 11.2b | MISSING | Versioning standards | Versioning standard (C9) |
+| 11.3a | PARTIAL | No PHI | No-PHI control is attestation + moderator review per the redaction and moderation SOPs; needs approval |
+| 11.4 | PARTIAL | Supervision and outsourcing policies aligned to ABA MR 5.3; CA rule alignment noted | Draft written; CA rule alignment is an open question for counsel |
+| A.1 | MISSING | Approve policies (Client A) | Client policy approval in writing |
+| A.3 | PARTIAL | Draft LPO SOPs (Integrator R/A; Counsel and Partner Attorney C) | Record counsel and partner attorney consultation on the SOPs |
+| A.4 | MISSING | Pilot matters (Partner Attorney A) | Pilot record; partner attorney named and accountable |
+| B.1 | MISSING | Discovery Summary | Discovery Summary |
+| B.2 | PARTIAL | Ethics and Compliance Policy Pack | Policy pack approval and export |
+| B.3 | MISSING | Governance Pack (bylaws, COI, minutes templates) | Governance pack |
+| B.5 | PARTIAL | LPO SOPs, QA checklist, versioning guide | QA checklist and versioning guide |
+| B.6 | PARTIAL | Training materials (slides, playbooks, screencasts) | Slides and screencasts |
+| B.7 | MISSING | Go-live and stabilization reports | Go-live and stabilization reports |
+
+### EXTERNAL SETUP (10)
+
+| SOW ref | Status | Requirement | What closes it |
+|---|---|---|---|
+| 2.1 | PARTIAL | Operational nonprofit hub with web guidance and downloadable templates | Public downloadable templates belong in the Notion KB (live link); the in-app library is members-only |
+| 3D.2b | MISSING | Intake form | Intake: SOW tool is Tally/Google Forms; an in-app intake would need a change order (C2) |
+| 3D.2c | PARTIAL | Helpdesk form | Helpdesk form in Tally/Google Forms (C3) |
+| 3D.2d | MISSING | Auto-log forms to Airtable or Sheets | Airtable/Sheets base, or accept the app DB by change order (B2) |
+| 3D.4 | MISSING | SignWell e-signature for SLAs, attorney agreements, acknowledgments | SignWell templates (C5); in-app consent only on unmerged CH-40 |
+| 3E.6 | PARTIAL | Secure channel for attorney feedback | Attorney feedback channel: Drive comments or email per SOW; app sharing is read-only (B5) |
+| 4.5 | MISSING | Forms, CRM base, Calendly page, SignWell templates | Forms, CRM, Calendly, SignWell live links (C2 to C5) |
+| 12.1 | MISSING | Intake-to-assignment SLA (1 business day or less) | Measurable in the intake tool once intake exists (C2, C13) |
+| 12.4 | MISSING | Defect rate (blocking issues per 10 matters) | Issue log / tracker (SOW 10.3, 19) |
+| 12.5 | MISSING | Member satisfaction (CSAT after first 5 matters) | CSAT survey form |
+
+### OUT OF SCOPE OR NEEDS CHANGE ORDER (9)
+
+| SOW ref | Status | Requirement | What closes it |
+|---|---|---|---|
+| 2.2 | PARTIAL | Supervised drafting pipeline marked "FOR ATTORNEY REVIEW ONLY" with clear QA gates | Attorney-supervised drafting pipeline vs. app moderation queue; CO-4/CO-5 (C1, B7) |
+| 3D.2a | PARTIAL | Membership form (Tally or Google Forms) | Built in-app (signup + Stripe) instead of Tally/Forms (CHANGE_ORDER_DRAFT B1) |
+| 3E.2 | MISSING | "FOR ATTORNEY REVIEW ONLY" watermarking | Release decision 0b: out of scope for the app; mark applied in the drafting tool (C1) |
+| 3H | MISSING | Optional: §468B QSF coordination | Optional QSF: confirm not elected (C14) |
+| 6.3 | PARTIAL | Integrator leads build, configures tools, drafts SOPs and policies, trains users | Integrator built a different stack; scope restated by CO-1 (section A) |
+| 7.2 | PARTIAL | Free or low-cost tool tiers sufficient; upgrades out of scope unless approved | Ongoing third-party costs need written approval (CHANGE_ORDER_DRAFT E) |
+| 11.2a | MISSING | "FOR ATTORNEY REVIEW ONLY" watermark on drafts | Release decision 0b: out of scope for the app (C1) |
+| 13 | MISSING | Material change to scope, tools or timeline needs a written Change Order | The change order itself: docs/CHANGE_ORDER_DRAFT.md |
+| A.2 | PARTIAL | Build web stack (Integrator R/A) | Web stack replaced by the custom app (CO-1) |

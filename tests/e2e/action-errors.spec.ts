@@ -25,6 +25,16 @@ import {
   loginAs,
 } from "./fixtures";
 
+// CSS selectors below are filtered to VISIBLE elements. In a production
+// build, React streams the page into a hidden <div id="S:0" hidden> and the
+// client render can finish ~100 ms before React removes that hidden copy, so
+// for that moment the DOM holds the visible form AND a display:none copy.
+// Users never see it (no hydration error, one visible form); see
+// docs/RELEASE_READINESS.md, S-19, and Next's "Preserving UI state" guide,
+// "DOM queries can find hidden elements". The last test below pins that
+// there is never more than one VISIBLE form and no copy survives.
+const visible = { visible: true } as const;
+
 // Next's production replacement for a thrown server-action message.
 const GENERIC_PRODUCTION_ERROR = /An error occurred in the Server Components render|digest/i;
 
@@ -51,9 +61,9 @@ test("new rebuttal form shows the server's specific message ('Facility not found
   await page.goto("/dashboard/rebuttals/new");
 
   await page.getByLabel("Rebuttal Title").fill("Response to Citation 1");
-  await page.locator("select[name='facilityId']").selectOption(facility.id);
+  await page.locator("select[name='facilityId']").filter(visible).selectOption(facility.id);
   await page.getByLabel("Rebuttal Content").fill("Our response.");
-  await page.locator("input[name='redactionAcknowledged']").check();
+  await page.locator("input[name='redactionAcknowledged']").filter(visible).check();
 
   // The facility disappears after the page rendered its picker.
   await softDeleteFacility(facility.id);
@@ -74,9 +84,9 @@ test("new rebuttal form still succeeds and redirects when the action accepts the
   await page.goto("/dashboard/rebuttals/new");
 
   await page.getByLabel("Rebuttal Title").fill("Response to Citation 2");
-  await page.locator("select[name='facilityId']").selectOption(facility.id);
+  await page.locator("select[name='facilityId']").filter(visible).selectOption(facility.id);
   await page.getByLabel("Rebuttal Content").fill("Our response.");
-  await page.locator("input[name='redactionAcknowledged']").check();
+  await page.locator("input[name='redactionAcknowledged']").filter(visible).check();
   await page.getByRole("button", { name: /submit for review/i }).click();
 
   await expect(page).toHaveURL(/\/dashboard\/rebuttals\?success=true/, { timeout: 15000 });
@@ -90,7 +100,7 @@ test("edit rebuttal form shows the server's specific message when the rebuttal i
   await page.goto(`/dashboard/rebuttals/${rebuttal.id}/edit`);
 
   await page.getByLabel("Rebuttal Title").fill("Fixed title");
-  await page.locator("input[name='redactionAcknowledged']").check();
+  await page.locator("input[name='redactionAcknowledged']").filter(visible).check();
 
   // A moderator acts on it while the member still has the edit form open.
   await setRebuttalStatus(rebuttal.id, "APPROVED");
@@ -107,10 +117,10 @@ test("fillable rebuttal form shows the server's specific message inline when the
   await loginAs(page, user);
   await page.goto("/dashboard/forms/rebuttal");
 
-  await page.locator("select[name='facilityId']").selectOption(facility.id);
-  await page.locator("[name='content']").fill("Our response.");
-  await page.locator("input[name='redactionAcknowledged']").check();
-  await page.locator("input[name='signature']").fill("Test Member");
+  await page.locator("select[name='facilityId']").filter(visible).selectOption(facility.id);
+  await page.locator("[name='content']").filter(visible).fill("Our response.");
+  await page.locator("input[name='redactionAcknowledged']").filter(visible).check();
+  await page.locator("input[name='signature']").filter(visible).fill("Test Member");
 
   await softDeleteFacility(facility.id);
   await page.getByRole("button", { name: /submit to db/i }).click();
@@ -119,4 +129,18 @@ test("fillable rebuttal form shows the server's specific message inline when the
   await expect(alert).toBeVisible({ timeout: 15000 });
   await expect(alert).not.toContainText(GENERIC_PRODUCTION_ERROR);
   expect(await countRebuttals()).toBe(0);
+});
+
+test("the new-rebuttal page renders exactly one VISIBLE form, and no hidden streamed copy survives", async ({ page }) => {
+  const { user } = await memberWithFacility();
+  await loginAs(page, user);
+  await page.goto("/dashboard/rebuttals/new");
+
+  await expect(page.locator("select[name='facilityId']").filter(visible)).toHaveCount(1);
+  await expect(page.locator("form").filter({ has: page.locator("select[name='facilityId']") }).filter(visible)).toHaveCount(1);
+  // Once React has swapped in the streamed segment, exactly one copy is left
+  // in the DOM (toHaveCount retries, so the ~100 ms window is waited out; a
+  // real double render would never settle to 1).
+  await expect(page.locator("select[name='facilityId']")).toHaveCount(1);
+  await expect(page.locator("div[hidden][id^='S:'] select[name='facilityId']")).toHaveCount(0);
 });

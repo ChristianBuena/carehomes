@@ -32,7 +32,8 @@ export async function resetDb() {
       "Organization",
       "MembershipAgreement",
       "ProcessedStripeEvent",
-      "LoginAttempt"
+      "LoginAttempt",
+      "AccessReview"
     RESTART IDENTITY CASCADE;
   `);
   await resetAuditLog();

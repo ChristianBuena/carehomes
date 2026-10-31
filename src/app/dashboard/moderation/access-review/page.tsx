@@ -11,6 +11,7 @@ import {
   Loader2,
   Users,
   Clock,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,11 @@ interface ReviewUser {
   role: string;
   createdAt: string;
   lastReviewedAt: string | null;
+  lastReview: {
+    reviewedAt: string;
+    decision: "KEEP_ACCESS" | "CHANGE_REQUESTED";
+    reviewer: { id: string; name: string } | null;
+  } | null;
   organization: {
     membership: {
       plan: string;
@@ -36,6 +42,8 @@ export default function AccessReviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
+  const [changeFor, setChangeFor] = useState<string | null>(null);
+  const [changeNotes, setChangeNotes] = useState("");
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -62,17 +70,27 @@ export default function AccessReviewPage() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleMarkReviewed = async (userId: string) => {
+  const handleMarkReviewed = async (
+    userId: string,
+    decision: "KEEP_ACCESS" | "CHANGE_REQUESTED" = "KEEP_ACCESS",
+    notes?: string
+  ) => {
     setMarkingId(userId);
+    setError(null);
     try {
       const res = await fetch("/api/admin/access-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId, decision, notes }),
       });
-      if (!res.ok) throw new Error("Failed to mark user");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Failed to record the review");
+      }
       // Remove from the local list immediately
       setUsers((prev) => prev.filter((u) => u.id !== userId));
+      setChangeFor(null);
+      setChangeNotes("");
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
@@ -107,7 +125,7 @@ export default function AccessReviewPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-6">
           <div>
             <Link
-              href="/moderation"
+              href="/dashboard/moderation"
               className="inline-flex items-center gap-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors mb-3"
             >
               <ArrowLeft className="h-4 w-4" /> Back to Moderation
@@ -125,11 +143,20 @@ export default function AccessReviewPage() {
             </p>
           </div>
 
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shrink-0 shadow-sm">
-            <Users className="h-4 w-4 text-[var(--color-warning)]" />
-            <span className="text-sm font-medium text-[var(--color-text)]">
-              {users.length} account{users.length !== 1 ? "s" : ""} need review
-            </span>
+          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+            <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-4 py-3 flex items-center gap-3 shadow-sm">
+              <Users className="h-4 w-4 text-[var(--color-warning)]" aria-hidden="true" />
+              <span className="text-sm font-medium text-[var(--color-text)]">
+                {users.length} account{users.length !== 1 ? "s" : ""} need review
+              </span>
+            </div>
+            <a
+              href="/api/admin/access-review/export"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium text-[var(--color-primary)] shadow-sm hover:bg-[var(--color-bg)]"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Export review record (CSV, last 90 days)
+            </a>
           </div>
         </div>
 
@@ -202,25 +229,84 @@ export default function AccessReviewPage() {
                       })}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-3 w-3" aria-hidden="true" />
                       Last reviewed: {daysSince(user.lastReviewedAt)}
+                      {user.lastReview?.reviewer ? ` by ${user.lastReview.reviewer.name}` : ""}
                     </span>
                   </div>
+                  {changeFor === user.id && (
+                    <div className="pt-3 space-y-2">
+                      <label
+                        htmlFor={`change-notes-${user.id}`}
+                        className="block text-sm font-medium text-[var(--color-text)]"
+                      >
+                        What needs to change?
+                      </label>
+                      <textarea
+                        id={`change-notes-${user.id}`}
+                        value={changeNotes}
+                        onChange={(e) => setChangeNotes(e.target.value)}
+                        maxLength={1000}
+                        rows={3}
+                        className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] p-2 text-sm text-[var(--color-text)]"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <Button
-                  onClick={() => handleMarkReviewed(user.id)}
-                  disabled={markingId === user.id}
-                  className="bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-white shrink-0"
-                >
-                  {markingId === user.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="flex flex-col gap-2 shrink-0">
+                  {changeFor === user.id ? (
+                    <>
+                      <Button
+                        onClick={() => handleMarkReviewed(user.id, "CHANGE_REQUESTED", changeNotes)}
+                        disabled={markingId === user.id || !changeNotes.trim()}
+                        className="min-h-11 bg-[var(--color-warning)] hover:bg-[var(--color-warning)]/90 text-white"
+                      >
+                        {markingId === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" aria-label="Saving" />
+                        ) : (
+                          "Save change request"
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="min-h-11"
+                        onClick={() => {
+                          setChangeFor(null);
+                          setChangeNotes("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </>
                   ) : (
                     <>
-                      <ShieldCheck className="mr-2 h-4 w-4" /> Mark Reviewed
+                      <Button
+                        onClick={() => handleMarkReviewed(user.id)}
+                        disabled={markingId === user.id}
+                        className="min-h-11 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/90 text-white"
+                      >
+                        {markingId === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" aria-label="Saving" />
+                        ) : (
+                          <>
+                            <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" /> Access is correct
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="min-h-11"
+                        onClick={() => {
+                          setChangeFor(user.id);
+                          setChangeNotes("");
+                        }}
+                      >
+                        Request a change
+                      </Button>
                     </>
                   )}
-                </Button>
+                </div>
               </div>
             ))}
           </div>

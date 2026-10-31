@@ -68,6 +68,12 @@ async function main() {
       result = await testDb.rebuttal.update({ where: { id }, data: { documentUrl, watermarkedUrl } });
       break;
     }
+    case "listAccessReviews":
+      result = await testDb.accessReview.findMany({
+        where: { userId: (args as { userId: string }).userId },
+        select: { reviewerId: true, decision: true, notes: true },
+      });
+      break;
     case "countRebuttals":
       result = await testDb.rebuttal.count();
       break;

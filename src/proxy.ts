@@ -41,7 +41,17 @@ export async function proxy(req: NextRequest) {
   }
 
   // ── 4. /api/admin/* — requires manage_users permission ────────────────
-  if (path.startsWith("/api/admin")) {
+  // Exception: the quarterly access review (and its export) is run by
+  // MODERATORs too, so that path needs moderate_rebuttals. The route
+  // handlers repeat their own checks.
+  if (isAccessReviewApi(path)) {
+    if (!hasPermission(user.role, "moderate_rebuttals")) {
+      return NextResponse.json(
+        { error: "Forbidden: insufficient permissions" },
+        { status: 403 }
+      );
+    }
+  } else if (path.startsWith("/api/admin")) {
     if (!hasPermission(user.role, "manage_users")) {
       return NextResponse.json(
         { error: "Forbidden: insufficient permissions" },
@@ -58,6 +68,10 @@ export async function proxy(req: NextRequest) {
   }
 
   return NextResponse.next();
+}
+
+function isAccessReviewApi(path: string): boolean {
+  return path === "/api/admin/access-review" || path.startsWith("/api/admin/access-review/");
 }
 
 export const config = {

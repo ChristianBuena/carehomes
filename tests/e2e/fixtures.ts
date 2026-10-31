@@ -50,6 +50,9 @@ export const countRebuttals = () => run<number>("countRebuttals");
 export const setRebuttalDocs = (id: string, documentUrl: string | null, watermarkedUrl: string | null) =>
   run("setRebuttalDocs", { id, documentUrl, watermarkedUrl });
 
+export const listAccessReviews = (userId: string) =>
+  run<Array<{ reviewerId: string | null; decision: string; notes: string | null }>>("listAccessReviews", { userId });
+
 type MemberFile = { id: string; filename: string; fileUrl: string };
 type ShareLink = { id: string; token: string };
 

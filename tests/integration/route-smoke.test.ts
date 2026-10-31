@@ -282,6 +282,11 @@ const CASES: SmokeCase[] = [
       ),
   },
   {
+    id: "src/app/api/admin/access-review/export/route.ts#GET",
+    run: (w, r) =>
+      r.GET(buildRequest("http://localhost/api/admin/access-review/export?format=json", { cookies: w.adminCookies }), noParams),
+  },
+  {
     id: "src/app/api/admin/audit-log/route.ts#GET",
     run: (w, r) =>
       r.GET(buildRequest("http://localhost/api/admin/audit-log?format=json", { cookies: w.adminCookies }), noParams),

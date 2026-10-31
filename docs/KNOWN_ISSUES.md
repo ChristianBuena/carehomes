@@ -8,6 +8,30 @@ fixed, the open items from round 2 are closed, and the areas skipped in the
 first pass have been tested. Round 3 **reported** the defects it found in
 those areas without fixing them; they are the first list below.
 
+## Release-blockers pass (branch `release-blockers`, 2026-10-31)
+
+Fixes for the NO-GO audit (docs/RELEASE_READINESS.md). Every fix has a
+regression test; nothing was pushed.
+
+| Was | Severity | Outcome | Proof |
+|---|---|---|---|
+| S-1 / D-1: original rebuttal documents public (facility page + `GET /api/rebuttal/published`) | Critical | **FIXED.** Public pages and APIs show approved rebuttal text only, no document URL of any kind (decision 0c). `GET /api/rebuttal/watermark` is moderators/admins only | `tests/integration/public-exposure.test.ts`, `tests/e2e/public-exposure.spec.ts`, `watermark.test.ts` "FIXED D-1" |
+| S-2 / D-2 + facility list email | Critical | **FIXED.** Explicit public allowlists; no email, password hash, claimant name or owner ids | same tests; `security.test.ts` (tightened) |
+| S-3: Next.js 16.2.6 advisories | Critical | **FIXED.** 16.4.3 | `tests/unit/dependency-floor.test.ts` |
+| S-7: seed admin with hard-coded password | High | **FIXED.** Env-only credentials, refuses `NODE_ENV=production` | `tests/unit/seed-guard.test.ts` |
+| S-23: Postgres password in docker-compose | Medium | **FIXED** in the working tree; still in history | `npm run scan:secrets` |
+| S-18: ESLint crash | Medium | **FIXED.** ESLint 9; 41 entity errors fixed; 36 errors + 37 warnings remain (listed in RELEASE_READINESS.md) | `tests/unit/lint.test.ts` |
+| S-19: prod-only duplicate form fields in E2E | Medium | **Test issue, fixed in the test.** React's hidden streamed segment overlaps the client render for ~100 ms on a cold load; never two visible forms, no hydration error | `tests/e2e/action-errors.spec.ts` guard test; prod E2E 3/3 |
+| S-17: npm audit | Medium | **Partly fixed.** Production: 3 critical / 24 high -> 0 critical / 5 high (uploadthing+effect, nodemailer need a major change) | `npm audit --omit=dev` |
+| `.env.example` missing | Medium | **FIXED** | `tests/unit/env-example.test.ts` |
+| S-5: secrets in git history | High | **Needs owner action.** Rotation checklist written; history not rewritten | `docs/SECRET_ROTATION.md` |
+| S-4: three pending migrations | Critical | **Needs owner action.** Runbook written; nothing applied to dev/prod | `docs/MIGRATION_RUNBOOK.md` |
+
+Release decisions recorded: 0a docs-only merges (CH-28-LPO-Workflow,
+CH-27-accessibility-audit, `docs/training/*` from CH-32); 0b "FOR ATTORNEY
+REVIEW ONLY" watermark out of scope for the app, via change order; 0c
+public pages show rebuttal text only; 0d draft policies in `docs/policies/`.
+
 ## Open — defects found in round 3 (not fixed)
 
 IDs match TEST_REPORT.md, which has expected vs actual, the test line and the
@@ -16,10 +40,10 @@ failure.
 
 | ID | Severity | Issue |
 |---|---|---|
-| D-1 | **High** | Public `GET /api/rebuttal/published` returns the original, un-watermarked `documentUrl` of every approved rebuttal |
+| ~~D-1~~ | FIXED (release-blockers) | ~~Public `GET /api/rebuttal/published` returns the original, un-watermarked `documentUrl` of every approved rebuttal~~ |
 | D-3 | **High** | The watermark route rejects ordinary text PDFs as "scanned" (it looks for the letters `BT`/`ET` in the raw file) |
 | D-4 | Medium | …and the same check accepts scanned PDFs with no text |
-| D-2 | Medium | Public `GET /api/rebuttal/published` returns each author's email |
+| ~~D-2~~ | FIXED (release-blockers) | ~~Public `GET /api/rebuttal/published` returns each author's email~~ |
 | D-5 | Medium | The watermark is a fixed text; it carries no user or organization information |
 | D-6 | Medium | No size limit on watermarking; the whole PDF is stored as base64 in the `Rebuttal` row |
 | A-1 | Medium | An unrecognised share-link expiry value silently creates a link that never expires |
@@ -33,9 +57,8 @@ failure.
 
 Found outside the requested areas, no test written:
 
-- **Public `GET /api/facility` (the list) returns the claiming user's email**
-  for each facility (`src/services/facility.service.ts:164`). Round 2 fixed
-  only the single-facility route.
+- ~~**Public `GET /api/facility` (the list) returns the claiming user's email**~~
+  **FIXED on release-blockers** (public allowlists, S-2).
 - **No `<Toaster />` is mounted anywhere**, so every `toast.*` call
   (`/dashboard/library`, `/dashboard/templates`, the print form) is
   invisible. The print form's submit error is now also shown inline.
@@ -45,7 +68,8 @@ Found outside the requested areas, no test written:
 
 ## Open — other
 
-1. **Apply three migrations before running the app.** They have been
+1. **Apply three migrations before running the app** (step-by-step:
+   `docs/MIGRATION_RUNBOOK.md`). They have been
    applied to `carehomes_test` only:
    `20261010120000_add_processed_stripe_event`,
    `20261010130000_add_login_lockout` and
@@ -80,7 +104,9 @@ Found outside the requested areas, no test written:
 8. **Not built: intake and consent / e-signature.** There is no intake
    route, page or model. `ConsentLog` and `MembershipAgreement` exist as
    models only; no code signs, reads or lists an agreement.
-9. **`POST /api/rebuttal/watermark` is never called** by the application,
+9. **`POST /api/rebuttal/watermark` is never called** by the application
+   (still true; release decision 0b keeps the SOW draft watermark out of the
+   app, pending the change order). Public pages no longer show any document,
    and no page reads `watermarkedUrl`.
 10. **Not covered by a running test:** UploadThing's own HTTP handler and
     its server-side limits, the Cloudinary upload in the rebuttal actions,

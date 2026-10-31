@@ -1,11 +1,159 @@
 # Release Readiness
 
+## Re-audit after the release-blockers pass (2026-10-31)
+
+Branch: `release-blockers` (cut from `round-3-cleanup-and-skipped-areas` @ `41d027f`), all commits local, **not pushed**. Every database command ran against `carehomes_test` only. Stripe, email and UploadThing were not called. The first audit is kept unchanged further down, under "First audit (superseded)".
+
+### Verdict: GO WITH CONDITIONS
+
+The code no longer exposes client data on public pages or APIs. The critical dependency advisories are fixed, the seed has no built-in admin, and every check below passes. The remaining items are mostly **actions only you or the client can take** (database, secrets, storage settings, contract). Release the build **only after conditions 1 to 4**. Do **not** request final sign-off or payment until **conditions 5 and 6** are met.
+
+| # | Condition | Why | Owner |
+|---|---|---|---|
+| 1 | Apply the three pending migrations to production **before** deploying this build (`docs/MIGRATION_RUNBOOK.md`) | Login and the Stripe webhook fail without them (S-4) | you |
+| 2 | Confirm or rotate the production `JWT_SECRET`, Gmail app password and database password; check production for the old seeded accounts (`docs/SECRET_ROTATION.md`) | Values were committed to git history and pushed (S-5, S-7) | you |
+| 3 | Make stored files private, or delete and re-upload the original documents of rebuttals that were approved before this branch (see "Stored files" below) | Old document URLs were linked publicly and still open without login (S-12) | you |
+| 4 | The proxy in front of the app must overwrite `X-Forwarded-For` | Login throttling trusts the first entry (KNOWN_ISSUES "Open, other" 3) | you / host |
+| 5 | Sign the change order (`docs/CHANGE_ORDER_DRAFT.md`), including the watermark decision (C1) and intake/e-signature (C2, C5) | The build differs from the SOW tool stack (S-8, S-9, S-6) | you + client |
+| 6 | Counsel review and client approval of the policy pack (`docs/policies/`, Privacy, Terms) | SOW 9.3; pages still say DRAFT (S-10) | partner attorney / counsel + client |
+
+### Remaining blockers, ranked
+
+| Rank | ID | Severity | Item | Status |
+|---|---|---|---|---|
+| 1 | S-4 | Critical | Pending migrations on dev/prod | Needs your action (runbook written) |
+| 2 | S-12 | High | Stored files open to anyone with the URL; originals of previously published rebuttals were public | Needs your action (storage settings); code change for signed delivery is open |
+| 3 | S-5 | High | Secrets in pushed git history | Needs your action (rotation checklist written) |
+| 4 | S-17 | High | `uploadthing` 7.7.4 pins `effect` 3.17.7 (GHSA-38f7-945m-qr2g: AsyncLocalStorage context lost or mixed inside Effect fibers). The upload auth middleware reads the session cookie through `next/headers` (AsyncLocalStorage) inside UploadThing (`src/lib/uploadthing.ts:22-29`). Exploitability not verified. `nodemailer` 7.x high advisories need major 10.x | Open; needs your decision (see Dependencies) |
+| 5 | S-8, S-9, S-6 | High | Scope mismatch; intake and e-signature; watermark | Needs change order (draft written) |
+| 6 | S-10 | High | Policies are drafts | Needs counsel + client |
+| 7 | S-13 | Medium | No security headers | Open |
+| 8 | S-14 | Medium | Access review blocked for moderators by middleware; no reviewer recorded | Open |
+| 9 | S-15 | Medium | Sessions cannot be revoked; role in token up to 7 days stale | Open |
+| 10 | S-16 | Medium | No audit log for login, claims, billing, roles, files | Open |
+| 11 | S-11 | Medium | Unknown share-link expiry creates a never-expiring link (A-1) | Open (`it.fails` still in place) |
+| 12 | S-20 | Medium | Deploy guide, rollback, backup procedure, stabilization runbook | Partly: migration runbook and `.env.example` done; deploy/rollback/backup/runbook still missing |
+| 13 | S-21, S-22 | Medium | GA without consent; signer name in published text, local drafts | Open |
+| 14 | S-24 to S-28 and round-3 Lows | Low | OTP stored in plain text, emails in logs, missing `/unauthorized`, robots/sitemap, A-2..A-6, B-1, D-3..D-8, F-1 | Open |
+
+### Every original blocker
+
+| ID | Original severity | Status now | Evidence |
+|---|---|---|---|
+| S-1 | Critical | **Fixed** | Commit `4be1339`. Public pages/APIs return approved rebuttal text only (decision 0c). `tests/integration/public-exposure.test.ts` (7 tests, every public API route anonymously) and `tests/e2e/public-exposure.spec.ts` (19 public pages + facility detail, raw HTML incl. RSC payload). Both fail on the old code (checked by stashing the fix) and pass now. D-1 `it.fails` removed |
+| S-2 | Critical | **Fixed** | Commits `4be1339`, `6154fb3`. Explicit allowlists in `facility.service.ts` and `rebuttal/published/route.ts`; no email, password hash, claimant name or owner ids. D-2 `it.fails` removed; `security.test.ts` tightened |
+| S-3 | Critical | **Fixed** | Commit `212061f`. Next.js 16.4.3; `npm audit` no longer lists `next`. Floor pinned by `tests/unit/dependency-floor.test.ts` |
+| S-4 | Critical | **Needs your action** | `docs/MIGRATION_RUNBOOK.md` (commit `bec178b`). All three are additive. Not applied to dev/prod |
+| S-5 | High | **Needs your action** | `docs/SECRET_ROTATION.md` (commit `f3f1d16`). History not rewritten (commands provided for you to run) |
+| S-6 | High | **Needs change order** | Decision 0b: out of scope for the app (CHANGE_ORDER_DRAFT C1). D-3..D-6 remain open but the watermark route serves only moderators now |
+| S-7 | High | **Fixed** (code); **check prod** | Commit `860ccde`. `tests/unit/seed-guard.test.ts` runs the real seed against an unreachable DB URL. Whether prod was ever seeded: not checked |
+| S-8 | High | **Needs change order** | `docs/CHANGE_ORDER_DRAFT.md` |
+| S-9 | High | **Needs your decision** | CHANGE_ORDER_DRAFT C2 (intake), C5 (e-signature). CH-40 not merged |
+| S-10 | High | **Partly fixed** | Drafts in `docs/policies/` (commit `8bb2e20`); counsel review and approval pending |
+| S-11 | Medium | Open | `tests/integration/files.test.ts:407` still `it.fails` |
+| S-12 | Medium (now ranked High) | **Needs your action** | See "Stored files" below |
+| S-13 | Medium | Open | |
+| S-14 | Medium | Open | |
+| S-15 | Medium | Open | |
+| S-16 | Medium | Open | |
+| S-17 | Medium | **Partly fixed** | Commits `fa6e201` (next-auth removed), `179dff9` (`npm audit fix`, Prisma aligned on 7.10.1). Production: 3 critical / 24 high -> 0 critical / 5 high |
+| S-18 | Medium | **Fixed** (lint runs) | Commit `be70a59`. ESLint 9.39.5; 41 errors fixed; 36 errors + 37 warnings listed below |
+| S-19 | Medium | **Fixed (test issue)** | Commit `cb49628`. Root cause below. Production-build Playwright 3 runs in a row, 5/5 each, then 5/5 again in this re-audit |
+| S-20 | Medium | **Partly fixed** | `.env.example` (commit `2a9c47e`), migration runbook, first-admin procedure. Deploy, rollback, backup and stabilization runbook still missing |
+| S-21 | Medium | Open | |
+| S-22 | Medium | Open | |
+| S-23 | Medium | **Fixed** (working tree) | Commit `0837177`. Old value remains in history (SECRET_ROTATION.md) |
+| S-24 | Low | Open | |
+| S-25 | Low | Open | |
+| S-26 | Low | Open | |
+| S-27 | Low | Open (D-1, D-2 of that list fixed) | |
+| S-28 | Low | Open | robots/sitemap exist on unmerged `origin/CH-28-seo-optimization` |
+
+### Re-audit checklist results
+
+| Check | Command | Result |
+|---|---|---|
+| Prisma schema | `npx dotenv -e .env.test -- npx prisma validate` | Exit 0, valid |
+| Migration status (test DB only) | `npx dotenv -e .env.test -- npx prisma migrate status` | Exit 0. Database "carehomes_test". 18 migrations, "Database schema is up to date!" `prisma migrate diff` against the schema: empty |
+| TypeScript | `npx tsc --noEmit` | Exit 0 |
+| Lint | `npm run lint` | **Runs now** (was crashing). Exit 1: 73 problems, 36 errors, 37 warnings (list below) |
+| Secret scan | `npm run scan:secrets` | Exit 0, "no findings (tracked files)". `npm run scan:secrets:history` still reports the old `.env` and compose passwords in history (expected until you scrub) |
+| Build | `npx dotenv -e .env.test -- npm run build` | Exit 0, Next.js 16.4.3, 68/68 static pages |
+| Vitest | `npm test` | Exit 0. **23 files, 538 tests: 525 passed, 13 expected-fail, 0 failed, 0 skipped** (was 486: 471 + 15) |
+| Playwright, dev server | same specs, scratch config raising only the server start timeout | Exit 0. **20 tests: 19 passed, 1 expected-fail (A-6)** |
+| Playwright, production build | same, `playwright.prod.config.ts` | Exit 0. **5/5 passed.** Also 3 consecutive runs 5/5 during Step 4 |
+| npm audit, production | `npm audit --omit=dev` | **0 critical, 5 high, 4 moderate, 5 low** (was 3 critical, 24 high) |
+| npm audit, all | `npm audit` | 0 critical, 5 high, 19 moderate, 5 low |
+
+Expected-fail tests still in place (13): watermark D-3, D-4, D-5, D-6, D-7, D-8; files A-1, A-2, A-3, A-4, A-5; templates B-1; uploadthing F-1. Plus the Playwright `test.fail()` for A-6. D-1 and D-2 were removed because they now pass.
+
+### Stored files (Step 1.3, honest answer)
+
+**Yes, anyone holding an old file URL can most likely still open the file without logging in.** What was verified, by reading code only (no call to UploadThing or Cloudinary):
+
+- Member files: `src/lib/uploadthing.ts` sets no `acl`. The installed library documents the default as `"public-read"` (`node_modules/@uploadthing/shared/dist/index.d.ts:141`). The stored `fileUrl` is the file's `ufsUrl` (`src/lib/uploadthing.ts:44`) and is handed out by share links. Unless the UploadThing app's dashboard default was changed to private (**not checked, no access**), these URLs are public. Revoking a share link stops the link page, not the file URL.
+- Rebuttal documents: uploaded to Cloudinary with `upload_stream({ folder, resource_type: "auto" })` and no `type` (`src/app/actions/rebuttals.ts:29-30`), which is Cloudinary's public `upload` delivery type. **Before this branch, the original document of every approved rebuttal was linked on public facility pages and in `GET /api/rebuttal/published`**, so assume those URLs have been seen, cached or indexed.
+
+What you need to do (not done, by instruction):
+
+1. UploadThing dashboard: check the app's default ACL. If you can, enable private files. Code would then need `acl: "private"` and signed, short-lived URLs served through an authenticated route.
+2. Cloudinary: for documents of rebuttals approved before this release, decide per document whether it is safe to stay reachable. If not, delete the asset (or move it to `type: "authenticated"`), which invalidates the old URL.
+3. Going forward, upload rebuttal documents as `authenticated`/`private` and serve them through signed URLs to moderators only.
+4. Deleting a file in the app does not delete it at the provider (`docs/policies/data-retention-policy.md` section 4).
+
+### S-19 root cause (Step 4)
+
+Measured on `next start` with the test database (diagnostic specs in the session scratch directory, not committed):
+
+- The server HTML contains **one** form, inside React's streamed Suspense segment `<div hidden id="S:0">`.
+- On the **first, cold** load the client render finishes about 100 ms before React's reveal script removes the hidden segment. For that window the DOM holds the visible form and a `display:none` copy (example: duplicate present from 839 to 942 ms, page `load` at 747 ms). At most one copy was ever visible; after settling there was one. No hydration error and no console error. Warm loads never showed it (0 of 12).
+- `page.goto` resolves on `load`, so the spec's CSS locators sometimes landed in that window and hit Playwright's strict mode. Label- and role-based locators never did, because hidden elements are not in the accessibility tree.
+- Conclusion: **a test issue, not an app bug.** Users never see two forms. Fix: visibility-filtered locators plus a guard test that fails on a real double render.
+
+### Dependencies left open (Step 3.2)
+
+| Package | Severity | Production dep? | Why not fixed | Fix or mitigation |
+|---|---|---|---|---|
+| `uploadthing` 7.7.4, `@uploadthing/react` 7.3.3, `@uploadthing/shared`, `effect` 3.17.7 | High | Yes | 7.7.4 is the latest release and pins `effect` 3.17.7 exactly. npm's suggested "fix" is a major **downgrade** to 6.x | Option A: npm `overrides` forcing `effect` >= 3.20 (same major; needs an upload test against a real UploadThing sandbox). Option B: wait for an UploadThing release. **Your decision; not applied** |
+| `nodemailer` 7.0.13 | High (several CRLF/header injection, DoS) | Yes | Fix is 10.x (major) | Upgrade to 10.x and re-test email sending, or move to a transactional email provider. **Needs `--force` or a manual major bump: your decision** |
+
+Moderate/low advisories remaining in production deps: 4 moderate, 5 low (see `npm audit --omit=dev`).
+
+### Lint errors remaining (Step 3.3, not trivial, not changed)
+
+- `@typescript-eslint/no-explicit-any` (20): `src/app/actions/claimFacility.ts:67`, `src/app/actions/linkSeatToOrg.ts:60`, `src/app/api/stripe/webhook/route.ts:64,104,181,189,226,270`, `src/app/dashboard/incidents/IncidentActionModal.tsx:70,106`, `src/app/dashboard/incidents/page.tsx:62`, `src/app/dashboard/layout.tsx:132`, `src/components/takedown/TakedownRequestForm.tsx:93`, `tests/e2e/db-cli.ts:29,32,35,38,41,44`, `tests/integration/billing.test.ts:17`
+- `react-hooks/set-state-in-effect` (13): `src/app/auth/login/LoginContent.tsx:31`, `src/app/dashboard/files/page.tsx:247`, `src/app/dashboard/forms/rebuttal/RebuttalPrintForm.tsx:38`, `src/app/dashboard/forms/redaction/RedactionPrintForm.tsx:30`, `src/app/dashboard/incidents/page.tsx:70`, `src/app/dashboard/library/page.tsx:113`, `src/app/dashboard/moderation/access-review/page.tsx:62`, `src/app/dashboard/templates/page.tsx:95`, `src/app/login/page.tsx:30`, `src/components/layout/MobileMenu.tsx:24`, `src/components/providers/ProviderFilters.tsx:33`, `src/components/ui/ThemeToggle.tsx:34`, `src/hooks/useAuth.ts:57`
+- `react-hooks/purity` (2): `src/app/dashboard/moderation/access-review/page.tsx:88`, `src/app/dashboard/page.tsx:81`
+- `react-hooks/refs` (1): `src/components/facilities/FacilityFilters.tsx:124`
+- Warnings (37): 31 `no-unused-vars`, 3 `react-hooks/exhaustive-deps`, 1 `no-unused-expressions`, 1 `@next/next/no-location-assign-relative-destination`, 1 `jsx-a11y/alt-text`
+
+### Files created or changed on this branch
+
+Code: `src/services/facility.service.ts`, `src/services/rebuttal.service.ts`, `src/app/api/rebuttal/published/route.ts`, `src/app/api/rebuttal/watermark/route.ts`, `src/app/(public)/facilities/[slug]/page.tsx`, `src/components/facilities/ApprovedRebuttalsSection.tsx`, `prisma/seed.ts`, `prisma/seed-config.ts` (new), `scripts/secret-scan.ts` (new), 12 page/component files (JSX entities only), `docker-compose.yml`, `.gitignore`, `.env.example` (new), `package.json`, `package-lock.json`, `AGENTS.md` (block written by `next dev` 16.4). Merged: CH-28-LPO-Workflow, CH-27-accessibility-audit, `docs/training/*` from CH-32.
+
+Tests: new `tests/integration/public-exposure.test.ts`, `tests/e2e/public-exposure.spec.ts`, `tests/unit/seed-guard.test.ts`, `tests/unit/env-example.test.ts`, `tests/unit/secret-scan.test.ts`, `tests/unit/dependency-floor.test.ts`, `tests/unit/lint.test.ts`; changed `tests/integration/watermark.test.ts` (D-1/D-2 un-`fails`; public 403 per 0c), `tests/integration/security.test.ts` (stricter), `tests/integration/route-smoke.test.ts` (watermark GET as moderator), `tests/e2e/action-errors.spec.ts`, `tests/e2e/fixtures.ts`, `tests/e2e/db-cli.ts`.
+
+Docs: `docs/SECRET_ROTATION.md`, `docs/MIGRATION_RUNBOOK.md`, `docs/CHANGE_ORDER_DRAFT.md`, `docs/HANDOVER_CHECKLIST.md`, `docs/policies/*` (3 drafts), `docs/SOW_GAP_ANALYSIS.md` (Part 4), `docs/KNOWN_ISSUES.md`, `docs/README.md`, this file.
+
+### Could not verify
+
+- Dev and production databases: migration state, seeded accounts, real data (forbidden).
+- Production secrets and whether leaked values are in use (no access).
+- UploadThing dashboard ACL and Cloudinary account settings (no access; must not call them).
+- Proxy `X-Forwarded-For` behavior at the real host.
+- Whether the `effect` advisory is exploitable through the UploadThing middleware.
+- Accessibility beyond lint rules and spot checks (no automated scan in the repo).
+
+---
+
+# First audit (superseded)
+
 Audit date: 2026-10-31
 Audited code: branch `round-3-cleanup-and-skipped-areas` at commit `41d027f`, working tree clean, nothing committed or pushed.
 Databases: every command that touches a database ran against `carehomes_test` only (`.env.test`; the `migrate status` output names the database "carehomes_test" at localhost:5432). The dev (`carehomes`) and production databases were not touched. Stripe, email and UploadThing were not called (the test suite mocks them; `.env.test` holds dummy keys, which differ from the dev values).
 Companion file: `docs/SOW_GAP_ANALYSIS.md`.
 
-## Final verdict: NO-GO
+## Final verdict (first audit): NO-GO
 
 The release candidate publishes the original, un-watermarked rebuttal documents on public facility pages and through a public API. Public endpoints return user email addresses. The Next.js version has published critical vulnerabilities. The SOW's own security section is not met (no "FOR ATTORNEY REVIEW ONLY" watermark, no ethics/supervision policy), and the build does not match the SOW tool stack, with no change order. Fix the Critical and High items below, merge or drop the unmerged work, and sign a change order before asking for sign-off.
 

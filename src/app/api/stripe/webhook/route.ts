@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
 import Stripe from "stripe";
 import { TIER_FACILITY_LIMITS } from "@/lib/permissions";
+import { recordAudit } from "@/services/audit.service";
 
 // Display copy only — facility limits come from TIER_FACILITY_LIMITS (the single source of truth).
 const tierConfig: Record<string, { label: string; price: string }> = {
@@ -42,6 +43,14 @@ async function claimStripeEvent(event: Stripe.Event): Promise<boolean> {
   });
   return count === 1;
 }
+
+// Events that change a membership row; each is written to the audit log once.
+const AUDITED_STRIPE_EVENTS = new Set<string>([
+  "checkout.session.completed",
+  "invoice.payment_succeeded",
+  "invoice.payment_failed",
+  "customer.subscription.deleted",
+]);
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -338,6 +347,15 @@ export async function POST(req: Request) {
 
       default:
         console.log("Unhandled event:", event.type);
+    }
+
+    if (firstDelivery && AUDITED_STRIPE_EVENTS.has(event.type)) {
+      await recordAudit({
+        action: "MEMBERSHIP_STRIPE_UPDATE",
+        targetType: "StripeEvent",
+        targetId: event.id,
+        metadata: { eventType: event.type },
+      });
     }
 
     return NextResponse.json({ received: true });

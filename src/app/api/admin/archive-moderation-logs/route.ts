@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import { hasPermission } from "@/lib/permissions";
 import { archiveOldModerationLogs } from "@/services/moderation.service";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 // POST /api/admin/archive-moderation-logs
 // Triggers archival of moderation logs older than 1 year (or a custom cutoff).
@@ -46,6 +47,13 @@ export async function POST(req: NextRequest) {
     }
 
     const archivedCount = await archiveOldModerationLogs(cutoffDate);
+    await recordAudit({
+      action: "MODERATION_LOGS_ARCHIVED",
+      actorId: user.userId,
+      actorRole: user.role,
+      metadata: { archivedCount },
+      ...auditContextFromRequest(req),
+    });
 
     return NextResponse.json({
       success: true,

@@ -3,6 +3,7 @@
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { auditContextFromHeaders, recordAudit } from "@/services/audit.service";
 
 export async function linkSeatToOrg(
   targetUserId: string,
@@ -53,6 +54,16 @@ export async function linkSeatToOrg(
     await prisma.user.update({
       where: { id: targetUserId },
       data: { organizationId: orgId },
+    });
+
+    await recordAudit({
+      action: "SEAT_LINKED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "User",
+      targetId: targetUserId,
+      metadata: { organizationId: orgId },
+      ...(await auditContextFromHeaders()),
     });
 
     revalidatePath("/dashboard/users");

@@ -2,6 +2,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { recordAudit } from "@/services/audit.service";
 
 const f = createUploadthing();
 
@@ -37,7 +38,7 @@ export const ourFileRouter = {
             else if (file.type === "image/png") fileType = "PNG";
 
             // Save file metadata to DB
-            await prisma.memberFile.create({
+            const created = await prisma.memberFile.create({
                 data: {
                     filename: file.name,
                     fileKey: file.key,
@@ -49,7 +50,13 @@ export const ourFileRouter = {
                 },
             });
 
-            console.log(`File uploaded: ${file.name} for user ${metadata.userId}`);
+            await recordAudit({
+                action: "FILE_UPLOADED",
+                actorId: metadata.userId,
+                targetType: "MemberFile",
+                targetId: created.id,
+                metadata: { fileType, size: file.size },
+            });
         }),
 } satisfies FileRouter;
 

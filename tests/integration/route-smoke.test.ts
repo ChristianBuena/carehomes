@@ -282,6 +282,11 @@ const CASES: SmokeCase[] = [
       ),
   },
   {
+    id: "src/app/api/admin/audit-log/route.ts#GET",
+    run: (w, r) =>
+      r.GET(buildRequest("http://localhost/api/admin/audit-log?format=json", { cookies: w.adminCookies }), noParams),
+  },
+  {
     id: "src/app/api/admin/archive-moderation-logs/route.ts#POST",
     run: async (w, r) => {
       // One log older than the default 1-year cutoff, so the archive transaction really runs.
@@ -355,7 +360,6 @@ const CASES: SmokeCase[] = [
   },
   {
     id: "src/app/api/auth/logout/route.ts#POST",
-    noPrisma: "only clears the auth cookie",
     run: (w, r) =>
       r.POST(buildRequest("http://localhost/api/auth/logout", { method: "POST", cookies: w.memberCookies }), noParams),
   },

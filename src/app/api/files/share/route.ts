@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
 import type { ShareLinkExpiry } from "@/types/share";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -93,6 +94,16 @@ export async function POST(req: NextRequest) {
       include: {
         selectedFiles: true,
       },
+    });
+
+    await recordAudit({
+      action: "SHARE_LINK_CREATED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "FileShareLink",
+      targetId: link.id,
+      metadata: { shareAll, fileCount: link.selectedFiles.length, expiry: link.expiry },
+      ...auditContextFromRequest(req),
     });
 
     return NextResponse.json({

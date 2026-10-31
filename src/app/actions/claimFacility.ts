@@ -3,6 +3,7 @@
 import { getUserFromRequest } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { withOrgFacilityQuota } from "@/services/facility.service";
+import { auditContextFromHeaders, recordAudit } from "@/services/audit.service";
 
 export async function claimFacility(facilityId: string) {
   try {
@@ -42,7 +43,7 @@ export async function claimFacility(facilityId: string) {
         return { claimed: false as const, error: "This facility has already been claimed by another user." };
       }
 
-      return { claimed: true as const, slug: facility.slug };
+      return { claimed: true as const, slug: facility.slug, id: facility.id };
     });
 
     if (!result.ok) {
@@ -58,6 +59,16 @@ export async function claimFacility(facilityId: string) {
     if (!result.value.claimed) {
       return { success: false, error: result.value.error };
     }
+
+    await recordAudit({
+      action: "FACILITY_CLAIMED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Facility",
+      targetId: result.value.id,
+      metadata: { organizationId: user.orgId },
+      ...(await auditContextFromHeaders()),
+    });
 
     // Revalidate relevant pages
     revalidatePath(`/facilities/${result.value.slug}`);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 // ── DELETE — revoke a share link ─────────────────────────────────────────────
 export async function DELETE(
@@ -40,6 +41,15 @@ export async function DELETE(
     await prisma.fileShareLink.update({
       where: { id },
       data: { revokedAt: new Date() },
+    });
+
+    await recordAudit({
+      action: "SHARE_LINK_REVOKED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "FileShareLink",
+      targetId: id,
+      ...auditContextFromRequest(req),
     });
 
     return NextResponse.json({ success: true });

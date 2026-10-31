@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import { hasPermission } from "@/lib/permissions";
 import { getFacilityById, softDeleteFacility } from "@/services/facility.service";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 // GET /api/facility/[id] — fetch a single facility by ID (active only)
 export async function GET(
@@ -56,6 +57,14 @@ export async function DELETE(
 
     // SOFT DELETE — sets deletedAt, does NOT remove row
     await softDeleteFacility(id);
+    await recordAudit({
+      action: "FACILITY_DELETED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Facility",
+      targetId: id,
+      ...auditContextFromRequest(req),
+    });
 
     return NextResponse.json({ success: true, id });
   } catch {

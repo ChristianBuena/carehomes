@@ -14,6 +14,7 @@ import {
   MFA_PENDING_MAX_AGE_SECONDS,
   signMfaPendingToken,
 } from "@/lib/jwt";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 function lockedResponse(lockedUntil: Date) {
   const retryAfterSeconds = Math.max(1, Math.ceil((lockedUntil.getTime() - Date.now()) / 1000));
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
     // user lookup so the answer is the same whether or not the account exists.
     const activeLock = await getLoginLock(key);
     if (activeLock) {
+      await recordAudit({ action: "AUTH_LOGIN_LOCKED", ...auditContextFromRequest(request) });
       return lockedResponse(activeLock);
     }
 
@@ -59,6 +61,14 @@ export async function POST(request: NextRequest) {
       // Unknown emails are counted exactly like wrong passwords, so the
       // 401 -> 429 sequence does not reveal whether an account exists.
       const lockedUntil = await recordLoginFailure(key);
+      // Unknown emails are recorded without an actor; the email itself is never stored.
+      await recordAudit({
+        action: lockedUntil ? "AUTH_LOGIN_LOCKED" : "AUTH_LOGIN_FAILED",
+        actorId: user?.id ?? null,
+        actorRole: user?.role ?? null,
+        metadata: { reason: user ? "wrong_password" : "unknown_account" },
+        ...auditContextFromRequest(request),
+      });
       if (lockedUntil) {
         return lockedResponse(lockedUntil);
       }
@@ -71,6 +81,12 @@ export async function POST(request: NextRequest) {
 
     // Correct password — clear the failure history for this email + address.
     await clearLoginFailures(key);
+    await recordAudit({
+      action: "AUTH_LOGIN_PASSWORD_OK",
+      actorId: user.id,
+      actorRole: user.role,
+      ...auditContextFromRequest(request),
+    });
 
     const cooldown = await getOtpResendCooldown(user.email);
     if (cooldown === 0) {

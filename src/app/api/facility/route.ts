@@ -6,6 +6,7 @@ import {
 } from "@/services/facility.service";
 import { resolveSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 export async function GET() {
   try {
@@ -102,6 +103,16 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    await recordAudit({
+      action: "FACILITY_CREATED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Facility",
+      targetId: facility.id,
+      metadata: { organizationId: user.orgId },
+      ...auditContextFromRequest(req),
+    });
 
     return NextResponse.json(facility, { status: 201 });
 

@@ -6,6 +6,7 @@ import { hasPermission } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 import { v2 as cloudinary } from "cloudinary";
 import type { ActionResult } from "@/types/action-result";
+import { auditContextFromHeaders, recordAudit } from "@/services/audit.service";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -101,7 +102,7 @@ export async function submitRebuttal(formData: FormData): Promise<ActionResult> 
       }
     }
 
-    await prisma.rebuttal.create({
+    const created = await prisma.rebuttal.create({
       data: {
         title,
         content,
@@ -110,6 +111,17 @@ export async function submitRebuttal(formData: FormData): Promise<ActionResult> 
         userId: user.userId,
         status: "PENDING",
       },
+      select: { id: true },
+    });
+
+    await recordAudit({
+      action: "REBUTTAL_SUBMITTED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: created.id,
+      metadata: { facilityId, withDocument: documentUrl !== null },
+      ...(await auditContextFromHeaders()),
     });
 
     revalidatePath("/dashboard/rebuttals");
@@ -173,6 +185,16 @@ export async function updateRebuttal(rebuttalId: string, formData: FormData): Pr
         status: "PENDING",        // Re-enter moderation queue
         moderatedById: null,      // Clear previous reviewer
       },
+    });
+
+    await recordAudit({
+      action: "REBUTTAL_UPDATED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: rebuttalId,
+      metadata: { newDocument: documentUrl !== existing.documentUrl },
+      ...(await auditContextFromHeaders()),
     });
 
     revalidatePath("/dashboard/rebuttals");

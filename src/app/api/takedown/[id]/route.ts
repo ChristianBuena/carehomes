@@ -9,6 +9,7 @@ import {
   RebuttalNotFoundError,
 } from "@/services/takedown.service";
 import { prisma } from "@/lib/prisma";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 const updateTakedownSchema = z.object({
   action: z.enum(["resolve", "reject", "emergency_takedown", "assign", "in_review"]),
@@ -99,6 +100,15 @@ export async function PATCH(
         resolutionNotes: resolutionNotes.trim(),
       });
 
+      await recordAudit({
+        action: status === "RESOLVED" ? "TAKEDOWN_RESOLVED" : "TAKEDOWN_REJECTED",
+        actorId: user.userId,
+        actorRole: user.role,
+        targetType: "TakedownRequest",
+        targetId: id,
+        ...auditContextFromRequest(req),
+      });
+
       return NextResponse.json({
         success: true,
         message: `Incident marked as ${status}`,
@@ -122,6 +132,16 @@ export async function PATCH(
         reason: emergencyReason || resolutionNotes || "Emergency takedown executed by moderation board.",
       });
 
+      await recordAudit({
+        action: "TAKEDOWN_EMERGENCY_UNPUBLISH",
+        actorId: user.userId,
+        actorRole: user.role,
+        targetType: "Rebuttal",
+        targetId: targetRebuttalId,
+        metadata: { takedownId: id },
+        ...auditContextFromRequest(req),
+      });
+
       return NextResponse.json({
         success: true,
         message: "Emergency takedown executed. Rebuttal has been unpublished immediately.",
@@ -136,6 +156,16 @@ export async function PATCH(
           assignedToId: assignedToId || null,
           status: "IN_REVIEW",
         },
+      });
+
+      await recordAudit({
+        action: "TAKEDOWN_ASSIGNED",
+        actorId: user.userId,
+        actorRole: user.role,
+        targetType: "TakedownRequest",
+        targetId: id,
+        metadata: { assignedToId: assignedToId || null },
+        ...auditContextFromRequest(req),
       });
 
       return NextResponse.json({ success: true, request: updated });

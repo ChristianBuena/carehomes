@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { createRebuttal } from "@/services/rebuttal.service";
 import { sendEmail } from "@/lib/mailer";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,6 +68,16 @@ export async function POST(req: NextRequest) {
       content,
       userId: user.userId,
       facilityId,
+    });
+
+    await recordAudit({
+      action: "REBUTTAL_SUBMITTED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: rebuttal.id,
+      metadata: { facilityId },
+      ...auditContextFromRequest(req),
     });
 
     // ── 6. Notify ADMIN and MODERATOR accounts ─────────────────────────────

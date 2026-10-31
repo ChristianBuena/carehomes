@@ -3,6 +3,7 @@ import { z } from "zod";
 import { verifyToken } from "@/lib/jwt";
 import { hasPermission } from "@/lib/permissions";
 import { createTakedownRequest, getTakedownRequests } from "@/services/takedown.service";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 import { TakedownReason, TakedownStatus } from "@/types/takedown.types";
 
 const createTakedownSchema = z.object({
@@ -47,6 +48,15 @@ export async function POST(req: NextRequest) {
       supportingInfo: validated.data.supportingInfo.trim(),
       rebuttalId: validated.data.rebuttalId,
       facilityId: validated.data.facilityId,
+    });
+
+    // Public form: no actor. Requester name and email stay in TakedownRequest only.
+    await recordAudit({
+      action: "TAKEDOWN_SUBMITTED",
+      targetType: "TakedownRequest",
+      targetId: takedown.id,
+      metadata: { reason: validated.data.reason },
+      ...auditContextFromRequest(req),
     });
 
     return NextResponse.json(

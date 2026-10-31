@@ -9,6 +9,7 @@ import {
 } from "@/services/moderation.service";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 const ACTION_PERMISSION_MAP: Record<string, Permission> = {
   approve: "approve_rebuttal",
@@ -126,6 +127,21 @@ export async function POST(req: NextRequest) {
     } else {
       rebuttal = await requestFixRebuttal(id, user.userId, actionNotes);
     }
+
+    await recordAudit({
+      action:
+        action === "approve"
+          ? "REBUTTAL_APPROVED"
+          : action === "reject"
+            ? "REBUTTAL_REJECTED"
+            : "REBUTTAL_FIX_REQUESTED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: id,
+      metadata: { fromStatus: existingRebuttal.status },
+      ...auditContextFromRequest(req),
+    });
 
     // ── 8. Send notification email to member ───────────────────────────────
     if (!isSameStatus) {

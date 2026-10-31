@@ -3,6 +3,7 @@ import { verifyToken } from "@/lib/jwt";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { UTApi } from "uploadthing/server";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 const utapi = new UTApi();
 
@@ -81,6 +82,16 @@ export async function DELETE(req: NextRequest) {
       data: { deletedAt: new Date() },
     });
 
+    await recordAudit({
+      action: "FILE_DELETED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "MemberFile",
+      targetId: fileId,
+      metadata: { ownerId: file.userId },
+      ...auditContextFromRequest(req),
+    });
+
     // Also delete from UploadThing storage
     try {
       await utapi.deleteFiles(file.fileKey);
@@ -127,6 +138,16 @@ export async function PATCH(req: NextRequest) {
         ...(label !== undefined && { label }),
         ...(isQsfDoc !== undefined && { isQsfDoc }),
       },
+    });
+
+    await recordAudit({
+      action: "FILE_UPDATED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "MemberFile",
+      targetId: id,
+      metadata: { label: label !== undefined, isQsfDoc: isQsfDoc ?? null },
+      ...auditContextFromRequest(req),
     });
 
     return NextResponse.json(updated);

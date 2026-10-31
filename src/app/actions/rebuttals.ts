@@ -28,7 +28,9 @@ async function uploadDocument(file: File): Promise<string> {
 
   const uploadResult = await new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: "carehomes_rebuttals", resource_type: "auto" },
+      // "authenticated": the file is not reachable by its URL alone; the app
+      // fetches it with a signed URL (src/services/file-storage.service.ts).
+      { folder: "carehomes_rebuttals", resource_type: "auto", type: "authenticated" },
       (error, result) => {
         if (error) reject(error);
         else resolve(result);

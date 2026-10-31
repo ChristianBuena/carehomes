@@ -336,8 +336,18 @@ export async function getTakedownById(id: string) {
   if (!req) return null;
 
   const sla = calculateSla(req.submittedAt, req.slaDeadline, req.status);
+  // The storage URL stays on the server (SOW 11.3); moderators open the
+  // document through /api/rebuttal/[id]/document.
+  const rebuttal = req.rebuttal
+    ? (({ documentUrl, ...r }) => ({
+        ...r,
+        hasDocument: documentUrl !== null,
+        documentDownloadUrl: documentUrl ? `/api/rebuttal/${r.id}/document` : null,
+      }))(req.rebuttal)
+    : null;
   return {
     ...req,
+    rebuttal,
     ...sla,
   };
 }

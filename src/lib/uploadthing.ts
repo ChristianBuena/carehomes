@@ -3,20 +3,28 @@ import { getSessionUser } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { recordAudit } from "@/services/audit.service";
+import { uploadThingPrivateFiles } from "@/services/file-storage.service";
 
 const f = createUploadthing();
 
 // File size limit: 16MB
 const MAX_FILE_SIZE = "16MB";
 
+// Private files (SOW 11.3). UploadThing rejects acl unless "Allow overriding
+// ACL" / private files is enabled for the app in its dashboard, so this is
+// switched on with UPLOADTHING_PRIVATE_FILES=true once that setting is on.
+// Downloads use signed URLs either way (src/services/file-storage.service.ts).
+const ACL = uploadThingPrivateFiles() ? ({ acl: "private" } as const) : {};
+
 export const ourFileRouter = {
     memberFileUploader: f({
-        pdf: { maxFileSize: MAX_FILE_SIZE, maxFileCount: 10 },
+        pdf: { maxFileSize: MAX_FILE_SIZE, maxFileCount: 10, ...ACL },
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
             maxFileSize: MAX_FILE_SIZE,
             maxFileCount: 10,
+            ...ACL,
         },
-        image: { maxFileSize: MAX_FILE_SIZE, maxFileCount: 10 },
+        image: { maxFileSize: MAX_FILE_SIZE, maxFileCount: 10, ...ACL },
     })
         .middleware(async () => {
             // Auth check

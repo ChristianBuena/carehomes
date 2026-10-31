@@ -56,6 +56,8 @@ export const listAccessReviews = (userId: string) =>
 export const listShareLinks = (userId: string) =>
   run<Array<{ expiry: string; expiresAt: string | null }>>("listShareLinks", { userId });
 
+export const revokeShareLink = (id: string) => run("revokeShareLink", { id });
+
 type MemberFile = { id: string; filename: string; fileUrl: string };
 type ShareLink = { id: string; token: string };
 

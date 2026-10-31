@@ -102,13 +102,15 @@ describe("A. Files — who can VIEW (GET /api/files)", () => {
     expect((await list()).status).toBe(401);
   });
 
-  it("the uploader sees their own files (and the file URL used to download them)", async () => {
+  it("the uploader sees their own files, with an app download route and NO storage URL (SOW 11.3)", async () => {
     const w = await world();
     const res = await list(w.cookies.owner);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string; filename: string; fileUrl: string }[];
+    const body = (await res.json()) as Record<string, unknown>[];
     expect(body).toHaveLength(1);
-    expect(body[0]).toMatchObject({ id: w.file.id, filename: "owner-plan.pdf", fileUrl: w.file.fileUrl });
+    expect(body[0]).toMatchObject({ id: w.file.id, filename: "owner-plan.pdf", downloadUrl: `/api/files/${w.file.id}/download` });
+    expect(body[0]).not.toHaveProperty("fileUrl");
+    expect(JSON.stringify(body)).not.toContain(w.file.fileUrl);
   });
 
   it("the listing does not expose the storage key or the owner id", async () => {
@@ -496,9 +498,19 @@ describe("A. Share links — public access (GET /api/share/[token])", () => {
     const body = (await res.json()) as { orgName: string; files: Record<string, unknown>[] };
     expect(body.orgName).toBe("Org A");
     expect(body.files).toEqual([
-      { filename: "owner-plan.pdf", fileUrl: w.file.fileUrl, fileSize: 1024, fileType: "PDF", mimeType: "application/pdf" },
+      {
+        ref: expect.any(String),
+        filename: "owner-plan.pdf",
+        downloadUrl: expect.stringMatching(new RegExp(`^/api/share/${link.token}/files/[A-Za-z0-9_-]{32}$`)),
+        fileSize: 1024,
+        fileType: "PDF",
+        mimeType: "application/pdf",
+      },
     ]);
+    // No storage URL of any file, shared or not (SOW 11.3).
+    expect(JSON.stringify(body)).not.toContain(w.file.fileUrl);
     expect(JSON.stringify(body)).not.toContain(other.fileUrl);
+    expect(JSON.stringify(body)).not.toContain("utfs.test");
   });
 
   it("the public response carries no internal ids, owner id or email", async () => {
@@ -506,8 +518,8 @@ describe("A. Share links — public access (GET /api/share/[token])", () => {
     const link = await createShareLink({ userId: w.owner.id, fileIds: [w.file.id] });
     const text = await (await open(link.token)).text();
 
-    // (The storage key is not checked: an UploadThing file URL contains it by design.)
-    for (const secret of [w.file.id, w.owner.id, w.owner.email, link.id]) {
+    // The storage key is now checked too: no storage URL is returned any more.
+    for (const secret of [w.file.id, w.file.fileKey, w.owner.id, w.owner.email, link.id]) {
       expect(text.includes(secret)).toBe(false);
     }
   });

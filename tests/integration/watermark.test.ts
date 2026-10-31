@@ -256,12 +256,18 @@ describe("D. Watermark route — who can request the result (GET /api/rebuttal/w
     expect((await get(w.cookies.author, w.rebuttal.id)).status).toBe(403);
   });
 
-  it("MODERATOR and ADMIN get both URLs, for any status", async () => {
+  it("MODERATOR and ADMIN get both URLs, for any status — as app routes, never the storage or data URL (SOW 11.3)", async () => {
     const w = await watermarked("PENDING");
     for (const cookies of [w.cookies.moderator, w.cookies.admin]) {
       const res = await get(cookies, w.rebuttal.id);
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ watermarkedUrl: "data:application/pdf;base64,AAAA", originalUrl: ORIGINAL_URL });
+      const text = await res.text();
+      expect(JSON.parse(text)).toEqual({
+        watermarkedUrl: `/api/rebuttal/${w.rebuttal.id}/document?version=approved-copy`,
+        originalUrl: `/api/rebuttal/${w.rebuttal.id}/document`,
+      });
+      expect(text).not.toContain(ORIGINAL_URL);
+      expect(text).not.toContain("data:application/pdf");
     }
   });
 

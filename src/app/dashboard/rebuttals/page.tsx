@@ -144,7 +144,7 @@ export default async function MyRebuttalsPage({
                 {rebuttal.documentUrl && (
                    <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
                     <a
-                      href={rebuttal.documentUrl}
+                      href={`/api/rebuttal/${rebuttal.id}/document`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary)] hover:underline"

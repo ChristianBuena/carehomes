@@ -80,6 +80,12 @@ async function main() {
         select: { expiry: true, expiresAt: true },
       });
       break;
+    case "revokeShareLink":
+      result = await testDb.fileShareLink.update({
+        where: { id: (args as { id: string }).id },
+        data: { revokedAt: new Date() },
+      });
+      break;
     case "countRebuttals":
       result = await testDb.rebuttal.count();
       break;

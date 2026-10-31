@@ -51,7 +51,15 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(rebuttal);
+    // Storage URLs stay on the server (SOW 11.3): the document is served by
+    // /api/rebuttal/[id]/document with the same access rule as this route.
+    const { documentUrl, watermarkedUrl: _watermarkedUrl, ...safe } = rebuttal;
+    void _watermarkedUrl;
+    return NextResponse.json({
+      ...safe,
+      hasDocument: documentUrl !== null,
+      documentDownloadUrl: documentUrl ? `/api/rebuttal/${rebuttal.id}/document` : null,
+    });
   } catch {
     return NextResponse.json({ error: "Failed to fetch rebuttal" }, { status: 500 });
   }

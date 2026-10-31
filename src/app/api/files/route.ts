@@ -34,7 +34,6 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         filename: true,
-        fileUrl: true,
         fileSize: true,
         fileType: true,
         mimeType: true,
@@ -44,7 +43,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(files);
+    // No storage URL: downloads go through /api/files/[id]/download (SOW 11.3).
+    return NextResponse.json(
+      files.map((f) => ({ ...f, downloadUrl: `/api/files/${f.id}/download` }))
+    );
   } catch {
     return NextResponse.json({ error: "Failed to fetch files" }, { status: 500 });
   }
@@ -141,6 +143,16 @@ export async function PATCH(req: NextRequest) {
         ...(label !== undefined && { label }),
         ...(isQsfDoc !== undefined && { isQsfDoc }),
       },
+      select: {
+        id: true,
+        filename: true,
+        fileSize: true,
+        fileType: true,
+        mimeType: true,
+        label: true,
+        isQsfDoc: true,
+        uploadedAt: true,
+      },
     });
 
     await recordAudit({
@@ -153,7 +165,7 @@ export async function PATCH(req: NextRequest) {
       ...auditContextFromRequest(req),
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ ...updated, downloadUrl: `/api/files/${updated.id}/download` });
   } catch {
     return NextResponse.json({ error: "Failed to update file" }, { status: 500 });
   }

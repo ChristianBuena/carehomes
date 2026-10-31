@@ -20,7 +20,7 @@ import { SHARE_LINK_EXPIRY_VALUES, type ShareLinkExpiry, type ShareLinkSummary, 
 interface MemberFile {
   id: string;
   filename: string;
-  fileUrl: string;
+  downloadUrl: string;
   fileSize: number;
   fileType: string;
   mimeType: string;
@@ -510,9 +510,7 @@ export default function FilesPage() {
                   {file.isQsfDoc ? "Untag QSF" : "Tag QSF"}
                 </button>
                 <a
-                  href={file.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={`${file.downloadUrl}?download=1`}
                   className="text-sm text-[var(--color-primary)] hover:underline"
                 >
                   Download

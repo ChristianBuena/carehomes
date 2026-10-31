@@ -78,6 +78,7 @@ vi.mock("uploadthing/server", async (importOriginal) => {
     ...mod,
     UTApi: class {
       deleteFiles = vi.fn().mockResolvedValue({ success: true, deletedCount: 1 });
+      generateSignedURL = vi.fn().mockImplementation(async (key: string) => ({ ufsUrl: `https://signed.utfs.test/f/${key}?sig=1` }));
     },
   };
 });
@@ -290,6 +291,54 @@ const CASES: SmokeCase[] = [
     id: "src/app/api/admin/audit-log/route.ts#GET",
     run: (w, r) =>
       r.GET(buildRequest("http://localhost/api/admin/audit-log?format=json", { cookies: w.adminCookies }), noParams),
+  },
+  {
+    id: "src/app/api/files/[id]/download/route.ts#GET",
+    run: async (w, r) => {
+      const file = await seedMemberFile(w, "file-download");
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(new Uint8Array([37, 80, 68, 70]), { status: 200 }));
+      try {
+        return await r.GET(buildRequest(`http://localhost/api/files/${file.id}/download`, { cookies: w.memberCookies }), withParams({ id: file.id }));
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  },
+  {
+    id: "src/app/api/share/[token]/files/[ref]/route.ts#GET",
+    run: async (w, r) => {
+      const file = await seedMemberFile(w, "share-file-download");
+      const link = await testDb.fileShareLink.create({
+        data: { token: "smoke-share-file-token", userId: w.member.id, shareAll: true, expiry: "DAYS_7", expiresAt: new Date(Date.now() + 86_400_000) },
+      });
+      const { shareFileRef } = await import("@/services/file-storage.service");
+      const ref = shareFileRef(link.id, file.id);
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(new Uint8Array([37, 80, 68, 70]), { status: 200 }));
+      try {
+        return await r.GET(
+          buildRequest(`http://localhost/api/share/${link.token}/files/${ref}`),
+          withParams({ token: link.token, ref })
+        );
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  },
+  {
+    id: "src/app/api/rebuttal/[id]/document/route.ts#GET",
+    run: async (w, r) => {
+      await testDb.rebuttal.update({ where: { id: w.pending.id }, data: { documentUrl: "https://files.test/smoke.pdf" } });
+      const pdf = await buildTextPdf();
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(new Uint8Array(pdf), { status: 200 }));
+      try {
+        return await r.GET(
+          buildRequest(`http://localhost/api/rebuttal/${w.pending.id}/document`, { cookies: w.moderatorCookies }),
+          withParams({ id: w.pending.id })
+        );
+      } finally {
+        spy.mockRestore();
+      }
+    },
   },
   {
     id: "src/app/api/admin/sessions/revoke/route.ts#POST",

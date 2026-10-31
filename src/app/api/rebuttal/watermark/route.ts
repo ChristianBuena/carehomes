@@ -144,9 +144,10 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Not authorized" }, { status: 403 });
         }
 
+        // App routes only, never the storage URL or the data URL (SOW 11.3).
         return NextResponse.json({
-            watermarkedUrl: rebuttal.watermarkedUrl ?? null,
-            originalUrl: rebuttal.documentUrl,
+            watermarkedUrl: rebuttal.watermarkedUrl ? `/api/rebuttal/${rebuttal.id}/document?version=approved-copy` : null,
+            originalUrl: rebuttal.documentUrl ? `/api/rebuttal/${rebuttal.id}/document` : null,
         });
     } catch (error) {
         console.error("Watermark fetch error:", error);

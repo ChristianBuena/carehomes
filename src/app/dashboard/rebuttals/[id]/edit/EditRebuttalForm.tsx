@@ -22,7 +22,7 @@ interface EditRebuttalFormProps {
     id: string;
     title: string;
     content: string;
-    documentUrl: string | null;
+    hasDocument: boolean;
     facility: { id: string; name: string } | null;
   };
 }
@@ -144,12 +144,12 @@ export default function EditRebuttalForm({ rebuttal }: EditRebuttalFormProps) {
           {/* Document upload */}
           <div className="space-y-2">
             <Label>Supporting Document (Optional)</Label>
-            {rebuttal.documentUrl && !fileName && (
+            {rebuttal.hasDocument && !fileName && (
               <div className="flex items-center gap-2 text-sm text-[var(--color-muted)] mb-2">
                 <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span>Current document attached. Upload a new file to replace it.</span>
                 <a
-                  href={rebuttal.documentUrl}
+                  href={`/api/rebuttal/${rebuttal.id}/document`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[var(--color-primary)] hover:underline font-medium"

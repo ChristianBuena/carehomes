@@ -13,8 +13,11 @@ export const SHARE_LINK_MAX_DAYS = 30;
 
 /** Slim file descriptor returned on the public share page */
 export interface ShareAccessFile {
+  /** Opaque per-link reference (not the internal file id). */
+  ref: string;
   filename: string;
-  fileUrl: string;
+  /** App route that streams the file; never a storage URL. */
+  downloadUrl: string;
   fileSize: number;
   fileType: string;
   mimeType: string;

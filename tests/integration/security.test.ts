@@ -258,9 +258,14 @@ describe("IDOR — accessing another org's/user's records by ID", () => {
     expect(text).not.toContain("SENTINEL-PASSWORD-HASH");
     expect(text).not.toContain("claimant-private@example.com");
 
+    // Tightened by release-blockers S-2: the public response is an explicit
+    // allowlist with no claimant identity and no internal owner ids at all.
     const body = JSON.parse(text);
-    expect(body.createdBy).toEqual({ id: user.id, name: "Claimant Name" });
-    expect(body).not.toHaveProperty("createdBy.password");
+    expect(body).not.toHaveProperty("createdBy");
+    expect(body).not.toHaveProperty("createdById");
+    expect(body).not.toHaveProperty("organizationId");
+    expect(text).not.toContain(user.id);
+    expect(text).not.toContain("Claimant Name");
   });
 });
 

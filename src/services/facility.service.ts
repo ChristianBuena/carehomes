@@ -142,6 +142,22 @@ export async function createFacility(
   });
 }
 
+/** Fields that may be returned to anonymous callers for a single facility. */
+const PUBLIC_FACILITY_SELECT = {
+  id: true,
+  slug: true,
+  name: true,
+  address: true,
+  description: true,
+  facilityNumber: true,
+  city: true,
+  county: true,
+  capacity: true,
+  ccldLink: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.FacilitySelect;
+
 export async function getFacilities(filters?: FacilityFilters) {
   const where = buildWhereClause(filters);
   const page = Math.max(1, filters?.page ?? 1);
@@ -161,7 +177,8 @@ export async function getFacilities(filters?: FacilityFilters) {
         facilityNumber: true,
         ccldLink: true,
         updatedAt: true,
-        createdBy: { select: { id: true, name: true, email: true } },
+        // PUBLIC (GET /api/facility and the directory page): no claimant
+        // identity, no internal owner ids. See tests/integration/public-exposure.test.ts.
         _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },
       },
       orderBy: { name: "asc" },
@@ -189,13 +206,6 @@ export const getFacilityBySlug = cache(async (slug: string) => {
   return prisma.facility.findFirst({
     where: { slug, deletedAt: null },
     include: {
-      createdBy: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
       _count: { select: { rebuttals: { where: { status: "APPROVED", deletedAt: null } } } },
     },
   });
@@ -237,11 +247,10 @@ export const getRecentFacilities = cache(async (take: number = 3) => {
 export async function getFacilityById(id: string) {
   return prisma.facility.findFirst({
     where: { id, deletedAt: null },
-    include: {
-      // Never `createdBy: true` — this feeds the PUBLIC GET /api/facility/[id]
-      // response, and the full User row includes the password hash and email.
-      createdBy: { select: { id: true, name: true } },
-    },
+    // Explicit allowlist — this feeds the PUBLIC GET /api/facility/[id]
+    // response. No claimant identity (name, email, password hash) and no
+    // internal owner ids (createdById, organizationId).
+    select: PUBLIC_FACILITY_SELECT,
   });
 }
 

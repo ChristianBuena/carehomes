@@ -63,6 +63,11 @@ async function main() {
       result = await testDb.rebuttal.update({ where: { id }, data: { status } });
       break;
     }
+    case "setRebuttalDocs": {
+      const { id, documentUrl, watermarkedUrl } = args as { id: string; documentUrl: string | null; watermarkedUrl: string | null };
+      result = await testDb.rebuttal.update({ where: { id }, data: { documentUrl, watermarkedUrl } });
+      break;
+    }
     case "countRebuttals":
       result = await testDb.rebuttal.count();
       break;

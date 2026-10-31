@@ -46,3 +46,16 @@ describe("security floors for installed dependencies", () => {
     expect(atLeast(v, FLOORS.next), v).toBe(true);
   });
 });
+
+describe("removed dependencies stay removed", () => {
+  // next-auth was installed but never imported, and carried a critical
+  // advisory (GHSA-7rqj-j65f-68wh). Auth is the custom JWT + OTP flow.
+  it("next-auth is not a dependency", () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    expect(pkg.dependencies?.["next-auth"]).toBeUndefined();
+    expect(pkg.devDependencies?.["next-auth"]).toBeUndefined();
+  });
+});

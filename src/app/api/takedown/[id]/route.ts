@@ -11,6 +11,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
+const takedownDelegate = prisma.takedownRequest;
+
 const updateTakedownSchema = z.object({
   action: z.enum(["resolve", "reject", "emergency_takedown", "assign", "in_review"]),
   resolutionNotes: z.string().optional(),

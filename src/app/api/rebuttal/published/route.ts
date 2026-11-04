@@ -9,16 +9,23 @@ export async function GET() {
   try {
     const publishedRebuttals = await prisma.rebuttal.findMany({
       where: {
-        status: "APPROVED", // the "published" state
-        deletedAt: null,    // exclude soft-deleted rebuttals
+        status: "APPROVED",
+        deletedAt: null, // exclude soft-deleted rebuttals
       },
       select: {
         id: true,
         title: true,
         content: true,
+        watermarkedUrl: true, // Only the protected watermarked copy
         createdAt: true,
         updatedAt: true,
-        facility: { select: { name: true, slug: true } },
+        facility: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",

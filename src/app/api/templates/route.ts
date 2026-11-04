@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requirePermission } from "@/lib/roleGuard";
 import { getAllTemplates, createTemplate, checkLibraryAccess } from "@/services/template.service";
 import { getUserFromRequest } from "@/lib/auth";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 import type { TemplateCategory, TemplateFileFormat } from "@/generated/prisma/enums";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -87,6 +88,15 @@ export async function POST(req: NextRequest) {
     fileUrl,
     notionUrl: notionUrl ?? undefined,
     uploadedById: user.userId,
+  });
+
+  await recordAudit({
+    action: "TEMPLATE_CREATED",
+    actorId: user.userId,
+    actorRole: user.role,
+    targetType: "Template",
+    targetId: template.id,
+    ...auditContextFromRequest(req),
   });
 
   return NextResponse.json({ template }, { status: 201 });

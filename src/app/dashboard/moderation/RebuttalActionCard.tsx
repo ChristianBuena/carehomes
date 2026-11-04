@@ -11,6 +11,10 @@ interface RebuttalWithRelations {
   content: string;
   status: string;
   createdAt: Date | string;
+  hasDocument: boolean;
+  signerName: string | null;
+  signedOn: Date | string | null;
+  visitDate: Date | string | null;
   user: {
     name: string | null;
     email: string;
@@ -78,12 +82,32 @@ export function RebuttalActionCard({ rebuttal }: RebuttalActionCardProps) {
                 Submitted:{" "}
                 {new Date(rebuttal.createdAt).toLocaleDateString("en-US")}
               </span>
+              {rebuttal.signerName && (
+                <span>
+                  Signed by: {rebuttal.signerName}
+                  {rebuttal.signedOn && ` (${new Date(rebuttal.signedOn).toLocaleDateString("en-US", { timeZone: "UTC" })})`}
+                </span>
+              )}
+              {rebuttal.visitDate && (
+                <span>Visit date: {new Date(rebuttal.visitDate).toLocaleDateString("en-US", { timeZone: "UTC" })}</span>
+              )}
             </div>
           </div>
 
           <div className="bg-[var(--color-bg)] rounded-lg p-4 text-sm text-[var(--color-text)] whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
             {rebuttal.content}
           </div>
+
+          {rebuttal.hasDocument && (
+            <a
+              href={`/api/rebuttal/${rebuttal.id}/document`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--color-primary)] hover:underline"
+            >
+              View supporting document
+            </a>
+          )}
           
           {error && (
             <p className="text-sm text-[var(--color-danger)] font-medium">

@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import {
   getTakedownById,
   resolveTakedownRequest,
   emergencyUnpublishRebuttal,
+  RebuttalNotFoundError,
 } from "@/services/takedown.service";
 import { prisma } from "@/lib/prisma";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 const takedownDelegate = prisma.takedownRequest;
 
@@ -30,7 +32,8 @@ export async function GET(
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!hasPermission(user.role, "manage_incidents")) {
       return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
     }
@@ -60,7 +63,8 @@ export async function PATCH(
     const token = req.cookies.get("auth-token")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!hasPermission(user.role, "manage_incidents")) {
       return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
     }
@@ -79,7 +83,7 @@ export async function PATCH(
     const { action, resolutionNotes, rebuttalId, assignedToId, emergencyReason } = validated.data;
 
     // Check request exists
-    const existing = await takedownDelegate.findUnique({ where: { id } });
+    const existing = await prisma.takedownRequest.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "Takedown request not found" }, { status: 404 });
     }
@@ -98,6 +102,15 @@ export async function PATCH(
         adminUserId: user.userId,
         status,
         resolutionNotes: resolutionNotes.trim(),
+      });
+
+      await recordAudit({
+        action: status === "RESOLVED" ? "TAKEDOWN_RESOLVED" : "TAKEDOWN_REJECTED",
+        actorId: user.userId,
+        actorRole: user.role,
+        targetType: "TakedownRequest",
+        targetId: id,
+        ...auditContextFromRequest(req),
       });
 
       return NextResponse.json({
@@ -123,6 +136,16 @@ export async function PATCH(
         reason: emergencyReason || resolutionNotes || "Emergency takedown executed by moderation board.",
       });
 
+      await recordAudit({
+        action: "TAKEDOWN_EMERGENCY_UNPUBLISH",
+        actorId: user.userId,
+        actorRole: user.role,
+        targetType: "Rebuttal",
+        targetId: targetRebuttalId,
+        metadata: { takedownId: id },
+        ...auditContextFromRequest(req),
+      });
+
       return NextResponse.json({
         success: true,
         message: "Emergency takedown executed. Rebuttal has been unpublished immediately.",
@@ -131,7 +154,7 @@ export async function PATCH(
     }
 
     if (action === "assign") {
-      const updated = await takedownDelegate.update({
+      const updated = await prisma.takedownRequest.update({
         where: { id },
         data: {
           assignedToId: assignedToId || null,
@@ -139,11 +162,21 @@ export async function PATCH(
         },
       });
 
+      await recordAudit({
+        action: "TAKEDOWN_ASSIGNED",
+        actorId: user.userId,
+        actorRole: user.role,
+        targetType: "TakedownRequest",
+        targetId: id,
+        metadata: { assignedToId: assignedToId || null },
+        ...auditContextFromRequest(req),
+      });
+
       return NextResponse.json({ success: true, request: updated });
     }
 
     if (action === "in_review") {
-      const updated = await takedownDelegate.update({
+      const updated = await prisma.takedownRequest.update({
         where: { id },
         data: { status: "IN_REVIEW" },
       });
@@ -153,6 +186,9 @@ export async function PATCH(
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
+    if (error instanceof RebuttalNotFoundError) {
+      return NextResponse.json({ error: "Rebuttal not found" }, { status: 404 });
+    }
     console.error("Error updating takedown request:", error);
     return NextResponse.json({ error: "Failed to update takedown request" }, { status: 500 });
   }

@@ -10,6 +10,16 @@ see TEST_REPORT.md for exactly which routes have test coverage.
 Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 (10-minute, login-step-2-only JWT, `path: /api`).
 
+**Organization comes from the database, not the token.** The session JWT
+still carries an `orgId`, but every ownership check reads the user's current
+`User.organizationId` through `resolveSessionUser()` / `getUserFromRequest()`
+in `src/lib/auth.ts`. A user moved to another organization loses access to
+the old one on their next request, with no re-login. A valid token for a user
+that no longer exists is treated as unauthenticated (401).
+
+Last brought in line with the code on 2026-10-10 (round 3). Items that used
+to be listed here as "confirmed bug" are fixed; see KNOWN_ISSUES.md.
+
 ---
 
 ## Auth
@@ -34,8 +44,21 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 - Body: `{ email, password }`
 - 200 `{ success, mfaRequired: true, email, message }`, sets `mfa-pending` cookie, emails an OTP (confirmed)
 - 400 missing email/password
-- 401 invalid credentials — same message for "no such user" and "wrong password" (confirmed, does not leak account existence)
+- 401 invalid credentials — same message for "no such user" and "wrong password" (confirmed, does not leak account existence). A non-string email or password is also 401.
+- 429 `{ error: "Too many failed login attempts. Try again in N minute(s)." }` with a `Retry-After` header (confirmed)
 - 500 unexpected error
+- **Throttling is per (email, client IP)**, in the `LoginAttempt` table
+  (`src/services/login-throttle.service.ts`): 5 failed attempts from one
+  address for one email within 15 minutes lock that pair for 15 minutes. The
+  same email from another address is unaffected, so knowing someone's email
+  is not enough to lock them out (confirmed). While locked, the correct
+  password is also refused. Unknown emails are counted exactly like wrong
+  passwords, so the 401 → 429 sequence is identical whether or not the
+  account exists (confirmed). A correct password clears the pair's history.
+- The client IP is the first `X-Forwarded-For` entry, then `X-Real-IP`, then
+  the shared bucket `"unknown"` (`src/lib/client-ip.ts`). This is only
+  trustworthy behind a proxy that overwrites the client's own
+  `X-Forwarded-For`.
 
 ### `POST /api/auth/verify` (aliased by `POST /api/mfa/verify`)
 - Auth: requires `mfa-pending` cookie (not `auth-token`).
@@ -77,8 +100,12 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 
 ### `GET /api/facility`
 - Auth: none (public directory).
-- Query: filters passed through to `getFacilities()` (not exercised by this test pass's filter logic directly — see KNOWN_ISSUES.md)
-- 200 `{ facilities: [...], total }`
+- Query: none is read. The handler calls `getFacilities()` with no filters,
+  so it always returns the first page (9 facilities, by name).
+- 200 `{ facilities: [...], total, ... }`
+- **Open finding (round 3):** each facility includes
+  `createdBy: { id, name, email }`, so this public endpoint returns the
+  claiming user's email address. See KNOWN_ISSUES.md.
 
 ### `POST /api/facility`
 - Auth: `auth-token`. Permission: `claim_facility`.
@@ -90,14 +117,20 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 - 400 missing name/address (confirmed)
 - 401 no token (confirmed)
 - 403 insufficient permission, no/inactive membership, or at tier limit — message `"Facility limit reached — upgrade your plan to claim more facilities."` (all confirmed)
-- Quota count filters `deletedAt: null` (confirmed) — see the companion action below for the inconsistency.
-- **Confirmed race condition**: two concurrent POSTs from the same org one
-  slot below its limit can both succeed (count-then-create is not
-  transactional) — reproduced in 13/15 trials. See TEST_REPORT.md.
+- Quota count filters `deletedAt: null` (confirmed), the same as the companion action below.
+- The membership check, the quota count and the insert run in one
+  transaction that locks the `Organization` row (`withOrgFacilityQuota()` in
+  `src/services/facility.service.ts`), so concurrent requests from one org
+  cannot exceed the limit (confirmed: 0 of 20 and 0 of 15 trials over limit;
+  the race found in the first pass is fixed).
+- The facility is created under the caller's **current** organization
+  (database value, not the token's).
 
 ### `GET /api/facility/[id]`
-- Auth: none.
-- 200 the facility (active only) (confirmed)
+- Auth: none (public directory).
+- 200 the facility (active only), with `createdBy: { id, name }` only —
+  never the claimant's email or password hash (confirmed; the first-pass leak
+  is fixed)
 - 404 not found / soft-deleted
 
 ### `DELETE /api/facility/[id]`
@@ -108,16 +141,17 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 
 ### Server action: `claimFacility(facilityId: string)` — `src/app/actions/claimFacility.ts`
 - Auth: `getUserFromRequest()`. No explicit permission check beyond being logged in.
-- Claims an existing unclaimed facility (by id) for the caller's org.
+- Claims an existing unclaimed facility (by id) for the caller's current org.
 - Returns `{ success: true }` or `{ success: false, error }` (never throws for expected failure paths).
 - Confirmed behaviors: claims successfully when below the org's tier limit;
   blocked at/above the limit; blocked with no/inactive membership; blocked
   (clear message) if already claimed by the caller; blocked (clear message,
   no mutation) if claimed by someone else; two users in the same org share
   one count (second is blocked once the first fills the quota).
-- **Confirmed bug**: the quota count query has no `deletedAt: null` filter —
-  a soft-deleted facility still counts against the org's limit on this path,
-  unlike `POST /api/facility` which does filter it.
+- Uses the same `withOrgFacilityQuota()` as `POST /api/facility`: soft-deleted
+  facilities do not count toward the limit, a soft-deleted facility cannot be
+  claimed ("Facility not found."), and concurrent claims cannot exceed the
+  limit or claim the same facility twice (all confirmed).
 
 ### Server action: `linkSeatToOrg(targetUserId, orgId)` — `src/app/actions/linkSeatToOrg.ts`
 - Auth: `getUserFromRequest()`. Role: `user.role === "ADMIN"` exactly (not `hasPermission`).
@@ -125,12 +159,12 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 - Confirmed: non-ADMIN rejected; nonexistent target user rejected with a
   clear message; already-in-this-org rejected with a clear message; ADMIN
   can link an orgless user successfully.
-- **Confirmed bugs**: linking to a nonexistent `orgId` is not validated
-  up front — it falls through to a raw Postgres foreign-key violation caught
-  by the generic `catch`, surfacing `"Failed to link seat to organization"`
-  instead of a clear "Organization not found". A user already in a
-  *different* org is NOT blocked from being re-linked — their prior
-  facility claims stay pointed at the old org, now orphaned from them.
+- A nonexistent or empty `orgId` returns "Organization not found"
+  (confirmed). A user who already belongs to a different org is **not**
+  moved: "User already belongs to another organization" (confirmed). Both
+  were bugs in the first pass and are fixed.
+- The linked user gets access to the org on their next request, with the
+  token they already hold (confirmed in `tests/integration/stale-org.test.ts`).
 
 ---
 
@@ -142,23 +176,23 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 - 200 the created rebuttal, emails all ADMIN/MODERATOR accounts (confirmed; email failure does not fail the request)
 - 400 missing fields (confirmed)
 - 401 no token
-- 403 insufficient permission (MODERATOR blocked, confirmed), or
-  **`facility.createdById !== user.userId`** — confirmed this is checked
-  against the individual claiming user, not `user.orgId ===
-  facility.organizationId`, so a teammate in the SAME org as the claimant is
-  wrongly blocked. A genuine outsider (different org) is correctly blocked
-  too, but for the wrong reason the schema was designed to avoid. ADMIN is
-  **not** blocked here despite the route's own comment/error copy claiming
-  otherwise (see PERMISSIONS.md).
-- 404 facility not found
+- 401 also when the token's user no longer exists
+- 403 insufficient permission — MODERATOR **and ADMIN** are blocked
+  (confirmed; only MEMBERs hold `submit_rebuttal`)
+- 403 when the facility's `organizationId` is not the caller's current
+  organization. Any seat in the owning org may submit, not only the user who
+  claimed the facility (confirmed). A caller with no organization can never
+  match an unclaimed facility (confirmed).
+- 404 facility not found or soft-deleted
 
 ### `GET /api/rebuttal/[id]`
-- Auth: **none** — confirmed no check exists at all.
-- Returns the rebuttal regardless of status (PENDING/REJECTED included),
-  plus the author's name/email.
-- **Confirmed bug**: this leaks un-moderated/rejected content and submitter
-  PII to anyone who has or guesses the id. See TEST_REPORT.md.
-- 404 not found/deleted
+- Auth: `auth-token` (confirmed; the route had no auth in the first pass).
+- Allowed for the rebuttal's author, any member of the organization that
+  owns the rebuttal's facility, and MODERATOR/ADMIN. Returns the rebuttal
+  with the author's `id`, `name`, `email`.
+- 401 no/invalid token or deleted user — 403 anyone else — 404 not
+  found/soft-deleted (all confirmed)
+- Approved rebuttals are served publicly by `GET /api/rebuttal/published`.
 
 ### `DELETE /api/rebuttal/[id]`
 - Auth: `auth-token`. Authorization: owner OR `manage_facilities` (ADMIN).
@@ -167,31 +201,68 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 
 ### `GET /api/rebuttal/published`
 - Auth: none. Returns only `status: APPROVED`, non-deleted rebuttals (confirmed).
+- **Open findings (round 3):** every row is returned whole, so the public
+  response includes `documentUrl` (the original, un-watermarked document),
+  `watermarkedUrl` (the full base64 PDF, when present) and the author's
+  `email`. See TEST_REPORT.md round 3, D-1 and D-2.
 
 ### `POST /api/rebuttal/watermark`
-- Auth: `auth-token`. Permission: `moderate_rebuttals`. Generates a watermarked PDF for a rebuttal's document. Not exercised by this test pass (see KNOWN_ISSUES.md).
+- Auth: `auth-token`. Permission: `moderate_rebuttals` (ADMIN + MODERATOR).
+- Body: `{ rebuttalId }`. Fetches the rebuttal's `documentUrl`, checks it is
+  a text-searchable PDF, stamps the fixed text "PUBLIC REDACTED VERSION"
+  diagonally on every page (`src/services/pdf-watermark.service.ts`) and
+  stores the result in `Rebuttal.watermarkedUrl` as a base64 `data:` URL.
+- 200 `{ success, watermarkedUrl }`, or `{ message: "Already watermarked", watermarkedUrl }`
+- 400 missing `rebuttalId`, no document attached, not a PDF, or not text-searchable
+- 401 / 403 / 404 as expected — 500 if the document cannot be fetched or processed
+- Nothing in the application calls this route (the comment in the file says
+  it runs automatically on approval; it does not), and no page reads
+  `watermarkedUrl`.
+- **Open findings (round 3):** the text-searchable check rejects ordinary
+  text PDFs and accepts scans; there is no size limit; the watermark carries
+  no user or organization information. See TEST_REPORT.md round 3, area D.
 
-### `GET /api/rebuttal/watermark`
-- Mixed public/privileged behavior based on token presence — not exercised by this test pass.
+### `GET /api/rebuttal/watermark?rebuttalId=`
+- Auth: optional. Anyone may read the watermarked URL of an APPROVED
+  rebuttal. A caller with `moderate_rebuttals` also gets `originalUrl` and
+  may read non-approved rebuttals.
+- 200 `{ watermarkedUrl, originalUrl }` — 400 missing id — 403 not approved
+  and not privileged — 404 not found/soft-deleted
 
 ### Server action: `submitRebuttal(formData)` — `src/app/actions/rebuttals.ts`
-- Auth: `getUserFromRequest()`. **No permission check, no facility-ownership check of any kind.**
+- Auth: `getUserFromRequest()`. Permission: `submit_rebuttal` (MEMBER only).
 - Body (FormData): `title`, `facilityId`, `content`, `redactionAcknowledged` ("on"), optional `document` file (uploaded to Cloudinary).
-- Throws (does not return an error object) on: not logged in, missing
-  required fields, redaction checkbox not acknowledged, or an upload failure.
-- **CRITICAL CONFIRMED BUG**: any authenticated user — from a different org,
-  with no relationship to the facility, or targeting a completely unclaimed
-  facility — can successfully submit a rebuttal for it. There is no
-  equivalent of the `/api/rebuttal` route's (flawed, but present)
-  `createdById` check. This is the single most exploitable finding in this
-  report; see TEST_REPORT.md finding #1.
+- **Returns** `{ success: true }` or `{ success: false, error }`
+  (`ActionResult`, `src/types/action-result.ts`). It never throws a message
+  the user needs to read, because Next.js replaces thrown server-action
+  messages with a generic one in production builds.
+- Errors returned: "Unauthorized"; "Missing required fields."; "You must
+  acknowledge the redaction policy."; "Forbidden: your role cannot submit
+  rebuttals."; "Facility not found." (also for a soft-deleted facility);
+  "This facility has not been claimed. …"; "Forbidden: you can only submit
+  rebuttals for facilities your organization owns."; "Failed to upload the
+  document. …"; and "Something went wrong. Please try again." for anything
+  unexpected (logged server-side). All confirmed.
+- The permission and ownership checks mirror `POST /api/rebuttal` and run
+  before any upload (the missing ownership check found in the first pass is
+  fixed).
 
 ### Server action: `updateRebuttal(rebuttalId, formData)`
 - Auth: `getUserFromRequest()`.
 - Requires the caller to be the rebuttal's owner AND the rebuttal to be in
   `REQUEST_FIX` status; re-enters `PENDING` and clears `moderatedById` on
-  success. Confirmed: non-owner rejected ("Forbidden."); wrong status
-  rejected with a clear message.
+  success.
+- Returns the same `ActionResult`. Errors returned: "Unauthorized";
+  "Rebuttal not found."; "Forbidden."; `Only rebuttals with "Fix Required"
+  status can be edited.`; "Missing required fields."; the redaction and
+  upload messages above; and the generic unexpected-error message (all
+  confirmed).
+
+### Callers of the rebuttal actions
+`NewRebuttalForm.tsx`, `EditRebuttalForm.tsx` and `RebuttalPrintForm.tsx`
+check `result.success` and render `result.error` in a `role="alert"` element.
+Verified in a browser against both the dev server and a production build
+(`tests/e2e/action-errors.spec.ts`).
 
 ---
 
@@ -257,9 +328,13 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
   once for `subscription_cycle` reason), `invoice.payment_failed` (confirmed:
   → PAST_DUE), `invoice.upcoming` (reminder email, not exercised),
   `customer.subscription.deleted` (confirmed: → CANCELED/NONE/0).
-- **Confirmed gap**: no `event.id` dedup table. DB writes stay idempotent on
-  redelivery (upsert/updateMany), but a redelivered event sends its email a
-  second time (confirmed: 2 emails for 2 deliveries of the same event).
+- **Idempotent on redelivery.** Each `event.id` is claimed in the
+  `ProcessedStripeEvent` table before handling; a redelivered event returns
+  200 without repeating its side effects, so its email is sent once
+  (confirmed). If handling fails, the claim is released and the route
+  returns 500 so Stripe's retry is processed as a first delivery (confirmed).
+  Rows in that table are never pruned (KNOWN_ISSUES.md).
+- `maxFacilities` is taken from `TIER_FACILITY_LIMITS`, not a local table.
 
 ---
 
@@ -312,20 +387,15 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 
 ### `GET /api/admin/access-review`
 - Auth: `auth-token`. Permission: `moderate_rebuttals` (ADMIN + MODERATOR).
-- **CRITICAL CONFIRMED BUG — this endpoint always fails.** It selects a
-  `membership` relation directly on `User`, which CH-18 removed (membership
-  moved to `Organization`). Every call throws a
-  `PrismaClientValidationError` ("Unknown field `membership` for select
-  statement on model `User`") and the route's catch block returns a generic
-  500. The entire `/dashboard/moderation/access-review` page — which calls
-  this exact endpoint — is non-functional as a direct result. Confirmed with
-  the real route handler in `tests/integration/admin.test.ts`; see
-  TEST_REPORT.md finding #1 (this report's highest-severity item).
-- 403 for MEMBER is correctly returned before the broken query ever runs (confirmed).
+- 200 `{ count, users }` — users whose `lastReviewedAt` is null or older
+  than 90 days, each with `organization.membership.{ plan, status }`
+  (confirmed). The first-pass bug (a `membership` select directly on `User`,
+  which always returned 500) is fixed; the select is now checked with
+  `satisfies Prisma.UserSelect`.
+- 401 / 403 as expected (MEMBER confirmed blocked).
 
 ### `POST /api/admin/access-review`
-- Marks a user reviewed (`lastReviewedAt`). Does not touch the broken
-  relation — confirmed working.
+- Marks a user reviewed (`lastReviewedAt`). Confirmed working.
 
 ### `POST /api/admin/archive-moderation-logs`
 - Auth: `auth-token`. Permission: `manage_facilities` (ADMIN only). Moves
@@ -338,16 +408,19 @@ Cookies used throughout: `auth-token` (7-day session JWT) and `mfa-pending`
 ## Pages requiring auth (summary — see ARCHITECTURE.md for the middleware mechanism)
 
 All of `/dashboard/*` require a valid session (`redirect("/login")` otherwise).
-Additional `hasPermission` gates: `/dashboard/facilities/claim` and
-`/dashboard/rebuttals/new` (`claim_facility`/`submit_rebuttal`, and also
-explicitly excludes ADMIN by role check — see PERMISSIONS.md note on the
-ADMIN/`submit_rebuttal` inconsistency), `/dashboard/facilities/manage`
-(`manage_facilities`), `/dashboard/forms/rebuttal` and
-`/dashboard/forms/redaction` (`submit_rebuttal`/`access_library`, both also
-explicitly allow ADMIN through a separate `|| user.role === "ADMIN"` clause —
-note this is the opposite pattern from the `/new` pages above),
+Additional `hasPermission` gates: `/dashboard/facilities/claim`
+(`claim_facility`, and also excludes ADMIN by an explicit role check),
+`/dashboard/rebuttals/new` and `/dashboard/forms/rebuttal` (`submit_rebuttal`,
+so MEMBER only — ADMIN no longer holds that permission),
+`/dashboard/forms/redaction` (`access_library`, with a redundant
+`|| role === "ADMIN"` clause; the facility picker is org-scoped for MEMBERs),
+`/dashboard/facilities/manage` (`manage_facilities`),
 `/dashboard/memberships` (`manage_memberships`), `/dashboard/moderation/*`
-(`moderate_rebuttals`), `/dashboard/users` (`manage_users`). Only
-`/dashboard`, `/moderation`, `/admin`, `/api/admin`, `/member` are covered by
-`src/middleware.ts` itself — every other authenticated route/page enforces
-its own check inline (verified route-by-route above).
+(`moderate_rebuttals`), `/dashboard/users` (`manage_users`). Pages that list
+facilities (`/dashboard`, `/dashboard/facilities`, the two form pages, the
+new-rebuttal page) scope them to the caller's current organization, not to
+the user who claimed them. Only `/dashboard`, `/moderation`, `/admin`,
+`/api/admin`, `/member` are covered by `src/middleware.ts` itself — every
+other authenticated route/page enforces its own check inline (verified
+route-by-route above). The middleware runs on the Edge and reads the role
+from the token only; it does not look anything up in the database.

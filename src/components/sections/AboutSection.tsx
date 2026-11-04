@@ -55,8 +55,8 @@ export function AboutSection() {
             {/* Mission callout */}
             <blockquote className="mt-8 border-l-4 border-[var(--color-primary)] pl-5 py-1">
               <p className="text-lg font-semibold text-[var(--color-text)] italic leading-snug">
-                "Giving care facilities a fair, transparent voice in the public
-                regulatory record."
+                &quot;Giving care facilities a fair, transparent voice in the public
+                regulatory record.&quot;
               </p>
               <footer className="mt-2 text-sm text-[var(--color-muted)]">
                 — Our Mission

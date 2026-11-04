@@ -88,7 +88,7 @@ export default function RedactionPolicyPage() {
                   Redaction is the process of censoring or obscuring part of a
                   text for legal or security purposes. On
                   CareHomesSupportDocs.org, redaction ensures that no sensitive
-                  personal information is ever published alongside a facility's
+                  personal information is ever published alongside a facility&apos;s
                   rebuttal.
                 </p>
                 <p className="text-[var(--color-text)] text-lg">
@@ -112,8 +112,8 @@ export default function RedactionPolicyPage() {
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-[var(--color-text)] text-lg mb-4">
                   <li>
-                    <strong>Resident Names:</strong> Initials (e.g., "Resident
-                    R1") are permitted if they match the CCLD report, but full
+                    <strong>Resident Names:</strong> Initials (e.g., &quot;Resident
+                    R1&quot;) are permitted if they match the CCLD report, but full
                     names are strictly prohibited.
                   </li>
                   <li>
@@ -122,12 +122,12 @@ export default function RedactionPolicyPage() {
                     names that could identify a resident.
                   </li>
                   <li>
-                    <strong>Room Numbers & Locations:</strong> (e.g., "the
-                    resident in Room 4B").
+                    <strong>Room Numbers & Locations:</strong> (e.g., &quot;the
+                    resident in Room 4B&quot;).
                   </li>
                   <li>
                     <strong>Family Member Names:</strong> Any identifying
-                    information regarding a resident's family or visitors.
+                    information regarding a resident&apos;s family or visitors.
                   </li>
                   <li>
                     <strong>Social Security Numbers & Financials:</strong>{" "}
@@ -136,7 +136,7 @@ export default function RedactionPolicyPage() {
                   <li>
                     <strong>Staff Names:</strong> Unless the staff member is a
                     publicly listed administrator or licensee. Use titles
-                    instead (e.g., "the attending caregiver").
+                    instead (e.g., &quot;the attending caregiver&quot;).
                   </li>
                 </ul>
               </section>
@@ -164,7 +164,7 @@ export default function RedactionPolicyPage() {
                   </li>
                   <li>
                     Factual descriptions of the{" "}
-                    <strong>facility's response</strong> or Plan of Correction
+                    <strong>facility&apos;s response</strong> or Plan of Correction
                     (POC).
                   </li>
                   <li>

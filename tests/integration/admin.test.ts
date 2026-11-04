@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { resetDb, disconnectDb, createUser } from "../helpers/db";
+import { resetDb, testDb, disconnectDb, createUser, createOrg, createMembership } from "../helpers/db";
 import { buildRequest, authCookie } from "../helpers/http";
 import { GET as accessReviewGet, POST as accessReviewPost } from "@/app/api/admin/access-review/route";
 import { POST as archiveModerationLogs } from "@/app/api/admin/archive-moderation-logs/route";
@@ -7,25 +7,60 @@ import { POST as archiveModerationLogs } from "@/app/api/admin/archive-moderatio
 beforeEach(resetDb);
 afterAll(disconnectDb);
 
-describe("GET /api/admin/access-review — CRITICAL CONFIRMED BUG", () => {
-  it("returns 500 for an ADMIN, every time, because the query still selects the pre-CH-18 " +
-     "User.membership relation which no longer exists (moved to Organization.membership). " +
-     "Confirmed as a genuine Prisma runtime error (PrismaClientValidationError: 'Unknown field " +
-     "`membership` for select statement on model `User`'), NOT caught by `npx tsc --noEmit` — " +
-     "see TEST_REPORT.md for why the type-checker misses this class of error entirely.", async () => {
-    const admin = await createUser({ role: "ADMIN", organizationId: null });
+describe("GET /api/admin/access-review — FIXED (was CRITICAL CONFIRMED BUG: always 500)", () => {
+  it("FIXED: returns 200 for an ADMIN and lists users due for review, with each user's membership " +
+     "read through User -> organization -> membership (the pre-CH-18 User.membership relation is gone)", async () => {
+    const admin = await createUser({ role: "ADMIN", organizationId: null, email: "admin@example.com" });
+    const org = await createOrg();
+    await createMembership({ organizationId: org.id, plan: "TIER_B", status: "ACTIVE" });
+    await createUser({ role: "MEMBER", organizationId: org.id, email: "paying@example.com" });
+    const bareOrg = await createOrg();
+    await createUser({ role: "MEMBER", organizationId: bareOrg.id, email: "nomembership@example.com" });
+
     const res = await accessReviewGet(
       buildRequest("http://localhost/api/admin/access-review", { cookies: await authCookie(admin) })
     );
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.count).toBe(3);
+    const byEmail = Object.fromEntries(
+      (body.users as Array<{ email: string; organization: unknown }>).map((u) => [u.email, u])
+    );
+    expect(byEmail["paying@example.com"].organization).toEqual({
+      membership: { plan: "TIER_B", status: "ACTIVE" },
+    });
+    // Org exists but has no Membership row.
+    expect(byEmail["nomembership@example.com"].organization).toEqual({ membership: null });
+    // No org at all.
+    expect(byEmail["admin@example.com"].organization).toBeNull();
+    // The password hash must never be part of this payload.
+    expect(JSON.stringify(body)).not.toContain("irrelevant-hash");
   });
 
-  it("MODERATOR also hits the same 500 (permission check passes, then the query itself fails)", async () => {
+  it("FIXED: MODERATOR also gets 200 (permission check passes and the query now succeeds)", async () => {
     const moderator = await createUser({ role: "MODERATOR", organizationId: null });
     const res = await accessReviewGet(
       buildRequest("http://localhost/api/admin/access-review", { cookies: await authCookie(moderator) })
     );
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
+  });
+
+  it("users reviewed within the last 90 days are excluded; older reviews are included", async () => {
+    const admin = await createUser({ role: "ADMIN", organizationId: null, email: "admin@example.com" });
+    const recent = await createUser({ role: "MEMBER", organizationId: null, email: "recent@example.com" });
+    const stale = await createUser({ role: "MEMBER", organizationId: null, email: "stale@example.com" });
+    const day = 24 * 60 * 60 * 1000;
+    await testDb.user.update({ where: { id: admin.id }, data: { lastReviewedAt: new Date() } });
+    await testDb.user.update({ where: { id: recent.id }, data: { lastReviewedAt: new Date(Date.now() - 10 * day) } });
+    await testDb.user.update({ where: { id: stale.id }, data: { lastReviewedAt: new Date(Date.now() - 120 * day) } });
+
+    const res = await accessReviewGet(
+      buildRequest("http://localhost/api/admin/access-review", { cookies: await authCookie(admin) })
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect((body.users as Array<{ email: string }>).map((u) => u.email)).toEqual(["stale@example.com"]);
   });
 
   it("MEMBER is still correctly forbidden before the query ever runs (403, not 500)", async () => {

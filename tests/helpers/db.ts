@@ -1,5 +1,6 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { TIER_FACILITY_LIMITS } from "@/lib/permissions";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 
@@ -29,9 +30,28 @@ export async function resetDb() {
       "Membership",
       "User",
       "Organization",
-      "MembershipAgreement"
+      "MembershipAgreement",
+      "ProcessedStripeEvent",
+      "LoginAttempt",
+      "AccessReview"
     RESTART IDENTITY CASCADE;
   `);
+  await resetAuditLog();
+}
+
+/**
+ * "AuditLog" is append-only: a trigger rejects TRUNCATE for every role
+ * (migration 20261031120000_add_audit_log). Tests own the test database, so
+ * they switch that one trigger off for the truncate and straight back on.
+ * Only the test database is ever touched (tests/setup.ts guards DATABASE_URL).
+ */
+export async function resetAuditLog() {
+  await testDb.$executeRawUnsafe(`ALTER TABLE "AuditLog" DISABLE TRIGGER "audit_log_no_truncate"`);
+  try {
+    await testDb.$executeRawUnsafe(`TRUNCATE TABLE "AuditLog"`);
+  } finally {
+    await testDb.$executeRawUnsafe(`ALTER TABLE "AuditLog" ENABLE TRIGGER "audit_log_no_truncate"`);
+  }
 }
 
 export async function disconnectDb() {
@@ -61,13 +81,12 @@ export async function createMembership(opts: {
   stripeSubscriptionId?: string;
 }) {
   const plan = opts.plan ?? "NONE";
-  const limits: Record<string, number> = { NONE: 0, TIER_A: 1, TIER_B: 3, TIER_C: 10 };
   return testDb.membership.create({
     data: {
       organizationId: opts.organizationId,
       plan,
       status: opts.status ?? "INACTIVE",
-      maxFacilities: opts.maxFacilities ?? limits[plan],
+      maxFacilities: opts.maxFacilities ?? TIER_FACILITY_LIMITS[plan],
       stripeCustomerId: opts.stripeCustomerId,
       stripeSubscriptionId: opts.stripeSubscriptionId,
     },
@@ -126,6 +145,72 @@ export async function createRebuttal(opts: {
       userId: opts.userId,
       facilityId: opts.facilityId ?? null,
       status: opts.status ?? "PENDING",
+    },
+  });
+}
+
+export async function createMemberFile(opts: {
+  userId: string;
+  filename?: string;
+  fileType?: "PDF" | "DOCX" | "JPG" | "PNG" | "OTHER";
+  mimeType?: string;
+  fileSize?: number;
+  deletedAt?: Date | null;
+}) {
+  const key = unique("filekey");
+  return testDb.memberFile.create({
+    data: {
+      filename: opts.filename ?? "document.pdf",
+      fileKey: key,
+      fileUrl: `https://utfs.test/f/${key}`,
+      fileSize: opts.fileSize ?? 1024,
+      fileType: opts.fileType ?? "PDF",
+      mimeType: opts.mimeType ?? "application/pdf",
+      userId: opts.userId,
+      deletedAt: opts.deletedAt ?? null,
+    },
+  });
+}
+
+export async function createShareLink(opts: {
+  userId: string;
+  shareAll?: boolean;
+  fileIds?: string[];
+  expiry?: "DAYS_7" | "DAYS_30" | "NEVER";
+  expiresAt?: Date | null;
+  revokedAt?: Date | null;
+}) {
+  return testDb.fileShareLink.create({
+    data: {
+      token: unique("sharetoken"),
+      userId: opts.userId,
+      shareAll: opts.shareAll ?? false,
+      expiry: opts.expiry ?? "NEVER",
+      expiresAt: opts.expiresAt ?? null,
+      revokedAt: opts.revokedAt ?? null,
+      selectedFiles: opts.fileIds ? { create: opts.fileIds.map((fileId) => ({ fileId })) } : undefined,
+    },
+  });
+}
+
+export async function createTemplate(opts?: {
+  title?: string;
+  description?: string;
+  category?: "REBUTTAL" | "CHECKLIST" | "GUIDE";
+  fileFormat?: "PDF" | "DOCX";
+  fileUrl?: string;
+  isActive?: boolean;
+  uploadedById?: string;
+}) {
+  return testDb.template.create({
+    data: {
+      title: opts?.title ?? unique("Template"),
+      description: opts?.description ?? "A template",
+      category: opts?.category ?? "REBUTTAL",
+      fileFormat: opts?.fileFormat ?? "PDF",
+      fileUrl: opts?.fileUrl ?? `https://files.test/${unique("template")}.pdf`,
+      isActive: opts?.isActive ?? true,
+      uploadedById: opts?.uploadedById,
     },
   });
 }

@@ -156,7 +156,7 @@ export default async function PricingPage() {
                   Need a detailed breakdown of all tier features?
                 </p>
                 <p className="text-[var(--color-muted)] leading-relaxed max-w-3xl">
-                  Explore our comprehensive Membership Guide to learn how facility claims, Title 22 citation rebuttals, tamper-evident watermarked PDFs, and attorney sharing work across each plan.
+                  Explore our comprehensive Membership Guide to learn how facility claims, Title 22 citation rebuttals, watermarked supporting documents, and attorney sharing work across each plan.
                 </p>
               </div>
             </div>

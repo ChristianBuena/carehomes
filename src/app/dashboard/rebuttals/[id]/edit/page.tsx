@@ -44,7 +44,7 @@ export default async function EditRebuttalPage({ params }: EditRebuttalPageProps
           id: rebuttal.id,
           title: rebuttal.title,
           content: rebuttal.content,
-          documentUrl: rebuttal.documentUrl,
+          hasDocument: rebuttal.documentUrl !== null,
           facility: rebuttal.facility,
         }}
       />

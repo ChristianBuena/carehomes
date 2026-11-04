@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { resolveSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { createRebuttal } from "@/services/rebuttal.service";
 import { sendEmail } from "@/lib/mailer";
+import { describeMailError } from "@/lib/log-safe";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +16,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
+    // orgId comes from the database, not the token (see resolveSessionUser).
+    const user = await resolveSessionUser(token);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // ── 2. Permission — only MEMBERs may submit rebuttals ──────────────────
     if (!hasPermission(user.role, "submit_rebuttal")) {
@@ -39,7 +46,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 4. Facility ownership — must own the facility (non-deleted) ────────
+    // ── 4. Facility ownership — the caller's ORGANIZATION must own the
+    //       (non-deleted) facility, so every seat in the org can submit ────
     const facility = await prisma.facility.findFirst({
       where: { id: facilityId, deletedAt: null },
     });
@@ -48,9 +56,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Facility not found" }, { status: 404 });
     }
 
-    if (facility.createdById !== user.userId) {
+    if (!user.orgId || facility.organizationId !== user.orgId) {
       return NextResponse.json(
-        { error: "You can only submit rebuttals for facilities you own" },
+        { error: "You can only submit rebuttals for facilities your organization owns" },
         { status: 403 }
       );
     }
@@ -61,6 +69,16 @@ export async function POST(req: NextRequest) {
       content,
       userId: user.userId,
       facilityId,
+    });
+
+    await recordAudit({
+      action: "REBUTTAL_SUBMITTED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: rebuttal.id,
+      metadata: { facilityId },
+      ...auditContextFromRequest(req),
     });
 
     // ── 6. Notify ADMIN and MODERATOR accounts ─────────────────────────────
@@ -117,7 +135,7 @@ export async function POST(req: NextRequest) {
       console.log(`Moderator alert sent to ${moderators.length} recipient(s)`);
     } catch (emailError) {
       // Don't fail the submission if email fails
-      console.error("Failed to send moderator alert:", emailError);
+      console.error("Failed to send moderator alert:", describeMailError(emailError));
     }
 
     return NextResponse.json(rebuttal);

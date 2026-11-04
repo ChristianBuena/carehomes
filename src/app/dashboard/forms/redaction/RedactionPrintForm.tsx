@@ -22,25 +22,15 @@ export default function RedactionPrintForm({ facilities, userName }: { facilitie
     date: new Date().toISOString().split("T")[0],
   });
 
-  // Load draft from localStorage on mount
+  // No drafts in browser storage (SOW 11.3). Remove any draft an older
+  // version saved on this computer.
   useEffect(() => {
-    const savedDraft = localStorage.getItem("redaction_form_draft");
-    if (savedDraft) {
-      try {
-        setFormData(JSON.parse(savedDraft));
-      } catch (e) {
-        console.error("Failed to parse saved draft", e);
-      }
+    try {
+      localStorage.removeItem("redaction_form_draft");
+    } catch {
+      // Storage unavailable (private mode): nothing to clean up.
     }
   }, []);
-
-  // Save to localStorage when form data changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      localStorage.setItem("redaction_form_draft", JSON.stringify(formData));
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [formData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -68,7 +58,7 @@ export default function RedactionPrintForm({ facilities, userName }: { facilitie
             <FileText className="w-5 h-5 text-[var(--color-primary)]" /> Fillable Redaction Attestation
           </h2>
           <p className="text-sm text-[var(--color-muted)] mt-1">
-            Generate your redaction compliance certificate to include with manual submissions. Auto-saves as you type.
+            Generate your redaction compliance certificate to include with manual submissions. Your entries are not saved in this browser.
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">

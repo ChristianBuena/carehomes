@@ -22,7 +22,7 @@ interface EditRebuttalFormProps {
     id: string;
     title: string;
     content: string;
-    documentUrl: string | null;
+    hasDocument: boolean;
     facility: { id: string; name: string } | null;
   };
 }
@@ -51,12 +51,17 @@ export default function EditRebuttalForm({ rebuttal }: EditRebuttalFormProps) {
     const formData = new FormData(e.currentTarget);
 
     try {
-      await updateRebuttal(rebuttal.id, formData);
+      // The action returns its errors (thrown messages are hidden in production).
+      const result = await updateRebuttal(rebuttal.id, formData);
+      if (!result.success) {
+        setError(result.error);
+        setIsSubmitting(false);
+        return;
+      }
       router.push("/dashboard/rebuttals?resubmitted=true");
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong. Please try again.";
-      setError(message);
+    } catch {
+      // Only reached when the request itself fails (network, server crash).
+      setError("Something went wrong. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -105,7 +110,7 @@ export default function EditRebuttalForm({ rebuttal }: EditRebuttalFormProps) {
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-8 shadow-sm">
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-[var(--color-danger)]/10 text-[var(--color-danger)] p-4 rounded-lg flex gap-3 text-sm font-medium">
+            <div role="alert" className="bg-[var(--color-danger)]/10 text-[var(--color-danger)] p-4 rounded-lg flex gap-3 text-sm font-medium">
               <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
               <p>{error}</p>
             </div>
@@ -139,12 +144,12 @@ export default function EditRebuttalForm({ rebuttal }: EditRebuttalFormProps) {
           {/* Document upload */}
           <div className="space-y-2">
             <Label>Supporting Document (Optional)</Label>
-            {rebuttal.documentUrl && !fileName && (
+            {rebuttal.hasDocument && !fileName && (
               <div className="flex items-center gap-2 text-sm text-[var(--color-muted)] mb-2">
                 <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span>Current document attached. Upload a new file to replace it.</span>
                 <a
-                  href={rebuttal.documentUrl}
+                  href={`/api/rebuttal/${rebuttal.id}/document`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[var(--color-primary)] hover:underline font-medium"
@@ -158,7 +163,7 @@ export default function EditRebuttalForm({ rebuttal }: EditRebuttalFormProps) {
                 type="file"
                 id="document"
                 name="document"
-                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={handleFileChange}
               />
@@ -172,7 +177,7 @@ export default function EditRebuttalForm({ rebuttal }: EditRebuttalFormProps) {
                   )}
                 </div>
                 <p className="text-xs text-[var(--color-muted)]">
-                  PDF, PNG, JPG or Word (max. 10MB)
+                  PDF, PNG or JPG (max. 10MB)
                 </p>
               </div>
             </div>

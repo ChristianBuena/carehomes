@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { GoogleAnalytics } from "@next/third-parties/google";
+import { AnalyticsConsent } from "@/components/layout/AnalyticsConsent";
 import { siteConfig } from "@/lib/site-config";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -25,9 +25,9 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
-        {/* Only render GA if the environment variable is provided */}
+        {/* GA is configured AND loads only after the visitor allows it (SOW 11.3). */}
         {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+          <AnalyticsConsent gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         )}
       </body>
     </html>

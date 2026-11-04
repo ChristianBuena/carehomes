@@ -68,7 +68,7 @@ const COMPARISON_ROWS: ComparisonRow[] = [
   },
   {
     category: "Citation Rebuttal System",
-    feature: "Tamper-Evident Watermarked PDFs",
+    feature: "Watermarked Supporting Documents",
     tier300: "Included",
     tier400: "Included",
     tier500: "Included",
@@ -144,10 +144,10 @@ const CORE_PILLARS = [
       "Every rebuttal undergoes independent moderation before going live. Our review board ensures neutral, non-inflammatory phrasing and confirms that no resident identifying details are present, safeguarding your facility's professionalism.",
   },
   {
-    title: "4. Tamper-Evident Watermarked PDFs",
+    title: "4. Watermarked Supporting Documents",
     icon: ShieldCheck,
     description:
-      "Approved rebuttals automatically generate official, cryptographically timestamped and watermarked PDFs. These documents serve as verified public records suitable for sharing with licensing analysts, ombudsmen, and prospective families.",
+      "While a rebuttal is under review, every view or download of its supporting document (PDF, PNG or JPG) is marked \u201cFOR ATTORNEY REVIEW ONLY\u201d on every page. When a rebuttal is approved, a copy marked \u201cPUBLIC REDACTED VERSION\u201d is kept for the moderation team. Public facility pages show the approved rebuttal text only; supporting documents are not published.",
   },
   {
     title: "5. Secure Legal & Attorney Sharing",
@@ -272,7 +272,7 @@ export default function MembershipGuidePage() {
                 <hr className="border-[var(--color-border)]" />
 
                 <div className="space-y-2.5 text-sm">
-                  <p className="font-semibold text-xs uppercase tracking-wider text-[var(--color-muted)]">What's Included:</p>
+                  <p className="font-semibold text-xs uppercase tracking-wider text-[var(--color-muted)]">What&apos;s Included:</p>
                   <ul className="space-y-2 text-xs sm:text-sm text-[var(--color-text)]">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[var(--color-success)] shrink-0 mt-0.5" />
@@ -284,7 +284,7 @@ export default function MembershipGuidePage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[var(--color-success)] shrink-0 mt-0.5" />
-                      <span><strong>Watermarked PDFs:</strong> Official authenticated documents</span>
+                      <span><strong>Watermarked documents:</strong> drafts marked &ldquo;For Attorney Review Only&rdquo;</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-[var(--color-success)] shrink-0 mt-0.5" />
@@ -498,7 +498,7 @@ export default function MembershipGuidePage() {
               {
                 step: "5",
                 title: "Live Publication",
-                desc: "Our review team approves within 24–48h. Your watermarked rebuttal goes live publicly.",
+                desc: "Our review team approves within 24–48h. The approved rebuttal text goes live on the facility page.",
               },
             ].map((item) => (
               <div
@@ -550,7 +550,7 @@ export default function MembershipGuidePage() {
                 What happens if my rebuttal requires redactions?
               </h3>
               <p className="text-xs sm:text-sm text-[var(--color-muted)] leading-relaxed">
-                If our moderation team identifies resident names or room numbers, the submission status changes to "Fix Requested" with specific reviewer notes. You can edit and resubmit directly from your dashboard without restarting.
+                If our moderation team identifies resident names or room numbers, the submission status changes to &quot;Fix Requested&quot; with specific reviewer notes. You can edit and resubmit directly from your dashboard without restarting.
               </p>
             </div>
 
@@ -568,7 +568,7 @@ export default function MembershipGuidePage() {
         {/* Bottom CTA Banner */}
         <div className="p-8 sm:p-12 rounded-3xl bg-[var(--color-primary)] text-white text-center space-y-6 shadow-xl">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight">
-            Ready to Protect Your Care Home's Reputation?
+            Ready to Protect Your Care Home&apos;s Reputation?
           </h2>
           <p className="text-sm sm:text-base text-white/80 max-w-2xl mx-auto leading-relaxed">
             Join licensed California care facility operators who publish professional, compliant responses to regulatory citations. Choose your plan today.

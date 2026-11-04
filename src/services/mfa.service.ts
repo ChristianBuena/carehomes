@@ -1,6 +1,7 @@
 import { randomInt, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
+import { describeMailError } from "@/lib/log-safe";
 
 function getOtpEmailTemplate(otp: string): string {
   return `
@@ -134,9 +135,8 @@ export async function createMfaOtp(email: string) {
       html: getOtpEmailTemplate(otp),
     });
 
-    console.log("OTP email sent successfully to:", email);
   } catch (error) {
-    console.error("❌ Failed to send OTP email:", error);
+    console.error("[mfa] Failed to send OTP email:", describeMailError(error));
 
     // OPTIONAL BUT RECOMMENDED:
     // rollback OTP if email fails

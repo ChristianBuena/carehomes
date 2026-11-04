@@ -43,10 +43,17 @@ export default function NewRebuttalForm({ facilities }: { facilities: FacilityOp
     const formData = new FormData(e.currentTarget);
 
     try {
-      await submitRebuttal(formData);
+      // The action returns its errors (thrown messages are hidden in production).
+      const result = await submitRebuttal(formData);
+      if (!result.success) {
+        setError(result.error);
+        setIsSubmitting(false);
+        return;
+      }
       router.push("/dashboard/rebuttals?success=true");
-    } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+    } catch {
+      // Only reached when the request itself fails (network, server crash).
+      setError("Something went wrong. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -70,8 +77,8 @@ export default function NewRebuttalForm({ facilities }: { facilities: FacilityOp
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-8 shadow-sm">
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-[var(--color-danger)]/10 text-[var(--color-danger)] p-4 rounded-lg flex gap-3 text-sm font-medium">
-              <AlertCircle className="h-5 w-5 shrink-0" />
+            <div role="alert" className="bg-[var(--color-danger)]/10 text-[var(--color-danger)] p-4 rounded-lg flex gap-3 text-sm font-medium">
+              <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
               <p>{error}</p>
             </div>
           )}
@@ -120,7 +127,7 @@ export default function NewRebuttalForm({ facilities }: { facilities: FacilityOp
                 type="file" 
                 id="document" 
                 name="document" 
-                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={handleFileChange}
               />
@@ -134,7 +141,7 @@ export default function NewRebuttalForm({ facilities }: { facilities: FacilityOp
                   )}
                 </div>
                 <p className="text-xs text-[var(--color-muted)]">
-                  PDF, PNG, JPG or Word (max. 10MB)
+                  PDF, PNG or JPG (max. 10MB)
                 </p>
               </div>
             </div>

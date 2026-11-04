@@ -1,22 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { resolveSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { getRebuttalById, softDeleteRebuttal } from "@/services/rebuttal.service";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 // GET /api/rebuttal/[id] — fetch a single rebuttal by ID (active only)
+// Restricted to the rebuttal's author, members of the facility's organization,
+// and MODERATOR/ADMIN. Approved rebuttals are served publicly (without author
+// email) by /api/rebuttal/published instead.
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+
+    // AUTH CHECK
+    const token = req.cookies.get("auth-token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // orgId comes from the database, not the token (see resolveSessionUser).
+    let user;
+    try {
+      user = await resolveSessionUser(token);
+    } catch {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const rebuttal = await getRebuttalById(id);
 
     if (!rebuttal) {
       return NextResponse.json({ error: "Rebuttal not found" }, { status: 404 });
     }
 
-    return NextResponse.json(rebuttal);
+    // AUTHORIZATION — author, a member of the facility's org, or a moderator/admin
+    const isAuthor = rebuttal.user.id === user.userId;
+    const isFacilityOrgMember =
+      !!user.orgId && rebuttal.facility?.organizationId === user.orgId;
+    const isModerator = hasPermission(user.role, "moderate_rebuttals");
+
+    if (!isAuthor && !isFacilityOrgMember && !isModerator) {
+      return NextResponse.json(
+        { error: "Forbidden: you do not have permission to view this rebuttal" },
+        { status: 403 }
+      );
+    }
+
+    // Storage URLs stay on the server (SOW 11.3): the document is served by
+    // /api/rebuttal/[id]/document with the same access rule as this route.
+    const { documentUrl, watermarkedUrl: _watermarkedUrl, ...safe } = rebuttal;
+    void _watermarkedUrl;
+    return NextResponse.json({
+      ...safe,
+      hasDocument: documentUrl !== null,
+      documentDownloadUrl: documentUrl ? `/api/rebuttal/${rebuttal.id}/document` : null,
+    });
   } catch {
     return NextResponse.json({ error: "Failed to fetch rebuttal" }, { status: 500 });
   }
@@ -38,7 +81,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
+    const user = await resolveSessionUser(token);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Fetch the rebuttal to verify existence and ownership
     const rebuttal = await getRebuttalById(id);
@@ -59,6 +105,14 @@ export async function DELETE(
 
     // SOFT DELETE — sets deletedAt, does NOT remove row
     await softDeleteRebuttal(id);
+    await recordAudit({
+      action: "REBUTTAL_DELETED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: id,
+      ...auditContextFromRequest(req),
+    });
 
     return NextResponse.json({ success: true, id });
   } catch {

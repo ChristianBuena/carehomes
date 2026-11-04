@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { createTakedownRequest, getTakedownRequests } from "@/services/takedown.service";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 import { TakedownReason, TakedownStatus } from "@/types/takedown.types";
 
 const createTakedownSchema = z.object({
@@ -49,6 +50,15 @@ export async function POST(req: NextRequest) {
       facilityId: validated.data.facilityId,
     });
 
+    // Public form: no actor. Requester name and email stay in TakedownRequest only.
+    await recordAudit({
+      action: "TAKEDOWN_SUBMITTED",
+      targetType: "TakedownRequest",
+      targetId: takedown.id,
+      metadata: { reason: validated.data.reason },
+      ...auditContextFromRequest(req),
+    });
+
     return NextResponse.json(
       {
         success: true,
@@ -78,7 +88,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
+    const user = await getSessionUser(token);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!hasPermission(user.role, "manage_incidents")) {
       return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
     }

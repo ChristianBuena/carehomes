@@ -6,6 +6,7 @@ import {
   MFA_PENDING_COOKIE,
 } from "@/lib/jwt";
 import { verifyMfaOtp } from "@/services/mfa.service";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 /**
  * POST /api/auth/verify — step 2 of login (OTP check). Single source of truth;
@@ -41,6 +42,16 @@ export async function POST(req: NextRequest) {
     const valid = await verifyMfaOtp(email, otp);
 
     if (!valid) {
+      const attempted = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true, role: true },
+      });
+      await recordAudit({
+        action: "AUTH_MFA_FAILED",
+        actorId: attempted?.id ?? null,
+        actorRole: attempted?.role ?? null,
+        ...auditContextFromRequest(req),
+      });
       return NextResponse.json(
         { error: "Invalid or expired OTP" },
         { status: 401 }
@@ -54,6 +65,7 @@ export async function POST(req: NextRequest) {
         email: true,
         role: true,
         organizationId: true,
+        tokenVersion: true,
       },
     });
 
@@ -73,6 +85,14 @@ export async function POST(req: NextRequest) {
       email: user.email,
       role: user.role,
       orgId: user.organizationId,
+      tv: user.tokenVersion,
+    });
+
+    await recordAudit({
+      action: "AUTH_LOGIN_SUCCESS",
+      actorId: user.id,
+      actorRole: user.role,
+      ...auditContextFromRequest(req),
     });
 
     const res = NextResponse.json({

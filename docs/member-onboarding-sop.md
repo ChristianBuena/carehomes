@@ -40,7 +40,7 @@ To claim care facilities and publish rebuttals, an active subscription tier is r
 
 | Plan Tier | Monthly / Annual | Facility Capacity | Features |
 |---|---|---|---|
-| **Tier A (Solo/Small)** | $49/mo | Up to **1 Facility** | 1 Facility Claim, Unlimited Rebuttals, Watermarked PDF generation |
+| **Tier A (Solo/Small)** | $49/mo | Up to **1 Facility** | 1 Facility Claim, Unlimited Rebuttals, Supporting documents marked "For Attorney Review Only" while under review |
 | **Tier B (Multi-Home)** | $129/mo | Up to **5 Facilities** | 5 Facility Claims, Priority Moderation Queue, Template Library |
 | **Tier C (Enterprise)** | $249/mo | Up to **10 Facilities** | 10 Facility Claims, Multi-Seat Attorney Access, Dedicated LPO Review |
 

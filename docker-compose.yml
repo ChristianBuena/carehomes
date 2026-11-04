@@ -5,10 +5,11 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ADMIN321
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: carehomes
     ports:
-      - "5432:5432"
+      # Bound to localhost only; the app reaches the DB over the compose network.
+      - "127.0.0.1:5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 
@@ -36,7 +37,7 @@ services:
     environment:
       NODE_ENV: production
       JWT_SECRET: ${JWT_SECRET}
-      DATABASE_URL: postgresql://postgres:ADMIN321@db:5432/carehomes
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/carehomes
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASS: ${EMAIL_PASS}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}

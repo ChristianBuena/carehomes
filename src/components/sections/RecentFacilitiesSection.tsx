@@ -6,7 +6,7 @@ import { ResponsiveContainer } from "@/components/ui/ResponsiveContainer";
 import { cache } from "react";
 
 const getTotalFacilityCount = cache(async () => {
-  return prisma.facility.count();
+  return prisma.facility.count({ where: { deletedAt: null } });
 });
 
 function formatDate(dateStr: string): string {

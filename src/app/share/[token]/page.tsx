@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { shareFileDownloadPath, shareFileRef } from "@/services/file-storage.service";
 import { FileText, Image, FileIcon, Download, Clock, ShieldCheck, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -49,8 +50,8 @@ async function getShareData(token: string) {
         include: {
           file: {
             select: {
+              id: true,
               filename: true,
-              fileUrl: true,
               fileSize: true,
               fileType: true,
               mimeType: true,
@@ -85,9 +86,13 @@ export default async function SharePage({
   const isInvalid = isRevoked || isExpired;
 
   // Gather files for valid links
+  // No storage URLs on this page: each file downloads through
+  // /api/share/[token]/files/[fileId], which re-checks the link (SOW 11.3).
+  const downloadUrl = (fileId: string) => shareFileDownloadPath(token, link.id, fileId);
   let files: Array<{
+    ref: string;
     filename: string;
-    fileUrl: string;
+    downloadUrl: string;
     fileSize: number;
     fileType: string;
   }> = [];
@@ -97,15 +102,21 @@ export default async function SharePage({
       const allFiles = await prisma.memberFile.findMany({
         where: { userId: link.userId, deletedAt: null },
         orderBy: { uploadedAt: "desc" },
-        select: { filename: true, fileUrl: true, fileSize: true, fileType: true },
+        select: { id: true, filename: true, fileSize: true, fileType: true },
       });
-      files = allFiles.map((f) => ({ ...f, fileType: f.fileType as string }));
+      files = allFiles.map(({ id, ...f }) => ({
+        ...f,
+        ref: shareFileRef(link.id, id),
+        fileType: f.fileType as string,
+        downloadUrl: downloadUrl(id),
+      }));
     } else {
       files = link.selectedFiles
         .filter((sf) => !sf.file.deletedAt)
         .map((sf) => ({
+          ref: shareFileRef(link.id, sf.file.id),
           filename: sf.file.filename,
-          fileUrl: sf.file.fileUrl,
+          downloadUrl: downloadUrl(sf.file.id),
           fileSize: sf.file.fileSize,
           fileType: sf.file.fileType as string,
         }));
@@ -202,9 +213,7 @@ export default async function SharePage({
                       </div>
                     </div>
                     <a
-                      href={file.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`${file.downloadUrl}?download=1`}
                       className="flex items-center gap-1.5 shrink-0 text-sm font-medium text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors"
                       aria-label={`Download ${file.filename}`}
                     >

@@ -12,6 +12,9 @@ import {
   createMembership,
   createUser,
   createFacility,
+  createRebuttal,
+  createMemberFile,
+  createShareLink,
 } from "../helpers/db";
 
 async function main() {
@@ -33,6 +36,69 @@ async function main() {
       break;
     case "createFacility":
       result = await createFacility(args as any);
+      break;
+    case "createRebuttal":
+      result = await createRebuttal(args as any);
+      break;
+    case "createMemberFile":
+      result = await createMemberFile(args as any);
+      break;
+    case "createShareLink": {
+      const a = args as { userId: string; shareAll?: boolean; fileIds?: string[]; expiresAt?: string | null; revokedAt?: string | null };
+      result = await createShareLink({
+        ...a,
+        expiresAt: a.expiresAt ? new Date(a.expiresAt) : null,
+        revokedAt: a.revokedAt ? new Date(a.revokedAt) : null,
+      });
+      break;
+    }
+    case "softDeleteFacility":
+      result = await testDb.facility.update({
+        where: { id: (args as { id: string }).id },
+        data: { deletedAt: new Date() },
+      });
+      break;
+    case "setRebuttalStatus": {
+      const { id, status } = args as { id: string; status: "PENDING" | "APPROVED" | "REJECTED" | "REQUEST_FIX" };
+      result = await testDb.rebuttal.update({ where: { id }, data: { status } });
+      break;
+    }
+    case "setRebuttalDocs": {
+      const { id, documentUrl, watermarkedUrl } = args as { id: string; documentUrl: string | null; watermarkedUrl: string | null };
+      result = await testDb.rebuttal.update({ where: { id }, data: { documentUrl, watermarkedUrl } });
+      break;
+    }
+    case "listAccessReviews":
+      result = await testDb.accessReview.findMany({
+        where: { userId: (args as { userId: string }).userId },
+        select: { reviewerId: true, decision: true, notes: true },
+      });
+      break;
+    case "listShareLinks":
+      result = await testDb.fileShareLink.findMany({
+        where: { userId: (args as { userId: string }).userId },
+        select: { expiry: true, expiresAt: true },
+      });
+      break;
+    case "revokeShareLink":
+      result = await testDb.fileShareLink.update({
+        where: { id: (args as { id: string }).id },
+        data: { revokedAt: new Date() },
+      });
+      break;
+    case "setRebuttalWatermark": {
+      const { id, watermarkStatus, watermarkError } = args as { id: string; watermarkStatus: "APPLIED" | "FAILED" | null; watermarkError: string | null };
+      result = await testDb.rebuttal.update({ where: { id }, data: { watermarkStatus, watermarkError } });
+      break;
+    }
+    case "getRebuttalWatermark":
+      result = await testDb.rebuttal.findUnique({
+        where: { id: (args as { id: string }).id },
+        select: { watermarkStatus: true, watermarkError: true },
+      });
+      break;
+    case "countRebuttals":
+      result = await testDb.rebuttal.count();
       break;
     default:
       throw new Error(`unknown op: ${op}`);

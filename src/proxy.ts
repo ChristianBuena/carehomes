@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyToken } from "@/lib/jwt";
+import { getSessionUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 
-export async function middleware(req: NextRequest) {
+/**
+ * Next.js 16 Proxy (formerly middleware.ts). Runs on the Node.js runtime, so
+ * it can check the session against the database: revoked sessions and role
+ * changes take effect on the next request (SOW 11.1a).
+ */
+export async function proxy(req: NextRequest) {
   const token = req.cookies.get("auth-token")?.value;
   const path = req.nextUrl.pathname;
 
@@ -16,15 +21,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  let user;
-  try {
-    user = await verifyToken(token);
-  } catch {
-    if (path.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+  const user = await getSessionUser(token);
 
   if (!user?.role) {
     if (path.startsWith("/api/")) {
@@ -44,7 +41,17 @@ export async function middleware(req: NextRequest) {
   }
 
   // ── 4. /api/admin/* — requires manage_users permission ────────────────
-  if (path.startsWith("/api/admin")) {
+  // Exception: the quarterly access review (and its export) is run by
+  // MODERATORs too, so that path needs moderate_rebuttals. The route
+  // handlers repeat their own checks.
+  if (isAccessReviewApi(path)) {
+    if (!hasPermission(user.role, "moderate_rebuttals")) {
+      return NextResponse.json(
+        { error: "Forbidden: insufficient permissions" },
+        { status: 403 }
+      );
+    }
+  } else if (path.startsWith("/api/admin")) {
     if (!hasPermission(user.role, "manage_users")) {
       return NextResponse.json(
         { error: "Forbidden: insufficient permissions" },
@@ -61,6 +68,10 @@ export async function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
+}
+
+function isAccessReviewApi(path: string): boolean {
+  return path === "/api/admin/access-review" || path.startsWith("/api/admin/access-review/");
 }
 
 export const config = {

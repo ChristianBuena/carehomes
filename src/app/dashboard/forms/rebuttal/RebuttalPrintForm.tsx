@@ -16,6 +16,8 @@ interface Facility {
 export default function RebuttalPrintForm({ facilities }: { facilities: Facility[] }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Shown inline as well as toasted, so the message is visible on its own.
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -28,25 +30,15 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
     redactionAcknowledged: false,
   });
 
-  // Load draft from localStorage on mount
+  // No drafts in browser storage (SOW 11.3): an unredacted draft could stay
+  // on a shared office computer. Remove any draft an older version saved.
   useEffect(() => {
-    const savedDraft = localStorage.getItem("rebuttal_form_draft");
-    if (savedDraft) {
-      try {
-        setFormData(JSON.parse(savedDraft));
-      } catch (e) {
-        console.error("Failed to parse saved draft", e);
-      }
+    try {
+      localStorage.removeItem("rebuttal_form_draft");
+    } catch {
+      // Storage unavailable (private mode): nothing to clean up.
     }
   }, []);
-
-  // Save to localStorage when form data changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      localStorage.setItem("rebuttal_form_draft", JSON.stringify(formData));
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [formData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -65,6 +57,7 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       if (!formData.facilityId || !formData.content) {
@@ -78,18 +71,35 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
       const fd = new FormData();
       fd.append("title", `Response to Citation ${formData.citationNumber || "Unknown"}`);
       fd.append("facilityId", formData.facilityId);
-      fd.append("content", `Date of Visit: ${formData.dateOfVisit}\nCitation Number: ${formData.citationNumber}\n\n${formData.content}\n\nSigned: ${formData.signature} (${formData.date})`);
+      // The published text holds the citation number and the response only.
+      // The signer's name, signing date and visit date are stored privately
+      // (SOW 11.3) and never published.
+      fd.append(
+        "content",
+        formData.citationNumber
+          ? `Citation Number: ${formData.citationNumber}\n\n${formData.content}`
+          : formData.content
+      );
+      fd.append("signerName", formData.signature);
+      fd.append("signedOn", formData.date);
+      fd.append("visitDate", formData.dateOfVisit);
       fd.append("redactionAcknowledged", "on");
 
-      await submitRebuttal(fd);
-      
-      // Clear draft on successful submit
-      localStorage.removeItem("rebuttal_form_draft");
+      // The action returns its errors (thrown messages are hidden in production).
+      const result = await submitRebuttal(fd);
+      if (!result.success) {
+        setSubmitError(result.error);
+        toast.error(result.error);
+        return;
+      }
+
       toast.success("Rebuttal submitted successfully!");
       router.push("/dashboard/rebuttals");
       
-    } catch (error: any) {
-      toast.error(error.message || "Failed to submit rebuttal");
+    } catch (error: unknown) {
+      const message = error instanceof Error && error.message ? error.message : "Failed to submit rebuttal";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -107,7 +117,7 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
             <FileText className="w-5 h-5 text-[var(--color-primary)]" /> Fillable Rebuttal Form
           </h2>
           <p className="text-sm text-[var(--color-muted)] mt-1">
-            Fill out this form to generate a clean PDF or submit it directly to your dashboard. Drafts are auto-saved.
+            Fill out this form to generate a clean PDF or submit it directly to your dashboard. Your entries are not saved in this browser; submit or print before leaving the page.
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -120,6 +130,15 @@ export default function RebuttalPrintForm({ facilities }: { facilities: Facility
           </Button>
         </div>
       </div>
+
+      {submitError && (
+        <div
+          role="alert"
+          className="print-hide mb-8 bg-[var(--color-danger)]/10 text-[var(--color-danger)] p-4 rounded-lg text-sm font-medium"
+        >
+          {submitError}
+        </div>
+      )}
 
       {/* The Printable Form Area */}
       <form onSubmit={handleSubmit} className="space-y-8 text-black">

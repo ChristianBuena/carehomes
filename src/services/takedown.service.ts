@@ -1,14 +1,22 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mailer";
+import { describeMailError } from "@/lib/log-safe";
 import { calculateSla, SlaUrgency } from "@/lib/sla";
 import { TakedownReason, TakedownStatus } from "@/types/takedown.types";
 import { RebuttalStatus } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
 
 export { calculateSla, type SlaUrgency };
 
-const takedownDelegate = (prisma as any).takedownRequest;
-
 // ── Types ────────────────────────────────────────────────────────────────────
+
+/** Thrown when a takedown action targets a rebuttal that does not exist or has been soft-deleted. */
+export class RebuttalNotFoundError extends Error {
+  constructor() {
+    super("Rebuttal not found");
+    this.name = "RebuttalNotFoundError";
+  }
+}
 
 export interface CreateTakedownInput {
   requesterName: string;
@@ -199,7 +207,7 @@ export async function createTakedownRequest(data: CreateTakedownInput) {
   const submittedAt = new Date();
   const slaDeadline = new Date(submittedAt.getTime() + 72 * 60 * 60 * 1000); // 72-hour SLA
 
-  const request = await takedownDelegate.create({
+  const request = await prisma.takedownRequest.create({
     data: {
       ticketNumber,
       requesterName: data.requesterName,
@@ -224,7 +232,7 @@ export async function createTakedownRequest(data: CreateTakedownInput) {
       html: getAcknowledgmentEmailHtml(ticketNumber, data.requesterName, data.facilityOrRebuttal, data.reason),
     });
   } catch (emailErr) {
-    console.error("Failed to send requester acknowledgment email:", emailErr);
+    console.error("Failed to send requester acknowledgment email:", describeMailError(emailErr));
   }
 
   // Alert Admins and Moderators
@@ -246,7 +254,7 @@ export async function createTakedownRequest(data: CreateTakedownInput) {
       )
     );
   } catch (modAlertErr) {
-    console.error("Failed to notify moderators of takedown request:", modAlertErr);
+    console.error("Failed to notify moderators of takedown request:", describeMailError(modAlertErr));
   }
 
   return request;
@@ -259,7 +267,7 @@ export async function getTakedownRequests(options?: {
   status?: TakedownStatus | "ALL";
   query?: string;
 }) {
-  const where: any = {};
+  const where: Prisma.TakedownRequestWhereInput = {};
 
   if (options?.status && options.status !== "ALL") {
     where.status = options.status;
@@ -274,7 +282,7 @@ export async function getTakedownRequests(options?: {
     ];
   }
 
-  const requests = await takedownDelegate.findMany({
+  const requests = await prisma.takedownRequest.findMany({
     where,
     include: {
       assignedTo: { select: { id: true, name: true, email: true } },
@@ -294,7 +302,7 @@ export async function getTakedownRequests(options?: {
     ],
   });
 
-  return requests.map((req: any) => {
+  return requests.map((req) => {
     const sla = calculateSla(req.submittedAt, req.slaDeadline, req.status);
     return {
       ...req,
@@ -307,7 +315,7 @@ export async function getTakedownRequests(options?: {
  * Fetch a single takedown incident by ID.
  */
 export async function getTakedownById(id: string) {
-  const req = await takedownDelegate.findUnique({
+  const req = await prisma.takedownRequest.findUnique({
     where: { id },
     include: {
       assignedTo: { select: { id: true, name: true, email: true } },
@@ -329,8 +337,18 @@ export async function getTakedownById(id: string) {
   if (!req) return null;
 
   const sla = calculateSla(req.submittedAt, req.slaDeadline, req.status);
+  // The storage URL stays on the server (SOW 11.3); moderators open the
+  // document through /api/rebuttal/[id]/document.
+  const rebuttal = req.rebuttal
+    ? (({ documentUrl, ...r }) => ({
+        ...r,
+        hasDocument: documentUrl !== null,
+        documentDownloadUrl: documentUrl ? `/api/rebuttal/${r.id}/document` : null,
+      }))(req.rebuttal)
+    : null;
   return {
     ...req,
+    rebuttal,
     ...sla,
   };
 }
@@ -344,7 +362,7 @@ export async function resolveTakedownRequest(params: {
   status: "RESOLVED" | "REJECTED";
   resolutionNotes: string;
 }) {
-  const request = await takedownDelegate.update({
+  const request = await prisma.takedownRequest.update({
     where: { id: params.id },
     data: {
       status: params.status,
@@ -368,7 +386,7 @@ export async function resolveTakedownRequest(params: {
       ),
     });
   } catch (err) {
-    console.error("Failed to send resolution email:", err);
+    console.error("Failed to send resolution email:", describeMailError(err));
   }
 
   return request;
@@ -386,13 +404,13 @@ export async function emergencyUnpublishRebuttal(params: {
   reason: string;
 }) {
   // 1. Fetch current rebuttal status
-  const rebuttal = await prisma.rebuttal.findUnique({
-    where: { id: params.rebuttalId },
+  const rebuttal = await prisma.rebuttal.findFirst({
+    where: { id: params.rebuttalId, deletedAt: null },
     include: { facility: true, user: true },
   });
 
   if (!rebuttal) {
-    throw new Error("Rebuttal not found");
+    throw new RebuttalNotFoundError();
   }
 
   // 2. Transaction: Update Rebuttal to REJECTED + create ModerationLog
@@ -414,7 +432,7 @@ export async function emergencyUnpublishRebuttal(params: {
 
   // 3. Update associated takedown request if provided
   if (params.takedownId) {
-    await takedownDelegate.update({
+    await prisma.takedownRequest.update({
       where: { id: params.takedownId },
       data: {
         isEmergencyTakedown: true,

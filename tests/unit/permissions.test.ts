@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import {
   hasPermission,
   canClaimFacility,
@@ -30,6 +32,12 @@ describe("hasPermission() — full role x permission matrix", () => {
 
   it("returns false for empty-string role", () => {
     expect(hasPermission("", "manage_users")).toBe(false);
+  });
+
+  it("only MEMBER can submit rebuttals — ADMIN and MODERATOR cannot (TEST_REPORT #11)", () => {
+    expect(hasPermission("MEMBER", "submit_rebuttal")).toBe(true);
+    expect(hasPermission("ADMIN", "submit_rebuttal")).toBe(false);
+    expect(hasPermission("MODERATOR", "submit_rebuttal")).toBe(false);
   });
 
   it("ADMIN can moderate, MEMBER cannot", () => {
@@ -97,15 +105,56 @@ describe("canClaimFacility() — tier boundaries", () => {
   });
 });
 
-describe("Tier limit source-of-truth duplication (CH-18 risk)", () => {
-  it("permissions.ts TIER_FACILITY_LIMITS matches config/tiers.ts TIER_LIMITS today", () => {
-    // These two tables are maintained by hand in two different files (and a third
-    // copy exists in the Stripe webhook route). This test only proves they agree
-    // RIGHT NOW — it will not catch someone editing one file and forgetting the
-    // other two, because there is no single source of truth to import from.
+describe("Tier limit single source of truth (FIXED; was duplicated by hand in three files)", () => {
+  it("the table canClaimFacility enforces has exactly the expected limits", () => {
+    expect(TIER_FACILITY_LIMITS).toEqual({ NONE: 0, TIER_A: 1, TIER_B: 3, TIER_C: 10 });
+  });
+
+  it("permissions.ts TIER_FACILITY_LIMITS matches config/tiers.ts TIER_LIMITS", () => {
     expect(TIER_FACILITY_LIMITS.NONE).toBe(TIER_LIMITS.NONE);
     expect(TIER_FACILITY_LIMITS.TIER_A).toBe(TIER_LIMITS.TIER_A);
     expect(TIER_FACILITY_LIMITS.TIER_B).toBe(TIER_LIMITS.TIER_B);
     expect(TIER_FACILITY_LIMITS.TIER_C).toBe(TIER_LIMITS.TIER_C);
+  });
+
+  it("config/tiers.ts TIER_LIMITS is the very same object, not a copy — they cannot drift", () => {
+    expect(TIER_LIMITS).toBe(TIER_FACILITY_LIMITS);
+  });
+
+  it("canClaimFacility's boundary follows the table for every plan", () => {
+    for (const [plan, limit] of Object.entries(TIER_FACILITY_LIMITS)) {
+      expect(canClaimFacility(plan, limit)).toBe(false);
+      if (limit > 0) expect(canClaimFacility(plan, limit - 1)).toBe(true);
+    }
+  });
+
+  it("no source file re-declares a numeric facility limit: the only `TIER_x: <number>` / " +
+     "`maxFacilities: <number>` literals under src/ and prisma/seed.ts are in src/lib/permissions.ts", () => {
+    const root = path.resolve(__dirname, "..", "..");
+    const offenders: string[] = [];
+    const scan = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name !== "generated" && entry.name !== "node_modules") scan(full);
+        } else if (/\.(ts|tsx)$/.test(entry.name)) {
+          check(full);
+        }
+      }
+    };
+    const check = (file: string) => {
+      const rel = path.relative(root, file);
+      if (rel === path.join("src", "lib", "permissions.ts")) return;
+      fs.readFileSync(file, "utf8").split("\n").forEach((line, i) => {
+        // PricingCard's planWeights is an upgrade/downgrade ordering (1 < 2 < 3), not a facility limit.
+        if (line.includes("planWeights")) return;
+        if (/\b(TIER_[ABC]|NONE)\s*:\s*\d/.test(line) || /\bmaxFacilities\s*:\s*\d/.test(line)) {
+          offenders.push(`${rel}:${i + 1}: ${line.trim()}`);
+        }
+      });
+    };
+    scan(path.join(root, "src"));
+    check(path.join(root, "prisma", "seed.ts"));
+    expect(offenders).toEqual([]);
   });
 });

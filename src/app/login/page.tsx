@@ -272,7 +272,7 @@ function LoginContent() {
         )}
 
         <p className="mt-8 text-center text-sm text-[var(--color-text)]">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/signup"
             className="text-[var(--color-secondary)] hover:underline font-semibold"

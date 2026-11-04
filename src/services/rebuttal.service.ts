@@ -35,7 +35,7 @@ export async function getRebuttalById(id: string) {
     where: { id, deletedAt: null },
     include: {
       user: { select: { id: true, name: true, email: true } },
-      facility: { select: { id: true, name: true, slug: true } },
+      facility: { select: { id: true, name: true, slug: true, organizationId: true } },
     },
   });
 }
@@ -51,18 +51,14 @@ export const getApprovedRebuttalsByFacilityId = cache(async (facilityId: string)
       status: "APPROVED",
       deletedAt: null,
     },
+    // Feeds the PUBLIC facility page: text only. No document URL and no
+    // author identity (see tests/e2e/public-exposure.spec.ts).
     select: {
       id: true,
       title: true,
       content: true,
-      documentUrl: true,
       createdAt: true,
       updatedAt: true,
-      user: {
-        select: {
-          name: true,
-        },
-      },
     },
     orderBy: {
       updatedAt: "desc",

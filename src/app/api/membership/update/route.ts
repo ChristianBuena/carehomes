@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/roleGuard";
 import { MembershipPlan } from "@/generated/prisma/enums";
 import { TIER_LIMITS } from "@/config/tiers";
+import { auditContextFromRequest, recordAudit } from "@/services/audit.service";
 
 /**
  * POST /api/membership/update — ADMIN-ONLY manual membership override.
@@ -52,15 +53,31 @@ export async function POST(req: NextRequest) {
     const maxFacilities = TIER_LIMITS[plan as keyof typeof TIER_LIMITS];
     const status = plan === "NONE" ? "INACTIVE" : "ACTIVE";
 
+    const before = await prisma.membership.findUnique({
+      where: { organizationId: org.id },
+      select: { plan: true, status: true },
+    });
+
     const membership = await prisma.membership.upsert({
       where: { organizationId: org.id },
       update: { plan, status, maxFacilities },
       create: { organizationId: org.id, plan, status, maxFacilities },
     });
 
-    console.log(
-      `[membership] Admin ${admin.userId} set org ${org.id} to ${plan}/${status}`
-    );
+    await recordAudit({
+      action: "MEMBERSHIP_ADMIN_OVERRIDE",
+      actorId: admin.userId,
+      actorRole: admin.role,
+      targetType: "Organization",
+      targetId: org.id,
+      metadata: {
+        fromPlan: before?.plan ?? null,
+        fromStatus: before?.status ?? null,
+        toPlan: plan,
+        toStatus: status,
+      },
+      ...auditContextFromRequest(req),
+    });
 
     return NextResponse.json({ success: true, membership });
   } catch (error) {

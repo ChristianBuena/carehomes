@@ -75,7 +75,8 @@ Moderators must scrutinize all text fields and attached PDF/DOCX documentation f
 ### Stage 3: Evidentiary Documentation & Watermark Verification
 - If a supporting document was uploaded (via Cloudinary):
   - Check that the document is legible, clean, and directly supports the rebuttal.
-  - Confirm the document URL is valid and watermarked with the compliance stamp.
+  - Open it with "View supporting document". While the rebuttal is not approved, the app serves it as a PDF marked "FOR ATTORNEY REVIEW ONLY" on every page. Word files cannot be marked and are not shown; ask the member for a PDF, PNG or JPG.
+  - On approval the app stores a copy marked "PUBLIC REDACTED VERSION". If that fails, the rebuttal is listed under "Approved copies that need attention" on the moderation page; use "Retry approved copy".
   - Ensure the document does not contain hidden metadata or unredacted PDF layers.
 
 ### Stage 4: Substantive Factual Tone & LPO Legal Guard

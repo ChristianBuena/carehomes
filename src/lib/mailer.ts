@@ -1,3 +1,4 @@
+import { describeMailError } from "@/lib/log-safe";
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
@@ -30,9 +31,9 @@ export const sendEmail = async ({
       html,
     });
 
-    console.log("Email sent successfully to:", to);
+    // No recipient address in logs (SOW 11.3 "limit PII").
   } catch (error) {
-    console.error("❌ Nodemailer Error:", error);
+    console.error("[mail] Send failed:", describeMailError(error));
     throw error;
   }
 };

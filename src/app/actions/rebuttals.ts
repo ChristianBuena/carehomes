@@ -2,8 +2,12 @@
 
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasPermission } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 import { v2 as cloudinary } from "cloudinary";
+import type { ActionResult } from "@/types/action-result";
+import { detectMarkableKind } from "@/services/pdf-watermark.service";
+import { auditContextFromHeaders, recordAudit } from "@/services/audit.service";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -11,136 +15,255 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function submitRebuttal(formData: FormData) {
-  const user = await getUserFromRequest();
-  if (!user) throw new Error("Unauthorized");
-
-  const title = formData.get("title") as string;
-  const facilityId = formData.get("facilityId") as string;
-  const content = formData.get("content") as string;
-  const redactionChecked = formData.get("redactionAcknowledged") === "on";
-  const file = formData.get("document") as File | null;
-
-  if (!title || !facilityId || !content) {
-    throw new Error("Missing required fields.");
-  }
-
-  if (!redactionChecked) {
-    throw new Error("You must acknowledge the redaction policy.");
-  }
-
-  let documentUrl: string | null = null;
-
-  if (file && file.size > 0) {
-    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
-      throw new Error("Cloudinary configuration is missing in the environment variables.");
-    }
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    try {
-      const uploadResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: "carehomes_rebuttals", resource_type: "auto" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(buffer);
-      });
-
-      documentUrl = (uploadResult as any).secure_url;
-    } catch (err: any) {
-      console.error("Cloudinary upload error:", err);
-      throw new Error("Failed to upload the document. " + (err.message || ""));
-    }
-  }
-
-  await prisma.rebuttal.create({
-    data: {
-      title,
-      content,
-      facilityId,
-      documentUrl,
-      userId: user.userId,
-      status: "PENDING",
-    },
-  });
-
-  revalidatePath("/dashboard/rebuttals");
-  revalidatePath("/moderation");
-  
-  return { success: true };
+// Errors the user needs to read are RETURNED, never thrown — see ActionResult.
+function fail(error: string): ActionResult {
+  return { success: false, error };
 }
 
-export async function updateRebuttal(rebuttalId: string, formData: FormData) {
-  const user = await getUserFromRequest();
-  if (!user) throw new Error("Unauthorized");
+const UNEXPECTED_ERROR = "Something went wrong. Please try again.";
 
-  // Verify ownership and that the rebuttal is in REQUEST_FIX state
-  const existing = await prisma.rebuttal.findFirst({
-    where: { id: rebuttalId, deletedAt: null },
+const MAX_SIGNER_NAME = 120;
+
+/** "YYYY-MM-DD" -> Date (UTC midnight), "" -> null, anything else -> "invalid". */
+function parseFormDate(value: FormDataEntryValue | null): Date | null | "invalid" {
+  if (value === null || value === "") return null;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "invalid";
+  const d = new Date(`${value}T00:00:00.000Z`);
+  return isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value ? "invalid" : d;
+}
+
+/**
+ * Private signer details (SOW 11.3): stored in their own columns, shown to
+ * the member and moderators only, never written into the published text.
+ */
+function parseSignerDetails(formData: FormData):
+  | { ok: true; signerName: string | null; signedOn: Date | null; visitDate: Date | null }
+  | { ok: false; error: string } {
+  const rawName = formData.get("signerName");
+  const signerName = typeof rawName === "string" ? rawName.trim() : "";
+  if (signerName.length > MAX_SIGNER_NAME) {
+    return { ok: false, error: `Signer name must be at most ${MAX_SIGNER_NAME} characters.` };
+  }
+  const signedOn = parseFormDate(formData.get("signedOn"));
+  const visitDate = parseFormDate(formData.get("visitDate"));
+  if (signedOn === "invalid" || visitDate === "invalid") {
+    return { ok: false, error: "Dates must be valid calendar dates." };
+  }
+  return { ok: true, signerName: signerName || null, signedOn, visitDate };
+}
+
+const UNSUPPORTED_DOCUMENT =
+  "Upload a PDF, PNG or JPG. Other files (including Word) cannot be marked FOR ATTORNEY REVIEW ONLY.";
+
+/**
+ * True when the file is a PDF, PNG or JPEG by its bytes. Drafts must be
+ * stamped "FOR ATTORNEY REVIEW ONLY" whenever they are viewed (SOW 11.2),
+ * which is only possible for these types.
+ */
+async function isMarkableUpload(file: File): Promise<boolean> {
+  return detectMarkableKind(new Uint8Array(await file.slice(0, 8).arrayBuffer())) !== null;
+}
+
+/** Uploads a rebuttal document to Cloudinary and returns its URL. */
+async function uploadDocument(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const uploadResult = await new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      // "authenticated": the file is not reachable by its URL alone; the app
+      // fetches it with a signed URL (src/services/file-storage.service.ts).
+      { folder: "carehomes_rebuttals", resource_type: "auto", type: "authenticated" },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    uploadStream.end(buffer);
   });
 
-  if (!existing) throw new Error("Rebuttal not found.");
-  if (existing.userId !== user.userId) throw new Error("Forbidden.");
-  if (existing.status !== "REQUEST_FIX") {
-    throw new Error("Only rebuttals with \"Fix Required\" status can be edited.");
-  }
+  return (uploadResult as { secure_url: string }).secure_url;
+}
 
-  const title = formData.get("title") as string;
-  const content = formData.get("content") as string;
-  const redactionChecked = formData.get("redactionAcknowledged") === "on";
-  const file = formData.get("document") as File | null;
+export async function submitRebuttal(formData: FormData): Promise<ActionResult> {
+  try {
+    const user = await getUserFromRequest();
+    if (!user) return fail("Unauthorized");
 
-  if (!title || !content) throw new Error("Missing required fields.");
-  if (!redactionChecked) throw new Error("You must acknowledge the redaction policy.");
+    const title = formData.get("title") as string;
+    const facilityId = formData.get("facilityId") as string;
+    const content = formData.get("content") as string;
+    const redactionChecked = formData.get("redactionAcknowledged") === "on";
+    const file = formData.get("document") as File | null;
 
-  // Use existing documentUrl by default; only upload if a new file is provided
-  let documentUrl: string | null = existing.documentUrl;
-
-  if (file && file.size > 0) {
-    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
-      throw new Error("Cloudinary configuration is missing in the environment variables.");
+    if (!title || !facilityId || !content) {
+      return fail("Missing required fields.");
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    try {
-      const uploadResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: "carehomes_rebuttals", resource_type: "auto" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        uploadStream.end(buffer);
-      });
-
-      documentUrl = (uploadResult as { secure_url: string }).secure_url;
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Upload failed";
-      throw new Error("Failed to upload the document. " + message);
+    if (!redactionChecked) {
+      return fail("You must acknowledge the redaction policy.");
     }
+
+    const signer = parseSignerDetails(formData);
+    if (!signer.ok) return fail(signer.error);
+
+    // Permission + facility ownership — mirrors POST /api/rebuttal. Checked before
+    // any upload so a rejected submission never stores a document.
+    if (!hasPermission(user.role, "submit_rebuttal")) {
+      return fail("Forbidden: your role cannot submit rebuttals.");
+    }
+
+    const facility = await prisma.facility.findFirst({
+      where: { id: facilityId, deletedAt: null },
+      select: { organizationId: true },
+    });
+
+    if (!facility) {
+      return fail("Facility not found.");
+    }
+
+    if (!facility.organizationId) {
+      return fail(
+        "This facility has not been claimed. Claim it before submitting a rebuttal."
+      );
+    }
+
+    if (!user.orgId || facility.organizationId !== user.orgId) {
+      return fail(
+        "Forbidden: you can only submit rebuttals for facilities your organization owns."
+      );
+    }
+
+    let documentUrl: string | null = null;
+
+    if (file && file.size > 0) {
+      if (!(await isMarkableUpload(file))) return fail(UNSUPPORTED_DOCUMENT);
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+        return fail("Cloudinary configuration is missing in the environment variables.");
+      }
+
+      try {
+        documentUrl = await uploadDocument(file);
+      } catch (err: unknown) {
+        console.error("Cloudinary upload error:", err);
+        const message = err instanceof Error ? err.message : "";
+        return fail("Failed to upload the document. " + message);
+      }
+    }
+
+    const created = await prisma.rebuttal.create({
+      data: {
+        title,
+        content,
+        facilityId,
+        documentUrl,
+        userId: user.userId,
+        status: "PENDING",
+        signerName: signer.signerName,
+        signedOn: signer.signedOn,
+        visitDate: signer.visitDate,
+      },
+      select: { id: true },
+    });
+
+    await recordAudit({
+      action: "REBUTTAL_SUBMITTED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: created.id,
+      metadata: { facilityId, withDocument: documentUrl !== null },
+      ...(await auditContextFromHeaders()),
+    });
+
+    revalidatePath("/dashboard/rebuttals");
+    revalidatePath("/moderation");
+
+    return { success: true };
+  } catch (err: unknown) {
+    // Anything unexpected (database down, etc.) — log it, show a safe message.
+    console.error("submitRebuttal error:", err);
+    return fail(UNEXPECTED_ERROR);
   }
+}
 
-  await prisma.rebuttal.update({
-    where: { id: rebuttalId },
-    data: {
-      title,
-      content,
-      documentUrl,
-      status: "PENDING",        // Re-enter moderation queue
-      moderatedById: null,      // Clear previous reviewer
-    },
-  });
+export async function updateRebuttal(rebuttalId: string, formData: FormData): Promise<ActionResult> {
+  try {
+    const user = await getUserFromRequest();
+    if (!user) return fail("Unauthorized");
 
-  revalidatePath("/dashboard/rebuttals");
-  revalidatePath("/moderation");
+    // Verify ownership and that the rebuttal is in REQUEST_FIX state
+    const existing = await prisma.rebuttal.findFirst({
+      where: { id: rebuttalId, deletedAt: null },
+    });
 
-  return { success: true };
+    if (!existing) return fail("Rebuttal not found.");
+    if (existing.userId !== user.userId) return fail("Forbidden.");
+    if (existing.status !== "REQUEST_FIX") {
+      return fail("Only rebuttals with \"Fix Required\" status can be edited.");
+    }
+
+    const title = formData.get("title") as string;
+    const content = formData.get("content") as string;
+    const redactionChecked = formData.get("redactionAcknowledged") === "on";
+    const file = formData.get("document") as File | null;
+
+    if (!title || !content) return fail("Missing required fields.");
+    if (!redactionChecked) return fail("You must acknowledge the redaction policy.");
+
+    // Use existing documentUrl by default; only upload if a new file is provided
+    let documentUrl: string | null = existing.documentUrl;
+
+    if (file && file.size > 0) {
+      if (!(await isMarkableUpload(file))) return fail(UNSUPPORTED_DOCUMENT);
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+        return fail("Cloudinary configuration is missing in the environment variables.");
+      }
+
+      try {
+        documentUrl = await uploadDocument(file);
+      } catch (err: unknown) {
+        console.error("Cloudinary upload error:", err);
+        const message = err instanceof Error ? err.message : "Upload failed";
+        return fail("Failed to upload the document. " + message);
+      }
+    }
+
+    await prisma.rebuttal.update({
+      where: { id: rebuttalId },
+      data: {
+        title,
+        content,
+        documentUrl,
+        status: "PENDING",        // Re-enter moderation queue
+        moderatedById: null,      // Clear previous reviewer
+        // A new document needs a new approved copy when it is approved.
+        ...(documentUrl !== existing.documentUrl && {
+          watermarkedUrl: null,
+          watermarkStatus: null,
+          watermarkError: null,
+          watermarkUpdatedAt: null,
+        }),
+      },
+    });
+
+    await recordAudit({
+      action: "REBUTTAL_UPDATED",
+      actorId: user.userId,
+      actorRole: user.role,
+      targetType: "Rebuttal",
+      targetId: rebuttalId,
+      metadata: { newDocument: documentUrl !== existing.documentUrl },
+      ...(await auditContextFromHeaders()),
+    });
+
+    revalidatePath("/dashboard/rebuttals");
+    revalidatePath("/moderation");
+
+    return { success: true };
+  } catch (err: unknown) {
+    // Anything unexpected (database down, etc.) — log it, show a safe message.
+    console.error("updateRebuttal error:", err);
+    return fail(UNEXPECTED_ERROR);
+  }
 }
